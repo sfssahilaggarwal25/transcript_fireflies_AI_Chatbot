@@ -27,6 +27,9 @@ venv/
 ENV/
 env/
 
+# uv
+.uv-cache/
+
 # IDE
 .vscode/
 .idea/
@@ -57,3 +60,10 @@ logs/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Generated test outputs
+chunks_output.json
+test_output.txt
+
+# Python version management
+.python-version
