@@ -3,7 +3,7 @@ from app.config import Config, CONSTANT_TRANSCRIPT
 
 
 from app.services.transcript.metadata import build_meeting_metadata
-from app.services.transcript.chunking import create_chunks
+# from app.services.transcript.chunking import create_chunks
 from app.services.transcript.normalize import normalize_transcript
 from app.clients.fireflies_client import fetch_transcript
 
@@ -53,8 +53,8 @@ async def handle_fireflies_webhook(payload):
         print(f"Meeting metadata (dev mode): meeting_id={meeting_metadata['meeting_id']}")
         
         # Create chunks
-        chunks = create_chunks(normalized_data["sentences"], meeting_metadata)
-        print(f"Chunks (dev mode): Created {len(chunks)} chunks")
+        # chunks = create_chunks(normalized_data["sentences"], meeting_metadata)
+        # print(f"Chunks (dev mode): Created {len(chunks)} chunks")
         return
     
     # Production mode: Normal webhook processing
@@ -120,8 +120,8 @@ async def handle_fireflies_webhook(payload):
     print(f"Meeting metadata: meeting_id={meeting_metadata['meeting_id']}")
 
     # Create chunks
-    chunks = create_chunks(normalized_data["sentences"], meeting_metadata)
-    print(f"Chunks: Created {len(chunks)} chunks")
+    # chunks = create_chunks(normalized_data["sentences"], meeting_metadata)
+    # print(f"Chunks: Created {len(chunks)} chunks")
     
     # TODO: Store chunks to database
-    return chunks
+    # return chunks

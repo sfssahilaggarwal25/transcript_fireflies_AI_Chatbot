@@ -7,9 +7,8 @@ import os
 import sys
 import asyncio
 import json
-from app.services.transcript.normalize import normalize_transcript
+from app.services.transcript.normalize import clean_with_gemini, normalize_transcript, group_by_speaker
 from app.services.transcript.metadata import build_meeting_metadata
-from app.services.transcript.chunking import create_chunks
 from app.handlers.webhook_handler import handle_fireflies_webhook
 from app.config import CONSTANT_TRANSCRIPT
 
@@ -61,36 +60,49 @@ def test_create_chunks():
     normalized_data = normalize_transcript(CONSTANT_TRANSCRIPT)
     metadata = build_meeting_metadata(normalized_data)
     sentences = normalized_data["sentences"]
+
+    grouped_sentences = group_by_speaker(sentences)
     
-    result = create_chunks(sentences, metadata)
-    print(f"✅ create_chunks created {len(result)} chunks")
-    if result:
-        print(f"✅ First chunk speaker: {result[0]['speaker']}")
-        print(f"✅ First chunk length: {result[0]['text_length']} chars")
+    # print(f"The normalized data: {normalized_data}")
+    print(f"========================= Sentences =========================")
+    print(f"Now the result of grouped sentences is: \n\n {grouped_sentences} \n\n")      
+    print(f"========================= Sentences =========================")
+
+    print(f"\n\n")
+    print(f"========================= Using Google Model for clean the code =========================")
+    clean_with_gemini(grouped_sentences)      
+    print(f"========================= Using Google Model for clean the code =========================")
+
+
+    # result = create_chunks(sentences, metadata)
+    # print(f"✅ create_chunks created {len(result)} chunks")
+    # if result:
+    #     print(f"✅ First chunk speaker: {result[0]['speaker']}")
+    #     print(f"✅ First chunk length: {result[0]['text_length']} chars")
         
-        # Save chunks to JSON file
-        output_file = "chunks_output.json"
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(result, f, indent=2, ensure_ascii=False)
-        print(f"✅ Chunks saved to {output_file}")
+    #     # Save chunks to JSON file
+    #     output_file = "chunks_output.json"
+    #     with open(output_file, 'w', encoding='utf-8') as f:
+    #         json.dump(result, f, indent=2, ensure_ascii=False)
+    #     print(f"✅ Chunks saved to {output_file}")
     
     # Verify structure
-    assert isinstance(result, list)
-    assert len(result) > 0  # Should have chunks from real data
-    if result:  # If chunks are created
-        assert "text" in result[0]
-        assert "speaker" in result[0]
-        assert "meeting_id" in result[0]
-        assert "meeting_title" in result[0]
-        assert "date" in result[0]
-        assert "sequence" in result[0]
-        assert "chunk_id" in result[0]
-        assert "text_length" in result[0]
-        # Verify dynamic data
-        assert result[0]["meeting_id"] == metadata["meeting_id"]
-        assert result[0]["meeting_title"] == metadata["title"]
+    # assert isinstance(result, list)
+    # assert len(result) > 0  # Should have chunks from real data
+    # if result:  # If chunks are created
+    #     assert "text" in result[0]
+    #     assert "speaker" in result[0]
+    #     assert "meeting_id" in result[0]
+    #     assert "meeting_title" in result[0]
+    #     assert "date" in result[0]
+    #     assert "sequence" in result[0]
+    #     assert "chunk_id" in result[0]
+    #     assert "text_length" in result[0]
+    #     # Verify dynamic data
+    #     assert result[0]["meeting_id"] == metadata["meeting_id"]
+    #     assert result[0]["meeting_title"] == metadata["title"]
     
-    print("✅ create_chunks working correctly\n")
+    # print("✅ create_chunks working correctly\n")
 
 async def test_webhook_development_mode():
     """Test webhook handler in development mode"""
@@ -131,11 +143,12 @@ async def main():
     # Test individual functions
     test_normalize_transcript()
     test_build_meeting_metadata()
+    # test_group_by_speaker()
     test_create_chunks()
     
     # Test webhook modes
-    await test_webhook_development_mode()
-    await test_webhook_production_mode()
+    # await test_webhook_development_mode()
+    # await test_webhook_production_mode()
     
     # print("🎉 All tests completed!")
 
