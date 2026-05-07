@@ -175,8 +175,8 @@ def group_by_speaker(raw: List[Dict], max_words: int = 80) -> List[Dict]:
 
     for item in raw:
         # ── Guard: skip missing fields ──
-        text = item.get("text", "").strip()
-        speaker_raw = item.get("speaker_name", "").strip()
+        text = str(item.get("text") or "").strip()
+        speaker_raw = str(item.get("speaker_name") or "").strip()
 
         if not text or not speaker_raw:
             logger.debug(f"Skipping empty line: {item}")
@@ -186,7 +186,7 @@ def group_by_speaker(raw: List[Dict], max_words: int = 80) -> List[Dict]:
         speaker = _clean_speaker_name(speaker_raw)
 
         # ── Detect cut-off sentences (ends without punctuation) ──
-        if len(text.split()) > 8 and text[-1] not in ".?!":
+        if len(text.split()) > 8 and text[-1] not in ".?!,\"'":
             cut_off_count += 1
 
         # ── Merge or append ──
@@ -194,10 +194,7 @@ def group_by_speaker(raw: List[Dict], max_words: int = 80) -> List[Dict]:
             current_words = len(grouped[-1]["text"].split())
             new_words = len(text.split())
 
-            if (
-                current_words + new_words <= max_words
-                or text[-1] not in ".?!"
-            ):
+            if current_words + new_words <= max_words:
                 # Safe to merge — same speaker, within limit or sentence doesn't end with punctuation
                 grouped[-1]["text"] += " " + text
             else:

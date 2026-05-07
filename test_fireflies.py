@@ -7,7 +7,7 @@ import os
 import sys
 import asyncio
 import json
-from app.services.transcript.normalize import clean_with_gemini, normalize_transcript, group_by_speaker
+from app.services.transcript.normalize import normalize_transcript, group_by_speaker
 from app.services.transcript.metadata import build_meeting_metadata
 from app.handlers.webhook_handler import handle_fireflies_webhook
 from app.config import CONSTANT_TRANSCRIPT
@@ -70,7 +70,7 @@ def test_create_chunks():
 
     print(f"\n\n")
     print(f"========================= Using Google Model for clean the code =========================")
-    clean_with_gemini(grouped_sentences)      
+    # clean_with_gemini(grouped_sentences)      
     print(f"========================= Using Google Model for clean the code =========================")
 
 
