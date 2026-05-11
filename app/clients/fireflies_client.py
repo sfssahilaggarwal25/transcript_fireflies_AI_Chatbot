@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 class FirefliesAPIError(Exception):
     """Custom exception for Fireflies API errors"""
-    pass
+
 
 
 def fetch_transcript(transcript_id: str) -> Dict[str, Any]:
@@ -35,6 +35,7 @@ def fetch_transcript(transcript_id: str) -> Dict[str, Any]:
       transcript(id: $id) {
         id
         title
+        date
         sentences {
           text
           speaker_name
@@ -49,7 +50,7 @@ def fetch_transcript(transcript_id: str) -> Dict[str, Any]:
 
     try:
         response = requests.post(
-            Config.FIRELIES_API_URL,
+            Config.FIREFLIES_API_URL,
             headers={
                 "Authorization": f"Bearer {Config.API_KEY}",
                 "Content-Type": "application/json"
@@ -86,4 +87,4 @@ def fetch_transcript(transcript_id: str) -> Dict[str, Any]:
 
 def validate_api_config() -> bool:
     """Validate that API configuration is properly set up"""
-    return bool(Config.FIRELIES_API_URL and Config.API_KEY)
+    return bool(Config.FIREFLIES_API_URL and Config.API_KEY)

@@ -65,7 +65,7 @@ def test_create_chunks():
     result = create_chunks(sentences, metadata)
     print(f"✅ create_chunks created {len(result)} chunks")
     if result:
-        print(f"✅ First chunk speaker: {result[0]['speaker']}")
+        print(f"✅ First chunk speaker: {result[0]['speaker_name']}")
         print(f"✅ First chunk length: {result[0]['text_length']} chars")
         
         # Save chunks to JSON file
@@ -79,11 +79,19 @@ def test_create_chunks():
     assert len(result) > 0  # Should have chunks from real data
     if result:  # If chunks are created
         assert "text" in result[0]
-        assert "speaker" in result[0]
+        assert "speaker_name" in result[0]
+        assert "speaker_id" in result[0]
+        assert "speaker_role" in result[0]
         assert "meeting_id" in result[0]
         assert "meeting_title" in result[0]
-        assert "date" in result[0]
-        assert "sequence" in result[0]
+        assert "meeting_date" in result[0]
+        assert "chunk_index" in result[0]
+        assert "chunk_type" in result[0]
+        assert "is_meeting_summary" in result[0]
+        assert "contains_decision" in result[0]
+        assert "contains_commitment" in result[0]
+        assert "contains_question" in result[0]
+        assert "sentiment" in result[0]
         assert "chunk_id" in result[0]
         assert "text_length" in result[0]
         # Verify dynamic data

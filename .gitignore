@@ -53,6 +53,12 @@ logs/
 *.db
 *.sqlite3
 
+# ChromaDB — local vector database (contains meeting content, rebuilds from webhooks)
+chroma_db/
+
+# Claude Code project files
+.claude/
+
 # Jupyter Notebook
 .ipynb_checkpoints
 

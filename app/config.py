@@ -4,8 +4,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    FIRELIES_API_URL = "https://api.fireflies.ai/graphql"
+    FIREFLIES_API_URL = "https://api.fireflies.ai/graphql"
     API_KEY = os.getenv("FIREFLIES_API_KEY")
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     DEVELOPMENT_MODE = os.getenv("DEVELOPMENT_MODE", "false").lower() == "true"
 
 # Development constant transcript for testing
@@ -151,6 +152,7 @@ CONSTANT_TRANSCRIPT = {
         "transcript": {
             "id": "01KM2DD6MXGSZ4F1QW0BNJE16N",
             "title": "Nolocode meeting with Ashpreet",
+            "date": "2026-05-08",
             "sentences": [
                 {
                     "text": "Would have been great to like also have gotten these questions before yesterday and had you guys already shared this document with, with what's the name Akash or.",

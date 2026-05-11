@@ -1,7 +1,22 @@
 from typing import Dict, Any, List
 import logging
+import re
 
 logger = logging.getLogger(__name__)
+
+_FILLER_PATTERNS = [
+    (re.compile(r'\b(um+|uh+|hmm+|hm+|er|erm)\b', re.IGNORECASE), ''),
+    (re.compile(r'\byou know\b,?', re.IGNORECASE), ''),
+    (re.compile(r'\b(\w+)\s+\1\b', re.IGNORECASE), r'\1'),  # "the the" → "the"
+    (re.compile(r'\s{2,}'), ' '),
+    (re.compile(r'\s+([,\.?!])'), r'\1'),
+]
+
+
+def _clean_sentence(text: str) -> str:
+    for pattern, replacement in _FILLER_PATTERNS:
+        text = pattern.sub(replacement, text)
+    return text.strip()
 
 
 class TranscriptValidationError(Exception):
@@ -51,14 +66,22 @@ def normalize_transcript(raw_data: Dict[str, Any]) -> Dict[str, Any]:
         if "speaker_name" not in sentence:
             raise TranscriptValidationError(f"Sentence {i} missing 'speaker_name' field")
     
+    cleaned_sentences = []
+    for s in sentences:
+        cleaned = _clean_sentence(s["text"])
+        if len(cleaned) >= 8:
+            cleaned_sentences.append({**s, "text": cleaned})
+
     normalized = {
         "meeting_id": transcript["id"],
         "title": transcript["title"],
-        "sentences": sentences,
+        "date": transcript.get("date"),
+        "sentences": cleaned_sentences,
         "summary": transcript.get("summary", {})
     }
     
-    logger.info(f"Normalized transcript with {len(sentences)} sentences")
+    dropped = len(sentences) - len(cleaned_sentences)
+    logger.info(f"Normalized {len(sentences)} sentences → {len(cleaned_sentences)} after cleaning ({dropped} dropped as too short)")
     return normalized
 
 

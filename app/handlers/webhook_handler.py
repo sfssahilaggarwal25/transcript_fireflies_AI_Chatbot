@@ -1,127 +1,214 @@
 import time
 from app.config import Config, CONSTANT_TRANSCRIPT
-
+from app.logger import get_logger
 
 from app.services.transcript.metadata import build_meeting_metadata
-from app.services.transcript.chunking import create_chunks
+from app.services.transcript.chunking import create_chunks, build_summary_chunk
 from app.services.transcript.normalize import normalize_transcript
 from app.clients.fireflies_client import fetch_transcript
+from app.clients.gemini_client import generate_meeting_summary
+from app.services.storage.project_store import get_project_for_meeting, get_speaker_role
+from app.services.storage.chunk_store import store_chunks, get_distinct_meeting_ids
+
+log = get_logger("webhook_handler")
+
+
+def _resolve_meeting_number(project_id: str, meeting_id: str) -> int:
+    """Return meeting number for this meeting — 1-indexed, based on meetings already stored."""
+    existing = get_distinct_meeting_ids(project_id)
+    if meeting_id in existing:
+        ordered = sorted(existing)
+        return ordered.index(meeting_id) + 1
+    return len(existing) + 1
+
+
+def _stamp_project_and_roles(chunks, meeting_id) -> bool:
+    """Stamp project_id, company fields, and speaker_role onto every chunk.
+    Returns False if meeting is not mapped in projects.json — caller must not store.
+    """
+    project_info = get_project_for_meeting(meeting_id)
+    if not project_info:
+        log.warning(f"meeting_id '{meeting_id}' not found in projects.json — add it before re-triggering")
+        log.warning("Chunks will NOT be stored. Pipeline aborted.")
+        return False
+
+    for chunk in chunks:
+        chunk.update(project_info)
+        chunk["speaker_role"] = get_speaker_role(meeting_id, chunk["speaker_name"])
+
+    log.info(f"Stamped → project_id={project_info['project_id']}  company={project_info['company_name']}")
+    return True
 
 
 def wait_for_summary(transcript_id):
-    """Wait for transcript summary to be available"""
-    for _ in range(6):
+    for attempt in range(6):
         data = fetch_transcript(transcript_id)
-        
+
         if not data or "data" not in data:
-            print("Failed to fetch transcript data")
+            log.warning(f"Summary poll {attempt+1}/6 — no data yet, retrying in 5s")
             time.sleep(5)
             continue
 
         transcript = data.get("data", {}).get("transcript")
-
         if not transcript:
-            print("No transcript data found")
+            log.warning(f"Summary poll {attempt+1}/6 — transcript not ready, retrying in 5s")
             time.sleep(5)
             continue
 
         summary = transcript.get("summary")
-
         if summary and summary.get("overview"):
+            log.info(f"Summary available after {attempt+1} poll(s)")
             return summary
 
         time.sleep(5)
 
+    log.warning("Summary not available after 6 polls — continuing without it")
     return None
 
 
+def _resolve_summary(normalized_data: dict, chunks: list[dict], meeting_title: str) -> str | None:
+    """Return summary text — Fireflies overview first, Gemini fallback if missing."""
+    fireflies_summary = normalized_data.get("summary", {})
+    if fireflies_summary and fireflies_summary.get("overview"):
+        log.info("Summary source: Fireflies")
+        return fireflies_summary["overview"]
+
+    log.info("Fireflies summary not available — generating via Gemini")
+    return generate_meeting_summary(chunks, meeting_title)
+
+
 async def handle_fireflies_webhook(payload):
-    """Handle incoming Fireflies webhook with full processing pipeline"""
-    print("Webhook received") 
-    
-    # Development mode: Use constant transcript for fast testing
+    pipeline_start = time.time()
+
+    # ── DEVELOPMENT MODE ──────────────────────────────────────────
     if Config.DEVELOPMENT_MODE:
-        print("DEVELOPMENT MODE: Using constant transcript")
-        transcript_data = CONSTANT_TRANSCRIPT
-        
-        # Normalize the transcript data
-        normalized_data = normalize_transcript(transcript_data)
-        print(f"Normalized transcript (dev mode): meeting_id={normalized_data['meeting_id']}, sentences={len(normalized_data['sentences'])}")
-        
-        # Build meeting metadata
+        log.info("[DEV MODE] Using hardcoded CONSTANT_TRANSCRIPT")
+
+        t = time.time()
+        normalized_data = normalize_transcript(CONSTANT_TRANSCRIPT)
+        log.info(f"[1/5] Normalize   → {len(normalized_data['sentences'])} sentences  ({_ms(t)})")
+
+        t = time.time()
         meeting_metadata = build_meeting_metadata(normalized_data)
-        print(f"Meeting metadata (dev mode): meeting_id={meeting_metadata['meeting_id']}")
-        
-        # Create chunks
+        project_info = get_project_for_meeting(normalized_data["meeting_id"])
+        if not project_info:
+            log.warning(f"[DEV] meeting_id '{normalized_data['meeting_id']}' not in projects.json — aborting")
+            return None
+        meeting_metadata["meeting_number"] = _resolve_meeting_number(
+            project_info["project_id"], normalized_data["meeting_id"]
+        )
+        log.info(f"[2/5] Metadata    → meeting_id={meeting_metadata['meeting_id']}  date={meeting_metadata['date']}  meeting_number={meeting_metadata['meeting_number']}  ({_ms(t)})")
+
+        t = time.time()
         chunks = create_chunks(normalized_data["sentences"], meeting_metadata)
-        print(f"Chunks (dev mode): Created {len(chunks)} chunks")
-        return
-    
-    # Production mode: Normal webhook processing
-    # Step 0: Wait for transcript ID to be available
+        speakers = set(c["speaker_name"] for c in chunks)
+        log.info(f"[3/5] Chunking    → {len(chunks)} chunks  {len(speakers)} speakers  ({_ms(t)})")
+
+        t = time.time()
+        summary_text = _resolve_summary(normalized_data, chunks, meeting_metadata["title"])
+        if summary_text:
+            chunks.append(build_summary_chunk(summary_text, meeting_metadata, len(chunks) + 1))
+            log.info(f"[3/5] Summary chunk added  ({_ms(t)})")
+        else:
+            log.warning("[3/5] No summary available — meeting stored without summary chunk")
+
+        t = time.time()
+        if not _stamp_project_and_roles(chunks, normalized_data["meeting_id"]):
+            return None
+        log.info(f"[4/5] Stamp roles → project_id={project_info['project_id']}  meeting_number={meeting_metadata['meeting_number']}  ({_ms(t)})")
+
+        t = time.time()
+        stored = store_chunks(chunks)
+        log.info(f"[5/5] ChromaDB    → {stored} chunks stored  ({_ms(t)})")
+
+        log.info(f"Pipeline complete ✓  total={_ms(pipeline_start)}")
+        return chunks
+
+    # ── PRODUCTION MODE ───────────────────────────────────────────
+    log.info("Production mode — resolving transcript ID from payload")
+
     transcript_id = None
     for attempt in range(3):
         transcript_id = (
             payload.get("transcript_id")
             or payload.get("meetingId")
-            or payload.get("meeting_id")   
+            or payload.get("meeting_id")
             or payload.get("data", {}).get("transcript_id")
         )
-        
         if transcript_id:
-            print("Transcript ID found:", transcript_id)
+            log.info(f"Transcript ID resolved: {transcript_id}")
             break
-        else:
-            print(f"Transcript ID not available yet (attempt {attempt + 1}/3), waiting 10 seconds...")
-            time.sleep(10)
-    
+        log.warning(f"Transcript ID not in payload yet (attempt {attempt+1}/3) — waiting 10s")
+        time.sleep(10)
+
     if not transcript_id:
-        print("No transcript ID found after retries")
-        return
+        log.error("Transcript ID not found after 3 attempts — dropping webhook")
+        return None
 
-    print("Processing transcript:", transcript_id)
-
-    # Step 1: Fetch transcript with retry for early webhooks
+    # Step 1 — Fetch transcript
+    log.info(f"[1/5] Fetching transcript from Fireflies API...")
     transcript_data = None
     for attempt in range(3):
         transcript_data = fetch_transcript(transcript_id)
-        
         if transcript_data and "data" in transcript_data and transcript_data["data"].get("transcript"):
-            print("Transcript fetched successfully")
+            log.info(f"[1/5] Transcript fetched ✓  (attempt {attempt+1})")
             break
-        else:
-            print(f"Transcript not ready yet (attempt {attempt + 1}/3), waiting 10 seconds...")
-            time.sleep(10)
-    
-    if not transcript_data or "data" not in transcript_data or not transcript_data["data"].get("transcript"):
-        print("Failed to fetch transcript after retries")
-        return
+        log.warning(f"[1/5] Transcript not ready (attempt {attempt+1}/3) — waiting 10s")
+        time.sleep(10)
 
-    # Step 2: Wait for summary
-    print("Waiting for summary...")
+    if not transcript_data or not transcript_data["data"].get("transcript"):
+        log.error("[1/5] Failed to fetch transcript after 3 attempts — dropping")
+        return None
+
+    # Step 2 — Wait for summary
+    log.info("[2/5] Polling for transcript summary...")
     summary = wait_for_summary(transcript_id)
-    
     if summary:
-        print("Summary retrieved successfully")
-
-        if "data" in transcript_data and "transcript" in transcript_data["data"]:
-            transcript_data["data"]["transcript"]["summary"] = summary
-        else:
-            print("Warning: Could not update summary in transcript data structure")
+        transcript_data["data"]["transcript"]["summary"] = summary
     else:
-        print("Summary not available after retries")
+        log.warning("[2/5] Proceeding without summary")
 
-    # Step 3: Normalize and process
+    # Step 3 — Normalize
+    t = time.time()
     normalized_data = normalize_transcript(transcript_data)
-    print(f"Normalized transcript: meeting_id={normalized_data['meeting_id']}, sentences={len(normalized_data['sentences'])}")
+    log.info(f"[3/5] Normalize   → {len(normalized_data['sentences'])} sentences  meeting_id={normalized_data['meeting_id']}  ({_ms(t)})")
 
-    # Build meeting metadata
+    # Step 4 — Metadata + chunk
+    t = time.time()
     meeting_metadata = build_meeting_metadata(normalized_data)
-    print(f"Meeting metadata: meeting_id={meeting_metadata['meeting_id']}")
+    project_info = get_project_for_meeting(normalized_data["meeting_id"])
+    if not project_info:
+        log.warning(f"meeting_id '{normalized_data['meeting_id']}' not in projects.json — add it and re-trigger")
+        return None
+    meeting_metadata["meeting_number"] = _resolve_meeting_number(
+        project_info["project_id"], normalized_data["meeting_id"]
+    )
+    log.info(f"[4/5] Metadata    → date={meeting_metadata['date']}  meeting_number={meeting_metadata['meeting_number']}  ({_ms(t)})")
 
-    # Create chunks
+    t = time.time()
     chunks = create_chunks(normalized_data["sentences"], meeting_metadata)
-    print(f"Chunks: Created {len(chunks)} chunks")
-    
-    # TODO: Store chunks to database
+    speakers = set(c["speaker_name"] for c in chunks)
+    log.info(f"[4/5] Chunking    → {len(chunks)} chunks  {len(speakers)} speakers  ({_ms(t)})")
+
+    t = time.time()
+    summary_text = _resolve_summary(normalized_data, chunks, meeting_metadata["title"])
+    if summary_text:
+        chunks.append(build_summary_chunk(summary_text, meeting_metadata, len(chunks) + 1))
+        log.info(f"[4/5] Summary chunk added  ({_ms(t)})")
+    else:
+        log.warning("[4/5] No summary available — meeting stored without summary chunk")
+
+    # Step 5 — Stamp + store
+    t = time.time()
+    if not _stamp_project_and_roles(chunks, normalized_data["meeting_id"]):
+        return None
+
+    stored = store_chunks(chunks)
+    log.info(f"[5/5] ChromaDB    → {stored} chunks stored  ({_ms(t)})")
+
+    log.info(f"Pipeline complete ✓  total={_ms(pipeline_start)}")
     return chunks
+
+
+def _ms(start: float) -> str:
+    return f"{(time.time() - start) * 1000:.0f}ms"
