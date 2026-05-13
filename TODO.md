@@ -16,8 +16,8 @@
 - [x] Fixed `FIREFLIES_API_URL` typo in `config.py` and `fireflies_client.py`
 - [x] Fixed `metadata.py` — now uses real meeting date from Fireflies API
 - [x] Added `date` field to GraphQL query in `fireflies_client.py`
-- [x] ChromaDB installed + `db.py` + `chunk_store.py` — full storage layer
-- [x] `store_chunks()` wired into `webhook_handler.py` — TODO replaced
+- [x] ChromaDB + LangChain Chroma + Gemini embeddings — full storage layer
+- [x] `store_documents()` wired into `webhook_handler.py` — chunks embedded and stored via LangChain
 - [x] `meeting_number` auto-computes from ChromaDB (distinct meeting count + 1)
 - [x] Pipeline guard — aborts cleanly if `meeting_id` not in `projects.json`
 - [x] ASR noise cleaning — regex-based filler word removal in `normalize.py` before chunking
@@ -25,11 +25,14 @@
 - [x] `app/clients/gemini_client.py` — `generate_meeting_summary()` with Gemini 1.5 Flash
 - [x] Content signal detection — `_detect_signals()` regex classifier in `chunking.py` sets `contains_decision`, `contains_commitment`, `contains_question` per chunk
 - [x] `_clean_speaker_name()` in `normalize.py` — strips Fireflies platform IDs from speaker names automatically
-- [x] `inspect_db.py` — CLI tool to inspect ChromaDB contents (chunk count, projects, signals, sample chunks)
+- [x] `app/services/documents/mapper.py` — `chunks_to_documents()` converts chunk dicts to LangChain Documents
+- [x] `app/services/embeddings/gemini_embeddings.py` — `gemini-embedding-001` via `langchain-google-genai`
+- [x] `inspect_db.py` — CLI tool to inspect ChromaDB contents
 
 **Remaining (Phase 1):**
-- [ ] Re-ingest existing meeting — trigger dev mode pipeline to upsert 232 chunks with signals + summary chunk
-- [ ] Update `projects.json` speaker keys — `_clean_speaker_name()` now strips IDs (e.g. "Karan Middha U0438EU2CSX" → "Karan Middha"), keys must match cleaned names
+- [ ] Update `projects.json` speaker keys — must match cleaned names (e.g. `"Karan Middha"` not `"Karan Middha U0438EU2CSX"`)
+- [ ] Fix `inspect_db.py` — uses old raw ChromaDB API, needs update for new LangChain Chroma setup
+- [ ] Re-ingest existing meeting — run dev mode pipeline once to store chunks with Gemini embeddings + signals + summary chunk
 - [ ] Speaker normalization — verify `speaker_id` slug is consistent across multiple meetings
 
 ---
@@ -42,13 +45,13 @@
 
 ## Phase 2 — RAG Engine
 
-- [ ] Create `app/services/embeddings/embedder.py` — `embed_text(text) → List[float]`
-- [ ] Add embeddings to `store_chunks()` — embed before storing in ChromaDB
-- [ ] Create `app/services/retrieval/retriever.py` — `retrieve(query, project_id, filters) → List[Chunk]`
-- [ ] Project scope enforcer — reject any query where `project_id` is missing (API-level check)
-- [ ] Create `app/services/ai/chat_model.py` — `generate_answer(question, chunks) → str`
-- [ ] LLM integration — Gemini (`gemini-1.5-flash`) for POC; Claude (`claude-sonnet-4-6`) when API access available
-- [ ] Source attribution — attach meeting title, date, speaker to every generated answer
+> Embedding pipeline is already done (Gemini `gemini-embedding-001` via LangChain). Remaining work is retrieval + LLM answer generation.
+
+- [x] ~~Embedding pipeline~~ — done in Phase 1 via `gemini_embeddings.py` + LangChain Chroma
+- [ ] Create `app/services/retrieval/retriever.py` — `retrieve(query, project_id, filters) → List[Document]` using `vectorstore.similarity_search()`
+- [ ] Project scope enforcer — every query must include `project_id` filter, reject at API level if missing
+- [ ] Create `app/services/ai/chat_model.py` — `generate_answer(question, chunks) → str` using Gemini
+- [ ] Source attribution — attach `meeting_title`, `meeting_date`, `speaker_name` to every answer
 - [ ] Create `POST /query` endpoint in `main.py` — accepts `{ question, project_id }`, returns `{ answer, sources }`
 
 ---

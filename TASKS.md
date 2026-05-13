@@ -8,13 +8,13 @@
 ## Overall Progress
 
 ```
-Phase 1 — Foundation       [█████████░]  95%  10/10 tasks      ACTIVE (re-ingest + slug check remaining)
-Phase 2 — RAG Engine       [░░░░░░░░░░]   0%   0/8  tasks    🔒 LOCKED
+Phase 1 — Foundation       [█████████░]  95%  10/10 tasks      ACTIVE (3 small tasks left)
+Phase 2 — RAG Engine       [█░░░░░░░░░]  15%   1/6  tasks      ACTIVE (embedding done)
 Phase 3 — Query Taxonomy   [░░░░░░░░░░]   0%   0/10 tasks    🔒 LOCKED
 Phase 4 — Streamlit UI     [░░░░░░░░░░]   0%   0/5  tasks    🔒 LOCKED
 Phase 5 — Validation       [░░░░░░░░░░]   0%   0/6  tasks    🔒 LOCKED
 
-TOTAL XP EARNED:   950 / 1500 XP
+TOTAL XP EARNED:  1050 / 1500 XP
 ```
 
 > Bars update when you say "update files" at end of session.

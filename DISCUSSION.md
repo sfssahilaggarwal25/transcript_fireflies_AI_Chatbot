@@ -35,12 +35,14 @@ A project-scoped AI chatbot for Project Managers. PM selects a project → asks 
 
 | Decision | Choice | Why |
 |----------|---------|-----|
-| Vector DB | ChromaDB (local) | Free, no server, perfect for POC |
+| Vector DB | ChromaDB (local) via LangChain Chroma | Free, no server, LangChain abstraction enables future swap |
+| Embedding model | `gemini-embedding-001` via `langchain-google-genai` | Gemini API already in use, no extra key needed |
 | Chunking strategy | Utterance-based | Speaker metadata stays clean, Fireflies already separates by speaker |
 | Scope enforcement | Backend (not UI) | Project A data must never touch Project B — not a UI toggle |
-| LLM | Claude API (primary) | claude-sonnet-4-6, already discussed |
+| LLM | Gemini (`gemini-1.5-flash`) for POC | Only Gemini API available; swap to Claude when access granted |
 | Classifier (Phase 3) | Rule-based first | Faster for POC, upgrade to LLM if accuracy is poor |
 | UI | Streamlit | POC speed, not design |
+| Storage abstraction | LangChain Documents | Separates chunk dict (internal) from vector store format (LangChain) |
 
 ---
 
@@ -177,6 +179,28 @@ A project-scoped AI chatbot for Project Managers. PM selects a project → asks 
 
 ---
 
+### Session 7 (2026-05-13) — LangChain + Gemini Embeddings Architecture
+
+**Topics covered:**
+- Adopted LangChain as the abstraction layer for ChromaDB — `langchain-chroma`, `langchain-google-genai`, `langchain-core`
+- Replaced raw ChromaDB client with LangChain `Chroma` vector store — embeddings now happen automatically at store time
+- Embedding model: `gemini-embedding-001` via `GoogleGenerativeAIEmbeddings` (stored in `app/services/embeddings/gemini_embeddings.py`)
+- Added `app/services/documents/mapper.py` — converts internal chunk dicts → LangChain `Document(page_content, metadata)` before storage
+- Rewrote `db.py` — `get_vectorstore()` (LangChain Chroma singleton) + `get_raw_collection()` (raw ChromaDB for metadata-only ops like `get_distinct_meeting_ids()`)
+- Rewrote `chunk_store.py` — `store_documents()` replaces `store_chunks()`
+- Pipeline now has 6 steps (added step 5: convert to Documents, step 6: store + embed)
+- **Key insight:** Phase 2 embedding task is now complete as a side effect — embeddings are wired end-to-end
+
+**Decisions made:**
+- LangChain adopted as the abstraction layer — enables swapping embedding model or vector DB later without changing pipeline logic
+- `gemini-embedding-001` is the embedding model for POC (Gemini API key already in `.env`)
+- `get_distinct_meeting_ids()` bypasses LangChain and hits raw ChromaDB directly — avoids unnecessary embedding call for a pure metadata lookup
+- `get_chunks_by_meeting()` uses `similarity_search(query="meeting transcript", filter=...)` as a workaround since LangChain Chroma has no pure "get by metadata" without vector search
+
+**What's next:** Fix `inspect_db.py` for new architecture → update `projects.json` speaker keys → re-ingest → Phase 1 complete → Phase 2 retriever + chat_model + /query endpoint
+
+---
+
 ### Session 6 (2026-05-13) — Git Setup + Merge Conflicts + DB Inspection
 
 **Topics covered:**
@@ -225,8 +249,8 @@ A project-scoped AI chatbot for Project Managers. PM selects a project → asks 
 
 | Phase | Status | Blocking On |
 |-------|--------|-------------|
-| Phase 1 — Foundation (ChromaDB + Metadata) | 95% — re-ingest + speaker slug check | Re-trigger pipeline in dev mode |
-| Phase 2 — RAG Engine | Not started | Phase 1 complete |
+| Phase 1 — Foundation (ChromaDB + Metadata) | 95% — 3 small tasks left | Fix inspect_db, update projects.json, re-ingest |
+| Phase 2 — RAG Engine | 15% — embedding done | Retriever + chat_model + /query endpoint |
 | Phase 3 — Query Taxonomy | Not started | Phase 2 complete |
 | Phase 4 — Streamlit UI | Not started | Phase 3 complete |
 | Phase 5 — Validation | Not started | Phase 4 complete |

@@ -63,6 +63,17 @@
   - `meeting_number` reads from `meeting_meta` in `chunking.py` (was hardcoded `0`)
   - Dev mode now returns chunks (was returning `None`)
 
+## Session 7 — LangChain + Gemini Embeddings Integration
+
+- [x] **`app/services/embeddings/gemini_embeddings.py`** — `get_embedding_model()` returns singleton `GoogleGenerativeAIEmbeddings(model="gemini-embedding-001")` via `langchain-google-genai`
+- [x] **`app/services/documents/mapper.py`** — `chunk_to_document()` + `chunks_to_documents()` convert internal chunk dicts to LangChain `Document(page_content=text, metadata={...})`; skips invalid chunks, sanitizes metadata types
+- [x] **`app/services/storage/db.py`** — fully rewritten: `get_vectorstore()` returns singleton `langchain_chroma.Chroma` (persisted, Gemini embeddings, `meeting_chunks` collection); `get_raw_collection()` exposes underlying ChromaDB collection for metadata-only operations
+- [x] **`app/services/storage/chunk_store.py`** — rewritten: `store_documents()` uses LangChain Chroma `add_documents()` with stable `chunk_id` as document ID; `get_distinct_meeting_ids()` uses raw collection for efficiency; `get_chunks_by_meeting()` / `get_chunk_count()` use vector similarity search with metadata filter
+- [x] **Pipeline upgraded to 6 steps** in `webhook_handler.py`:
+  - Step 5: `chunks_to_documents()` — converts chunk dicts to LangChain Documents
+  - Step 6: `store_documents()` — embeds with Gemini and stores in ChromaDB via LangChain
+- [x] **Embedding now happens automatically** at storage time — `page_content` is embedded by Gemini before every `add_documents()` call
+
 ## Session 6 — Git Setup + Merge Resolution + DB Inspection
 
 - [x] **Git configured** — `user.name = "Sahil Aggarwal"`, `user.email = "sfs.sahilaggarwal25@gmail.com"` set globally
