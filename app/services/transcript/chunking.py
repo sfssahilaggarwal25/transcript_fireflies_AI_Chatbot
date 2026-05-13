@@ -2,32 +2,130 @@ import re
 import unicodedata
 
 _DECISION_RE = re.compile(
-    r'\b(we decided|we agreed|decision is|going with|we\'ll go with|final decision|'
-    r'we have decided|it\'s decided|confirmed|approved|we chose|let\'s go with|'
-    r'we\'re going to|agreed to|settled on|the plan is|we concluded)\b',
+    r"\b("
+    r"we decided|"
+    r"we have decided|"
+    r"decision is|"
+    r"final decision|"
+    r"it's decided|"
+    r"we agreed|"
+    r"agreed to|"
+    r"approved|"
+    r"confirmed|"
+    r"we chose|"
+    r"settled on|"
+    r"the plan is|"
+    r"we concluded|"
+    r"we'll go with|"
+    r"let's go with|"
+    r"going with|"
+    r"move forward with|"
+    r"we will use|"
+    r"we will take|"
+    r"we'll use|"
+    r"we'll take|"
+    r"use this|"
+    r"stick with|"
+    r"same one|"
+    r"this is the approach|"
+    r"this is what we'll use"
+    r")\b",
     re.IGNORECASE,
 )
+
 
 _COMMITMENT_RE = re.compile(
-    r'\b(I will|I\'ll|we will|we\'ll|action item|will be done|will handle|'
-    r'will send|will follow up|will check|will take care|I\'ll make sure|'
-    r'I\'ll get|I\'ll share|by (monday|tuesday|wednesday|thursday|friday|'
-    r'saturday|sunday|tomorrow|next week|end of (day|week|month)))\b',
+    r"\b("
+    r"i will|"
+    r"i'll|"
+    r"i can|"
+    r"i'll check|"
+    r"i'll confirm|"
+    r"i'll send|"
+    r"i'll share|"
+    r"i'll update|"
+    r"i'll get|"
+    r"i'll make sure|"
+    r"we will send|"
+    r"we will share|"
+    r"we will update|"
+    r"we will follow up|"
+    r"we will check|"
+    r"we will handle|"
+    r"we will deliver|"
+    r"action item|"
+    r"will be done|"
+    r"by monday|"
+    r"by tuesday|"
+    r"by wednesday|"
+    r"by thursday|"
+    r"by friday|"
+    r"tomorrow|"
+    r"next week|"
+    r"end of day|"
+    r"end of week|"
+    r"end of month"
+    r")\b",
     re.IGNORECASE,
 )
 
+
 _QUESTION_START_RE = re.compile(
-    r'^(what|when|where|who|why|how|can you|could you|would you|is there|'
-    r'are there|do you|did you|have you|will you|should we|can we|are we)\b',
+    r"^(what|when|where|who|why|how|"
+    r"can you|could you|would you|"
+    r"is there|are there|"
+    r"do you|did you|have you|"
+    r"will you|"
+    r"should we|can we|are we|"
+    r"what if)\b",
+    re.IGNORECASE,
+)
+
+
+_FALSE_COMMITMENT_RE = re.compile(
+    r"\b("
+    r"we will calculate|"
+    r"we will take|"
+    r"we will use|"
+    r"let's go to the next|"
+    r"wait a second|"
+    r"let's move on|"
+    r"we'll come back"
+    r")\b",
     re.IGNORECASE,
 )
 
 
 def _detect_signals(text: str) -> dict:
+    """
+    Detect decision / commitment / question signals from transcript chunk text.
+    """
+
+    cleaned = text.strip()
+
+    if not cleaned:
+        return {
+            "contains_decision": False,
+            "contains_commitment": False,
+            "contains_question": False,
+        }
+
+    contains_decision = bool(_DECISION_RE.search(cleaned))
+
+    contains_commitment = (
+        bool(_COMMITMENT_RE.search(cleaned))
+        and not bool(_FALSE_COMMITMENT_RE.search(cleaned))
+    )
+
+    contains_question = (
+        cleaned.endswith("?")
+        or bool(_QUESTION_START_RE.match(cleaned))
+    )
+
     return {
-        "contains_decision":   bool(_DECISION_RE.search(text)),
-        "contains_commitment": bool(_COMMITMENT_RE.search(text)),
-        "contains_question":   text.strip().endswith("?") or bool(_QUESTION_START_RE.match(text.strip())),
+        "contains_decision": contains_decision,
+        "contains_commitment": contains_commitment,
+        "contains_question": contains_question,
     }
 
 
