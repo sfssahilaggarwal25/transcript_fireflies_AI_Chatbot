@@ -177,6 +177,29 @@ A project-scoped AI chatbot for Project Managers. PM selects a project → asks 
 
 ---
 
+### Session 6 (2026-05-13) — Git Setup + Merge Conflicts + DB Inspection
+
+**Topics covered:**
+- Fixed git global config — `user.name = "Sahil Aggarwal"`, `user.email = "sfs.sahilaggarwal25@gmail.com"`
+- Fixed GitHub authentication — switched from password to classic PAT (token with `repo` scope)
+- Resolved merge conflicts between local and remote `sahil_fireflies_poc` branch:
+  - Remote had `clean_with_gemini()` per-sentence Gemini approach in `normalize.py` — dropped (decided against it)
+  - Remote had `create_chunks()` commented out — kept our full implementation
+  - Remote had `webhook_handler.py` pipeline commented out — kept our complete 5-step pipeline
+  - Took `_clean_speaker_name()` from remote — strips Fireflies platform IDs e.g. "Karan Middha U0438EU2CSX" → "Karan Middha". Now applied in `normalize_transcript()` so all speaker names are clean before chunking.
+  - Took `group_by_speaker()` utility from remote — kept as utility, not wired into main pipeline
+- Created `inspect_db.py` — one-command tool to inspect ChromaDB state (chunk count, projects, signals, sample)
+- Ran inspection: 232 chunks stored, all signals False, 0 summary chunks — because these were ingested before signal detection and summary chunk were built
+- **Finding:** existing chunks need re-ingestion to pick up `contains_decision`, `contains_commitment`, `contains_question`, and summary chunk. Pipeline uses upsert so it's safe.
+
+**Decisions made:**
+- `_clean_speaker_name()` is now applied during `normalize_transcript()` — speaker names are cleaned before reaching the chunker or ChromaDB
+- `projects.json` speaker keys like "Karan Middha U0438EU2CSX" should be updated to cleaned names ("Karan Middha") to match what normalize now outputs
+
+**What's next:** Re-ingest existing meeting (trigger dev mode pipeline) to update all 232 chunks with signals + add summary chunk → then Phase 1 is complete → Phase 2 (RAG engine)
+
+---
+
 ### Session 5 (2026-05-10) — ASR Cleaning + Summary Chunk + Content Signals
 
 **Topics covered:**
@@ -202,7 +225,7 @@ A project-scoped AI chatbot for Project Managers. PM selects a project → asks 
 
 | Phase | Status | Blocking On |
 |-------|--------|-------------|
-| Phase 1 — Foundation (ChromaDB + Metadata) | 90% — 1 task left | Speaker normalization check |
+| Phase 1 — Foundation (ChromaDB + Metadata) | 95% — re-ingest + speaker slug check | Re-trigger pipeline in dev mode |
 | Phase 2 — RAG Engine | Not started | Phase 1 complete |
 | Phase 3 — Query Taxonomy | Not started | Phase 2 complete |
 | Phase 4 — Streamlit UI | Not started | Phase 3 complete |

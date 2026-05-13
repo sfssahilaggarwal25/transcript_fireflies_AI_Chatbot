@@ -17,6 +17,7 @@ print("STEP 0 — What Fireflies sends us (raw webhook payload)")
 print(DIVIDER)
 
 raw = CONSTANT_TRANSCRIPT["data"]["transcript"]
+
 print(f"  meeting id    : {raw['id']}")
 print(f"  title         : {raw['title']}")
 print(f"  total sentences: {len(raw['sentences'])}")

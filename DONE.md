@@ -63,6 +63,19 @@
   - `meeting_number` reads from `meeting_meta` in `chunking.py` (was hardcoded `0`)
   - Dev mode now returns chunks (was returning `None`)
 
+## Session 6 — Git Setup + Merge Resolution + DB Inspection
+
+- [x] **Git configured** — `user.name = "Sahil Aggarwal"`, `user.email = "sfs.sahilaggarwal25@gmail.com"` set globally
+- [x] **GitHub authentication** — classic PAT with `repo` scope; token embedded in remote URL
+- [x] **Merge conflicts resolved** — `normalize.py`, `chunking.py`, `webhook_handler.py`, `test_fireflies.py`
+  - Kept: full utterance chunking pipeline, signal detection, summary chunk, regex cleaner
+  - Dropped: `clean_with_gemini()` per-sentence approach (decided against it in Session 5)
+  - Kept from remote: `_clean_speaker_name()` — strips Fireflies platform IDs (e.g. "Karan Middha U0438EU2CSX" → "Karan Middha")
+  - Kept from remote: `group_by_speaker()` — available as utility
+- [x] **`_clean_speaker_name()` wired into `normalize_transcript()`** — speaker names are cleaned before chunking
+- [x] **`inspect_db.py`** — CLI inspection tool (`uv run python inspect_db.py`)
+  - Shows: total chunks, projects, meetings, signal counts, summary chunks, 3-chunk sample
+
 ## Session 5 — ASR Cleaning + Summary Chunk + Content Signals
 
 - [x] **ASR noise cleaning** (`normalize.py`) — `_clean_sentence()` with 5 compiled regex patterns

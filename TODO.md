@@ -24,8 +24,12 @@
 - [x] Meeting summary chunk — `build_summary_chunk()` in `chunking.py`, Fireflies summary → Gemini fallback
 - [x] `app/clients/gemini_client.py` — `generate_meeting_summary()` with Gemini 1.5 Flash
 - [x] Content signal detection — `_detect_signals()` regex classifier in `chunking.py` sets `contains_decision`, `contains_commitment`, `contains_question` per chunk
+- [x] `_clean_speaker_name()` in `normalize.py` — strips Fireflies platform IDs from speaker names automatically
+- [x] `inspect_db.py` — CLI tool to inspect ChromaDB contents (chunk count, projects, signals, sample chunks)
 
 **Remaining (Phase 1):**
+- [ ] Re-ingest existing meeting — trigger dev mode pipeline to upsert 232 chunks with signals + summary chunk
+- [ ] Update `projects.json` speaker keys — `_clean_speaker_name()` now strips IDs (e.g. "Karan Middha U0438EU2CSX" → "Karan Middha"), keys must match cleaned names
 - [ ] Speaker normalization — verify `speaker_id` slug is consistent across multiple meetings
 
 ---
@@ -43,7 +47,7 @@
 - [ ] Create `app/services/retrieval/retriever.py` — `retrieve(query, project_id, filters) → List[Chunk]`
 - [ ] Project scope enforcer — reject any query where `project_id` is missing (API-level check)
 - [ ] Create `app/services/ai/chat_model.py` — `generate_answer(question, chunks) → str`
-- [ ] LLM integration — Claude API (`claude-sonnet-4-6`)
+- [ ] LLM integration — Gemini (`gemini-1.5-flash`) for POC; Claude (`claude-sonnet-4-6`) when API access available
 - [ ] Source attribution — attach meeting title, date, speaker to every generated answer
 - [ ] Create `POST /query` endpoint in `main.py` — accepts `{ question, project_id }`, returns `{ answer, sources }`
 
