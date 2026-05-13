@@ -3,16 +3,14 @@
     "project_name": "Nolocode",
     "company_id": "comp_001",
     "company_name": "Nolocode",
-    "meeting_ids": [
-      "01KM2DD6MXGSZ4F1QW0BNJE16N"
-    ],
+    "meeting_ids": ["01KM2DD6MXGSZ4F1QW0BNJE16N"],
     "speakers": {
-      "Ngũmi Gituro":              "client",
-      "Project Manager SFS":      "project_manager",
-      "Karan Middha U0438EU2CSX": "developer",
-      "Bhavneet Mhajan":          "developer",
-      "Rhythm jalhotra":          "developer",
-      "Neha":                     "developer"
+      "Ngũmi Gituro": "client",
+      "Project Manager SFS": "project_manager",
+      "Karan Middha": "developer",
+      "Bhavneet Mhajan": "developer",
+      "Rhythm jalhotra": "developer",
+      "Neha": "developer"
     }
   }
 }
