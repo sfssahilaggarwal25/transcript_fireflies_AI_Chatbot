@@ -78,31 +78,38 @@ _SUMMARY_RE = re.compile(
 )
 
 _SPEAKER_RE = re.compile(
-    r"\b("
-    r"client|"
-    r"customer|"
-    r"founder|"
-    r"engineer|"
-    r"project manager|"
-    r"speaker|"
+    r"("
+    # "what did [name] say/mention/discuss/state/think" — exclude "we/they/it/the/you"
+    r"what did (?!we\b|they\b|it\b|the\b|you\b).+? (?:say|mention|discuss|state|think)\b|"
+    # "what has/have [name] said/mentioned/discussed"
+    r"what (?:has|have) (?!we\b|they\b|it\b|the\b|you\b).+? (?:said|mentioned|discussed|stated)\b|"
+    # "what was [name] saying"
+    r"what was .+? saying\b|"
+    r"according to|"
     r"who said"
-    r")\b",
+    r")",
     re.IGNORECASE,
 )
 
 _TIMELINE_RE = re.compile(
-    r"\b("
-    r"timeline|"
-    r"deadline|"
-    r"due date|"
-    r"schedule|"
-    r"roadmap|"
-    r"last week|"
-    r"last month|"
-    r"this week|"
-    r"what changed|"
-    r"progress over time"
-    r")\b",
+    r"("
+    r"\b(?:timeline|deadline|due date|schedule|roadmap)\b|"
+    r"\b(?:last week|last month|this week|historically|over time)\b|"
+    r"\bprogress over time\b|"
+    # explicit change-tracking phrases
+    r"\bwhat changed\b|"
+    r"\bhow (?:has|did|have|were?).{0,30}changed?\b|"
+    r"\bchanged? (?:since|between|across|from)\b|"
+    r"\bevolved?\b|"
+    # cross-meeting comparison
+    r"\bbetween (?:the )?(?:two|both|meetings?|meeting \d|first|second|last)\b|"
+    r"\bacross (?:both|the|all|meetings?)\b|"
+    r"\bcompared? to (?:the )?(?:first|second|last|previous|earlier)\b|"
+    r"\bprevious meeting\b|"
+    r"\bfirst meeting\b|"
+    r"\bsecond meeting\b|"
+    r"\bfrom .{0,20} to .{0,20} meeting\b"
+    r")",
     re.IGNORECASE,
 )
 
@@ -123,31 +130,36 @@ def classify_query_intent(query: str) -> QueryIntent:
     if not cleaned:
         raise ValueError("Query cannot be blank.")
 
+    matched_by = "none (fallback)"
+
     if _DECISION_RE.search(cleaned):
         intent = QueryIntent.DECISION
-
+        matched_by = "_DECISION_RE"
     elif _COMMITMENT_RE.search(cleaned):
         intent = QueryIntent.COMMITMENT
-
-    elif _QUESTION_RE.search(cleaned):
-        intent = QueryIntent.QUESTION
-
+        matched_by = "_COMMITMENT_RE"
     elif _SUMMARY_RE.search(cleaned):
         intent = QueryIntent.SUMMARY
-
+        matched_by = "_SUMMARY_RE"
+    # SPEAKER before QUESTION: "What did Ngumi say about the questions?" must route
+    # to SPEAKER (name detected), not QUESTION (keyword match). Speech-act patterns
+    # are specific enough that false positives are rare.
     elif _SPEAKER_RE.search(cleaned):
         intent = QueryIntent.SPEAKER
-
+        matched_by = "_SPEAKER_RE"
+    elif _QUESTION_RE.search(cleaned):
+        intent = QueryIntent.QUESTION
+        matched_by = "_QUESTION_RE"
     elif _TIMELINE_RE.search(cleaned):
         intent = QueryIntent.TIMELINE
-
+        matched_by = "_TIMELINE_RE"
     else:
         intent = QueryIntent.GENERAL
 
     logger.info(
-        "Query intent classified | query='%s' | intent=%s",
-        cleaned,
+        "  classifier : %-20s  matched by %s",
         intent.value,
+        matched_by,
     )
 
     return intent

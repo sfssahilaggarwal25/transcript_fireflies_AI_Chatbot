@@ -73,12 +73,13 @@ def normalize_transcript(raw_data: Dict[str, Any]) -> Dict[str, Any]:
                 "speaker_name": _clean_speaker_name(s["speaker_name"]),
             })
 
+    summary_raw = transcript.get("summary")
     normalized = {
         "meeting_id": transcript["id"],
         "title": transcript["title"],
         "date": transcript.get("date"),
         "sentences": cleaned_sentences,
-        "summary": transcript.get("summary", {})
+        "summary": summary_raw if isinstance(summary_raw, dict) else {},
     }
 
     dropped = len(sentences) - len(cleaned_sentences)

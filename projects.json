@@ -3,14 +3,20 @@
     "project_name": "Nolocode",
     "company_id": "comp_001",
     "company_name": "Nolocode",
-    "meeting_ids": ["01KM2DD6MXGSZ4F1QW0BNJE16N"],
+    "meeting_ids": [
+      "01KM2DD6MXGSZ4F1QW0BNJE16N",
+      "01KMHQSBYB1RAGY2X4EP6DCMC9"
+    ],
     "speakers": {
       "Ngũmi Gituro": "client",
       "Project Manager SFS": "project_manager",
       "Karan Middha": "developer",
-      "Bhavneet Mhajan": "developer",
+      "Bhavneet Mhajan": "client",
       "Rhythm jalhotra": "developer",
-      "Neha": "developer"
+      "Neha": "developer",
+      "Ashpreet Singh": "client",
+      "Nolocode AI": "client",
+      "Harsh Vardhan Dixit": "developer"
     }
   }
 }

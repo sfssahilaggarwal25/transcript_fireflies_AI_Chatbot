@@ -30,10 +30,7 @@
 - [x] `inspect_db.py` — CLI tool to inspect ChromaDB contents
 
 **Remaining (Phase 1):**
-- [ ] Update `projects.json` speaker keys — must match cleaned names (e.g. `"Karan Middha"` not `"Karan Middha U0438EU2CSX"`)
-- [ ] Fix `inspect_db.py` — uses old raw ChromaDB API, needs update for new LangChain Chroma setup
-- [ ] Re-ingest existing meeting — run dev mode pipeline once to store chunks with Gemini embeddings + signals + summary chunk
-- [ ] Speaker normalization — verify `speaker_id` slug is consistent across multiple meetings
+- [x] ~~Re-ingest existing meeting~~ — 232 chunks stored with Gemini embeddings, signals, and summary chunk ✓
 
 ---
 
@@ -43,53 +40,56 @@
 
 ---
 
-## Phase 2 — RAG Engine
+## Phase 2 — RAG Engine ✓ COMPLETE
 
-> Embedding pipeline is already done (Gemini `gemini-embedding-001` via LangChain). Remaining work is retrieval + LLM answer generation.
-
-- [x] ~~Embedding pipeline~~ — done in Phase 1 via `gemini_embeddings.py` + LangChain Chroma
-- [ ] Create `app/services/retrieval/retriever.py` — `retrieve(query, project_id, filters) → List[Document]` using `vectorstore.similarity_search()`
-- [ ] Project scope enforcer — every query must include `project_id` filter, reject at API level if missing
-- [ ] Create `app/services/ai/chat_model.py` — `generate_answer(question, chunks) → str` using Gemini
-- [ ] Source attribution — attach `meeting_title`, `meeting_date`, `speaker_name` to every answer
-- [ ] Create `POST /query` endpoint in `main.py` — accepts `{ question, project_id }`, returns `{ answer, sources }`
+- [x] ~~Embedding pipeline~~ — `gemini-embedding-001` via LangChain, wired at store time
+- [x] ~~`retriever.py`~~ — `retrieve_documents(query, project_id, filters, k)`, project scope enforced
+- [x] ~~Project scope enforcer~~ — `project_id` validated in retriever, raises if missing
+- [x] ~~`app/services/answer_service.py`~~ — fully implemented: intent → retrieval → Gemini prompt → `{answer, sources, intent}`
+- [x] ~~Prompt templates~~ — 7 templates (one per `QueryIntent` type) inside `answer_service.py`
+- [x] ~~Summary intent retrieval~~ — uses `get_raw_collection().get()` with `$and` filter, NOT vector search
+- [x] ~~`POST /query` endpoint~~ in `main.py` — `{question, project_id}` → `{answer, sources, intent}`
 
 ---
 
 ## Phase 3 — Query Taxonomy (6 Types)
 
-- [ ] Create `app/services/retrieval/classifier.py` — rule-based question type detector
-- [ ] Create `app/services/retrieval/router.py` — routes question type to correct retrieval strategy
-- [ ] Type 1 — Decision Lookup: retrieval + prompt template
-- [ ] Type 2 — Action Item Query: retrieval + prompt template
-- [ ] Type 3 — Miscommunication Detection: dual retrieval + prompt template
-- [ ] Type 4 — Progress Summary: summary-chunk-only retrieval + prompt template
-- [ ] Type 5 — Speaker Specific: speaker-filtered retrieval + prompt template
-- [ ] Type 6 — Timeline Query: date-range retrieval + prompt template
-- [ ] Create `app/services/prompts/templates.py` — one prompt template per query type
-- [ ] Write 30 test questions (5 per type) with known correct answers — validation dataset
+- [x] ~~Question classifier~~ — `query_intent.py` with `QueryIntent` enum (7 types) covers all 6 query types
+- [x] ~~Router~~ — `answer_service.py` wires `classify_query_intent()` → correct retrieval strategy per intent
+- [x] ~~Verify Types 1, 2, 4, 5, 6~~ — all validated end-to-end against real data ✓
+- [x] ~~QUESTION intent speaker filter~~ — name-based: `contains_question=True + speaker_name=<detected name>` ✓
+- [x] ~~Type 5 improvement~~ — name-based speaker detection fully implemented with diacritic normalization ✓
+- [x] ~~Type 6 improvement~~ — `retrieve_timeline_documents()` runs per-meeting semantic search, merges chronologically; `_TIMELINE_RE` expanded with 8 cross-meeting comparison patterns ✓
+- [x] ~~Write 30 test questions~~ — `test_queries.py` now has 30 questions across all 7 types ✓
+
+> **DEFERRED — Type 3 (Miscommunication Detection)**
+> Dual retrieval (client + dev, same topic) + contradiction prompt. Most complex, biggest differentiator.
+> Design decision pending: what to return when one side has no chunks about the topic.
+> Build after all other types verified + Streamlit UI complete.
 
 ---
 
-## Phase 4 — Streamlit UI
+## Phase 4 — Streamlit UI ✓ COMPLETE
 
-- [ ] Create `streamlit_app.py` at project root
-- [ ] Project selector dropdown (enforces scope)
-- [ ] Chat window with session history
-- [ ] Source panel (meeting + speaker per answer)
-- [ ] Meeting timeline sidebar
-- [ ] Confidence indicator for low-relevance answers
+- [x] ~~Create `streamlit_app.py` at project root~~ ✓
+- [x] ~~Project selector dropdown (enforces scope)~~ ✓
+- [x] ~~Chat window with session history~~ ✓
+- [x] ~~Source panel (meeting + speaker per answer)~~ ✓
+- [x] ~~Meeting timeline sidebar~~ ✓ (in sidebar)
+- [x] ~~Intent badges per answer~~ ✓
+- [x] ~~Example questions empty state~~ ✓
+- [x] ~~Cache refresh (TTL=120, project-switch clear, Refresh button)~~ ✓
 
 ---
 
-## Phase 5 — Validation
+## Phase 5 — Validation ✓ COMPLETE
 
-- [ ] Accuracy test: 30 known questions → score correct answers
-- [ ] Scope isolation test: cross-project query must fail cleanly
-- [ ] Miscommunication test: planted contradiction must be detected
-- [ ] Multi-meeting synthesis test
-- [ ] Speed test: < 10 seconds per query
-- [ ] Document results + recommendation
+- [x] ~~Accuracy test~~ — 30/30 (100%) on `test_queries.py` ✓
+- [x] ~~Scope isolation test~~ — fake project_id returns "not found", 0 sources, no leakage ✓
+- [ ] Miscommunication test — **DEFERRED** (Type 3 needs design discussion)
+- [x] ~~Multi-meeting synthesis test~~ — summary + timeline + commitment all span both meetings ✓
+- [x] ~~Speed test~~ — avg 3.4s, max 4.6s (target was <10s) ✓
+- [x] ~~Document results~~ — full session log in DISCUSSION.md ✓
 
 ---
 

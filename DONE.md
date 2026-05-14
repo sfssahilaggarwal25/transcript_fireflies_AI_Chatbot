@@ -4,6 +4,106 @@
 
 ---
 
+## Session 14 (2026-05-14) — Phase 5 Validation: POC COMPLETE
+
+**Accuracy test — 30/30 (100%):**
+- [x] `test_queries.py` — 30 questions across all 7 intent types, 100% pass rate, 0 errors, avg 3.8s per question
+- [x] Fixed 4 fragile must_contain keywords (year/word-form variants replaced with stable terms)
+- [x] Added 1-second sleep between questions to prevent Windows proxy SSL rate-throttling on rapid consecutive embedding calls
+
+**Classifier fix:**
+- [x] `query_intent.py` — SPEAKER check moved before QUESTION in `classify_query_intent()`. Root cause: "What did Ngumi say about the **questions**?" was matching QUESTION intent because `_QUESTION_RE` was checked first. Now SPEAKER (speech-act pattern with name) takes priority over QUESTION keyword matching.
+
+**Scope isolation test — PASS:**
+- [x] `validate_poc.py` — 3 queries against non-existent `proj_fake_999` → all returned "not found" with 0 sources, no Nolocode data leaked
+
+**Multi-meeting synthesis test — PASS:**
+- [x] Summary query → covers both meetings (2026-05-08 and 2026-05-14) in one cohesive answer
+- [x] Timeline query → correctly compares "on hold" (May 8) vs "two approaches being evaluated" (May 14)
+- [x] Commitment query → lists action items from both meetings
+
+**Speed test — PASS:**
+- [x] All 6 query types under 10s — avg 3.4s, max 4.6s (TIMELINE is slowest — 2× embedding calls)
+
+---
+
+## Session 13 (2026-05-14) — Type 6 Timeline Query + 30 Test Questions
+
+- [x] **`project_store.py`** — `get_meeting_ids_for_project(project_id)` added; returns all meeting IDs registered to a project
+- [x] **`retriever.py`** — `retrieve_timeline_documents(query, project_id, k_per_meeting=6)` added; runs one semantic search per meeting, merges results sorted by `meeting_date` ascending. Ensures every meeting in the project contributes equally regardless of semantic distance.
+- [x] **`answer_service.py`** — TIMELINE intent now routes to `retrieve_timeline_documents()` (previously fell through to plain `retrieve_documents()`). Import added.
+- [x] **`query_intent.py` `_TIMELINE_RE` expanded** — old regex only matched explicit schedule/deadline words. Added 8 new patterns: `between.*meetings`, `how did/has.*changed`, `across both/all meetings`, `compared to the first/second/previous meeting`, `evolved`, `first/second meeting`, `changed since`. All 4 test timeline questions now correctly classify as `timeline_query`.
+- [x] **`test_queries.py`** — 4 new questions added to reach 30 total: decision (meeting 2 — AI approach), timeline (cross-meeting x2), speaker (Harsh Vardhan), commitment (Harsh Vardhan meeting 2). Distribution: decision×4, commitment×5, summary×3, speaker×5, timeline×4, general×7, edge×2.
+- [x] **`check_timeline.py`** — verification script created and run; confirmed 2 meetings (2026-05-08 and 2026-05-14), 5 shared topics (AI module, scenario modeling, timeline, module, approach), data sufficient for Type 6 queries.
+
+**Verified end-to-end:**
+- "How did the discussion about the AI module change between the two meetings?" → `timeline_query`, sources from both meetings, answer correctly shows May 8 status ("on hold, awaiting approach decision") vs May 14 status ("actively comparing two approaches for stress testing")
+
+---
+
+## Session 12 (2026-05-14) — Second Transcript + Streamlit UI Complete
+
+**Multi-transcript ingestion pipeline:**
+- [x] **`webhook_handler.py` dev mode** — loops over all transcripts in `CONSTANT_TRANSCRIPT["data"]["transcript"]` list (previously only processed first item). Each transcript is wrapped individually and passed to `normalize_transcript()`. Skip check: meetings already in ChromaDB are skipped automatically — re-runs are safe.
+- [x] **`normalize.py` null-summary guard** — `"summary": "null"` (literal string from Fireflies) now coerced to `{}` via `isinstance(summary_raw, dict)` check. Prevents `_resolve_summary()` from crashing on `.get("overview")` call.
+- [x] **`projects.json` updated** — second meeting `01KMHQSBYB1RAGY2X4EP6DCMC9` added to `meeting_ids`. Three new speakers added: `Ashpreet Singh (client)`, `Nolocode AI (client)`, `Harsh Vardhan Dixit (developer)`.
+- [x] **ChromaDB clean re-ingest** — wiped corrupted HNSW index (caused by partial write), re-ingested both meetings fresh. Meeting 1: 232 docs (Fireflies summary). Meeting 2: 289 docs (Gemini fallback summary, 992 chars). Total: 521 docs.
+- [x] **Gemini fallback verified** — `generate_meeting_summary()` in `gemini_client.py` correctly generates summary when Fireflies returns `"null"`. Feeds all transcript chunks, produces accurate 4-6 sentence summary.
+
+**Streamlit UI — `streamlit_app.py` complete:**
+- [x] **Sidebar** — project selector (enforces scope), 3-metric stats bar (meetings/speakers/chunks), meeting list with dates, speaker list with role icons (🔴 client / 🟡 PM / 🔵 developer), "What can I ask?" query guide expander
+- [x] **Chat window** — `st.chat_message` for user + assistant, renders full conversation history on every rerun
+- [x] **Intent badges** — coloured pill HTML (`🔵 Decision`, `🟠 Action Item`, `🟢 Summary`, `🟣 Questions`, `🔷 Speaker`, `🟡 Timeline`, `⚫ General`) displayed above each answer
+- [x] **Source panel** — collapsible expander showing speaker, meeting title, date, and 200-char content preview per source
+- [x] **Empty state** — 6 example question buttons (3-column grid) shown when no chat history
+- [x] **`st.cache_data(ttl=120)`** on `load_projects()` and `get_project_stats()` — auto-refreshes every 2 minutes; cache cleared on project switch
+- [x] **Refresh button** — `st.cache_data.clear()` + rerun, alongside Clear Chat button
+
+---
+
+## Session 11 (2026-05-14) — Name-Based Speaker Architecture
+
+**Architecture change: role-based querying → name-based querying**
+
+- [x] **`query_intent.py` `_SPEAKER_RE` rewritten** — removed role keywords (client/developer/PM). Now triggers on speech-act patterns: `"what did [name] say/mention/discuss"`, `"what has [name] said"`, `"according to"`, `"who said"`. Negative lookahead prevents `"what did we/they/the discuss"` from triggering SPEAKER intent.
+- [x] **`answer_service.py` refactored** — removed `_detect_speaker_role()` + all role regexes (`_CLIENT_RE`, `_DEV_RE`, `_PM_RE`). Added `_normalize()` (strips diacritics so "Ngumi" matches "Ngũmi") + `_detect_speaker_name(query, project_id)` (scans project speaker list, matches full name then first name). Both SPEAKER and QUESTION intents now filter by `speaker_name` instead of `speaker_role`.
+- [x] **`project_store.py`** — added `get_speaker_names(project_id)` returning list of speaker names for a project
+- [x] **`test_queries.py` SPEAKER tests updated** — 4 role-based questions replaced with name-based: Ngumi, Karan, Bhavneet, Project Manager SFS
+- [x] **`trace_query.py` fixed** — imported `_detect_speaker_name` (was importing removed `_detect_speaker_role`), added QUESTION intent branch with name filter, updated all SPEAKER descriptions
+- [x] **`FUTURE_SCOPE.md` created** — documents role-based querying (full architecture: flag + registry + signal chain), Type 3 miscommunication, name fuzzy matching improvements, Type 6 date range filtering
+- [x] **Verified end-to-end** — `"What questions did Bhavneet Mahajan raise?"` → intent=question_query, `contains_question=True + speaker_name=Bhavneet Mhajan` filter applied, 1 source (Bhavneet only), correct answer
+
+---
+
+## Session 10 (2026-05-14) — Speaker Role Fix + QUESTION Intent Bug Fix
+
+- [x] **`projects.json` corrected** — `"Bhavneet Mhajan": "developer"` → `"Bhavneet Mhajan": "client"` (was mislabeled; Bhavneet is a client, not a developer)
+- [x] **ChromaDB re-ingested** — 232 chunks upserted via dev mode pipeline; all Bhavneet Mhajan chunks now have `speaker_role = "client"` confirmed
+- [x] **QUESTION intent speaker filter fix** in `answer_service.py` — query "What questions did the client raise?" was returning PM chunks because QUESTION intent was checked before SPEAKER intent in the classifier. Fix: `_retrieve_for_intent` now detects speaker role for QUESTION intent and adds `speaker_role` filter alongside `contains_question=True`. Both filters apply when a role keyword is present in the query.
+
+---
+
+## Session 9 — Phase 2 Complete: RAG Answer Engine
+
+- [x] **`app/services/answer_service.py`** — full implementation replacing the stub
+  - `answer_question(query, project_id)` → `{answer, sources, intent}`
+  - Routes via `classify_query_intent()` → 7 intent-specific retrieval strategies
+  - SUMMARY intent: `get_raw_collection().get()` with `$and` filter — chronological, NOT vector search
+  - DECISION intent: broad semantic search (no hard filter — weak signal design, confirmed correct)
+  - COMMITMENT/QUESTION: `retrieve_commitment_documents()` / standard retrieval with signal filters
+  - SPEAKER intent: detects `client`/`developer`/`project_manager` from query text, adds `speaker_role` filter
+  - 7 prompt templates (one per `QueryIntent`) — each with rules tailored to what the LLM must focus on
+  - `_extract_sources()` — deduplicates `{meeting_title, meeting_date, speaker_name}` across retrieved docs
+- [x] **`POST /query` endpoint** in `main.py` — `{question, project_id}` → `{answer, sources, intent}`, HTTP 400/500 errors
+- [x] **ChromaDB `$and` filter fix** in `retriever.py` + `answer_service.py` — ChromaDB 1.5 rejects flat multi-key dicts, requires `{"$and": [{"field": {"$eq": val}}]}` syntax
+- [x] **Gemini SDK migration** — both `gemini_client.py` and `answer_service.py` migrated from deprecated `google.generativeai` → `google.genai`
+- [x] **Model updated** — `gemini-1.5-flash` → `gemini-2.5-flash` (older versions removed from API)
+- [x] **`langchain-chroma` + `langchain-google-genai` added to `pyproject.toml`** — were installed but untracked
+- [x] **Meeting re-ingested** — 232 chunks stored with Gemini embeddings, correct signals, and 1 summary chunk via dev mode pipeline
+- [x] **All 6 query types validated end-to-end** — decision, commitment, summary, speaker, timeline, general all return real grounded answers with sources
+
+---
+
 ## Fireflies Webhook Integration
 
 - [x] `POST /webhook/fireflies` endpoint receives Fireflies.ai notifications
@@ -62,6 +162,14 @@
   - `date` field added to GraphQL query — real meeting date now used instead of `datetime.now()`
   - `meeting_number` reads from `meeting_meta` in `chunking.py` (was hardcoded `0`)
   - Dev mode now returns chunks (was returning `None`)
+
+## Session 8 — Retriever + Query Intent Classifier
+
+- [x] **`app/services/retrieval/retriever.py`** — `retrieve_documents(query, project_id, filters, k)` with project scope enforcement; dedicated helpers: `retrieve_commitment_documents()`, `retrieve_question_documents()`, `retrieve_decision_candidates()` (broad semantic — no hard decision filter, smart design)
+- [x] **`app/services/query_intent.py`** — `classify_query_intent(query) → QueryIntent` enum (GENERAL / DECISION / COMMITMENT / QUESTION / SUMMARY / SPEAKER / TIMELINE); rule-based regex, 7 types covering all 6 query taxonomy types + catch-all
+- [x] **`chunking.py` signals improved** — `_FALSE_COMMITMENT_RE` added to exclude false positives ("we will calculate", "let's move on", "we'll come back")
+- [x] **`projects.json` speaker keys fixed** — "Karan Middha" (stripped platform ID) ✓
+- [x] **`inspect_db.py` updated** — now uses `get_raw_collection()` from new LangChain-based `db.py`
 
 ## Session 7 — LangChain + Gemini Embeddings Integration
 

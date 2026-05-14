@@ -4,6 +4,7 @@ from typing import Optional
 from langchain_core.documents import Document
 
 from app.services.storage.db import get_vectorstore
+from app.services.storage.project_store import get_meeting_ids_for_project
 
 logger = logging.getLogger(__name__)
 
@@ -67,18 +68,20 @@ def _build_filter(
     filters: Optional[dict] = None,
 ) -> dict:
     """
-    Build safe Chroma metadata filter.
-    Always scopes retrieval to a single project.
+    Build ChromaDB metadata filter.
+    Always excludes is_meeting_summary chunks — those are fetched separately
+    via _retrieve_summary_chunks() using the raw collection, not vector search.
+    Multiple conditions use $and — ChromaDB 1.5+ rejects flat multi-key dicts.
     """
+    base = {"project_id": {"$eq": project_id}}
 
-    metadata_filter = {
-        "project_id": project_id,
-    }
+    if not filters:
+        return base
 
-    if filters:
-        metadata_filter.update(filters)
-
-    return metadata_filter
+    conditions = [base]
+    for key, value in filters.items():
+        conditions.append({key: {"$eq": value}})
+    return {"$and": conditions}
 
 
 def retrieve_documents(
@@ -123,14 +126,7 @@ def retrieve_documents(
         )
 
         vectorstore = get_vectorstore()
-
-        logger.info(
-            "Retrieving documents | query='%s' | project_id=%s | k=%s | filters=%s",
-            query,
-            project_id,
-            k,
-            metadata_filter,
-        )
+        logger.debug("  filter     : %s", metadata_filter)
 
         documents = vectorstore.similarity_search(
             query=query,
@@ -138,10 +134,19 @@ def retrieve_documents(
             filter=metadata_filter,
         )
 
-        logger.info(
-            "Retrieved %s documents.",
-            len(documents),
-        )
+        logger.info("  retrieved  : %d documents", len(documents))
+        for i, doc in enumerate(documents, 1):
+            m = doc.metadata
+            preview = doc.page_content[:90].replace("\n", " ")
+            logger.info(
+                "  doc[%d/%d]  : %s (%s) | %s | \"%s...\"",
+                i,
+                len(documents),
+                m.get("meeting_title", "?")[:35],
+                m.get("meeting_date", "?"),
+                m.get("speaker_name", "?"),
+                preview,
+            )
 
         return documents
 
@@ -216,3 +221,39 @@ def retrieve_decision_candidates(
         filters=None,
         k=k,
     )
+
+
+def retrieve_timeline_documents(
+    query: str,
+    project_id: str,
+    k_per_meeting: int = 6,
+) -> list[Document]:
+    """
+    Retrieve documents for timeline/historical queries.
+
+    Runs one semantic search per meeting in the project, then merges results
+    sorted chronologically by meeting_date. This ensures every meeting
+    contributes equally — plain similarity_search would skew toward whichever
+    meeting is semantically closer to the query.
+    """
+    meeting_ids = get_meeting_ids_for_project(project_id)
+    if not meeting_ids:
+        logger.warning("No meeting IDs found for project_id=%s", project_id)
+        return retrieve_documents(query, project_id, k=k_per_meeting * 2)
+
+    all_docs: list[Document] = []
+    for meeting_id in meeting_ids:
+        try:
+            docs = retrieve_documents(
+                query=query,
+                project_id=project_id,
+                filters={"meeting_id": meeting_id},
+                k=k_per_meeting,
+            )
+            all_docs.extend(docs)
+            logger.debug("  timeline   : %d docs from meeting_id=%s", len(docs), meeting_id)
+        except Exception as e:
+            logger.warning("Timeline retrieval skipped for meeting_id=%s: %s", meeting_id, e)
+
+    all_docs.sort(key=lambda d: d.metadata.get("meeting_date", ""))
+    return all_docs

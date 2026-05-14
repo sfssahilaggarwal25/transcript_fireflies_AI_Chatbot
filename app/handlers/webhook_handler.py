@@ -86,52 +86,70 @@ async def handle_fireflies_webhook(payload):
     if Config.DEVELOPMENT_MODE:
         log.info("[DEV MODE] Using hardcoded CONSTANT_TRANSCRIPT")
 
-        t = time.time()
-        normalized_data = normalize_transcript(CONSTANT_TRANSCRIPT)
-        log.info(f"[1/6] Normalize   → {len(normalized_data['sentences'])} sentences  ({_ms(t)})")
+        transcript_list = CONSTANT_TRANSCRIPT.get("data", {}).get("transcript", [])
+        if not isinstance(transcript_list, list):
+            transcript_list = [transcript_list]
 
-        t = time.time()
-        meeting_metadata = build_meeting_metadata(normalized_data)
+        all_chunks = []
+        for idx, transcript_item in enumerate(transcript_list, 1):
+            meeting_id_raw = transcript_item.get("id", f"unknown_{idx}")
+            log.info(f"[DEV] ── Transcript {idx}/{len(transcript_list)}: id={meeting_id_raw} ──")
 
-        project_info = get_project_for_meeting(normalized_data["meeting_id"])
-        if not project_info:
-            log.warning(f"[DEV] meeting_id '{normalized_data['meeting_id']}' not in projects.json — aborting")
-            return None
-        meeting_metadata["meeting_number"] = _resolve_meeting_number(
-            project_info["project_id"], normalized_data["meeting_id"]
-        )
-        log.info(f"[2/6] Metadata    → meeting_id={meeting_metadata['meeting_id']}  date={meeting_metadata['date']}  meeting_number={meeting_metadata['meeting_number']}  ({_ms(t)})")
+            t = time.time()
+            wrapped = {"data": {"transcript": transcript_item}}
+            normalized_data = normalize_transcript(wrapped)
+            log.info(f"[1/6] Normalize   → {len(normalized_data['sentences'])} sentences  ({_ms(t)})")
 
-        t = time.time()
-        chunks = create_chunks(normalized_data["sentences"], meeting_metadata)
-        speakers = set(c["speaker_name"] for c in chunks)
-        log.info(f"[3/6] Chunking    → {len(chunks)} chunks  {len(speakers)} speakers  ({_ms(t)})")
+            t = time.time()
+            meeting_metadata = build_meeting_metadata(normalized_data)
 
-        t = time.time()
-        summary_text = _resolve_summary(normalized_data, chunks, meeting_metadata["title"])
-        if summary_text:
-            chunks.append(build_summary_chunk(summary_text, meeting_metadata, len(chunks) + 1))
-            log.info(f"[3/6] Summary chunk added  ({_ms(t)})")
-        else:
-            log.warning("[3/6] No summary available — meeting stored without summary chunk")
+            project_info = get_project_for_meeting(normalized_data["meeting_id"])
+            if not project_info:
+                log.warning(f"[DEV] meeting_id '{normalized_data['meeting_id']}' not in projects.json — skipping")
+                continue
 
-        t = time.time()
-        if not _stamp_project_and_roles(chunks, normalized_data["meeting_id"]):
-            return None
-        log.info(f"[4/6] Stamp roles → project_id={project_info['project_id']}  meeting_number={meeting_metadata['meeting_number']}  ({_ms(t)})")
+            existing_ids = get_distinct_meeting_ids(project_info["project_id"])
+            if normalized_data["meeting_id"] in existing_ids:
+                log.info(f"[DEV] meeting_id '{normalized_data['meeting_id']}' already in ChromaDB — skipping")
+                continue
 
-        documents = chunks_to_documents(chunks)
-        log.info(f"[5/6] langchain documents is created → {len(documents)}")
+            meeting_metadata["meeting_number"] = _resolve_meeting_number(
+                project_info["project_id"], normalized_data["meeting_id"]
+            )
+            log.info(f"[2/6] Metadata    → meeting_id={meeting_metadata['meeting_id']}  date={meeting_metadata['date']}  meeting_number={meeting_metadata['meeting_number']}  ({_ms(t)})")
 
-        if not documents:
-            log.error("No valid documents generated from chunks. Pipeline aborted.")
-            return None
+            t = time.time()
+            chunks = create_chunks(normalized_data["sentences"], meeting_metadata)
+            speakers = set(c["speaker_name"] for c in chunks)
+            log.info(f"[3/6] Chunking    → {len(chunks)} chunks  {len(speakers)} speakers  ({_ms(t)})")
 
-        stored = store_documents(documents)
-        log.info(f"[6/6] ChromaDB    → {stored} documents stored  ({_ms(t)})")
+            t = time.time()
+            summary_text = _resolve_summary(normalized_data, chunks, meeting_metadata["title"])
+            if summary_text:
+                chunks.append(build_summary_chunk(summary_text, meeting_metadata, len(chunks) + 1))
+                log.info(f"[3/6] Summary chunk added  ({_ms(t)})")
+            else:
+                log.warning("[3/6] No summary available — meeting stored without summary chunk")
 
-        log.info(f"Pipeline complete ✓  total={_ms(pipeline_start)}")
-        return chunks
+            t = time.time()
+            if not _stamp_project_and_roles(chunks, normalized_data["meeting_id"]):
+                continue
+            log.info(f"[4/6] Stamp roles → project_id={project_info['project_id']}  meeting_number={meeting_metadata['meeting_number']}  ({_ms(t)})")
+
+            documents = chunks_to_documents(chunks)
+            log.info(f"[5/6] langchain documents is created → {len(documents)}")
+
+            if not documents:
+                log.error("No valid documents generated from chunks. Skipping transcript.")
+                continue
+
+            stored = store_documents(documents)
+            log.info(f"[6/6] ChromaDB    → {stored} documents stored  ({_ms(t)})")
+
+            all_chunks.extend(chunks)
+
+        log.info(f"Pipeline complete ✓  total={_ms(pipeline_start)}  transcripts_processed={len(all_chunks) > 0}")
+        return all_chunks
 
     # ── PRODUCTION MODE ───────────────────────────────────────────
     log.info("Production mode — resolving transcript ID from payload")

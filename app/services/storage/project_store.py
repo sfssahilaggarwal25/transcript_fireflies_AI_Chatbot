@@ -37,3 +37,15 @@ def get_speaker_role(meeting_id: str, speaker_name: str) -> str:
         if meeting_id in project.get("meeting_ids", []):
             return project.get("speakers", {}).get(speaker_name, "unknown")
     return "unknown"
+
+
+def get_speaker_names(project_id: str) -> list[str]:
+    """Return all known speaker names for a project."""
+    projects = _load()
+    return list(projects.get(project_id, {}).get("speakers", {}).keys())
+
+
+def get_meeting_ids_for_project(project_id: str) -> list[str]:
+    """Return all meeting IDs registered to a project."""
+    projects = _load()
+    return list(projects.get(project_id, {}).get("meeting_ids", []))

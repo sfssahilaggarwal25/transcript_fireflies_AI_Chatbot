@@ -1,10 +1,10 @@
 import logging
-import google.generativeai as genai
+from google import genai
 from app.config import Config
 
 log = logging.getLogger(__name__)
 
-_MODEL = "gemini-1.5-flash"
+_MODEL = "gemini-2.5-flash-lite"
 
 
 def generate_meeting_summary(chunks: list[dict], meeting_title: str) -> str | None:
@@ -13,8 +13,7 @@ def generate_meeting_summary(chunks: list[dict], meeting_title: str) -> str | No
         return None
 
     try:
-        genai.configure(api_key=Config.GEMINI_API_KEY)
-        model = genai.GenerativeModel(_MODEL)
+        client = genai.Client(api_key=Config.GEMINI_API_KEY)
 
         transcript_text = "\n".join(
             f"{c['speaker_name']}: {c['text']}"
@@ -27,7 +26,7 @@ def generate_meeting_summary(chunks: list[dict], meeting_title: str) -> str | No
             f"Transcript:\n{transcript_text}\n\nSummary:"
         )
 
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(model=_MODEL, contents=prompt)
         summary = response.text.strip()
         log.info(f"Gemini summary generated ({len(summary)} chars)")
         return summary
