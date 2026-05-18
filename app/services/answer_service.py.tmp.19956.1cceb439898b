@@ -25,23 +25,6 @@ logger = logging.getLogger(__name__)
 
 _MODEL = "gemini-2.5-flash-lite"
 
-_TOPIC_ACTION_WORDS = frozenset({
-    "confusion", "concern", "question", "issue", "doubt", "problem",
-    "decision", "commitment", "update", "change", "summary", "raised",
-    "mentioned", "said", "discussed", "asked", "expressed", "noted",
-    "around", "about", "regarding", "related", "concerning",
-})
-
-
-def _subject_topic_hint(topic: str) -> str:
-    """Strip action/connector words from the topic so only subject terms remain.
-    'CE classification code confusion' → 'CE classification code'
-    This gives the re-ranker a concrete subject to check against.
-    """
-    words = topic.split()
-    subject_words = [w for w in words if w.lower() not in _TOPIC_ACTION_WORDS]
-    return " ".join(subject_words) if subject_words else topic
-
 
 def _normalize(text: str) -> str:
     """Lowercase and strip diacritics so 'Ngumi' matches 'Ngũmi'."""
@@ -304,14 +287,12 @@ _PROMPT_TEMPLATES = {
         "Answer based strictly on the transcript content provided below.\n\n"
         "Rules:\n"
         "- Base your answer only on the provided context\n"
-        "- Always give the best answer the evidence supports — if evidence is partial or indirect,\n"
-        "  commit to the most supported conclusion and note the confidence inline (e.g. 'based on\n"
-        "  available transcripts...'). Only say 'not found' if no relevant content exists at all.\n"
+        "- If the context does not contain enough information, say so clearly\n"
         "- Include meeting title and speaker references where relevant\n"
-        "- When the question asks who raised, expressed, discovered, or originated something,\n"
-        "  identify the speaker whose words most directly demonstrate that action — judge by the\n"
-        "  substance and intent of what was said, not literal keyword matching.\n"
-        "  Prioritize the originator over someone who merely referenced or described it afterward.\n\n"
+        "- When the question asks who raised, caused, expressed, or originated something,\n"
+        "  identify the speaker whose words most directly demonstrate that action — look for\n"
+        "  the substance and intent of what was said, not just the literal keyword from the question.\n"
+        "  Prioritize the originator over someone who merely referenced or described the event afterward.\n\n"
         "Context from meeting transcripts:\n{context}\n\n"
         "Question: {query}\n\nAnswer:"
     ),
@@ -457,11 +438,7 @@ def answer_question(query: str, project_id: str) -> dict:
         # Skip SUMMARY — fetched by metadata, chronological order already correct
         if not understanding.needs_summary:
             logger.info("[3/5] RERANK   (%d candidates)", len(documents))
-            documents = rerank_documents(
-                query, documents,
-                intent_hint=intent.value,
-                topic_hint=_subject_topic_hint(understanding.topic),
-            )
+            documents = rerank_documents(query, documents, intent_hint=intent.value)
         else:
             logger.info("[3/5] RERANK   skipped (summary — chronological order preserved)")
 

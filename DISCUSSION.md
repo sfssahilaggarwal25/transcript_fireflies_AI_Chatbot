@@ -104,6 +104,71 @@ A project-scoped AI chatbot for Project Managers. PM selects a project → asks 
 
 ## Discussion Log
 
+### Session 16 (2026-05-18) — Production Architecture: Retrieval Accuracy Problem + Plan
+
+**Topics covered:**
+
+**1. Pipeline logging fixed**
+- `pipeline.log` file handler confirmed working — logs captured correctly
+- Terminal display was broken because `─` (U+2500) and `↳` (U+21B3) in log messages are not in Windows cp1252 encoding, causing `StreamHandler.emit()` to fail silently
+- Fix: replaced `_SEP = "─" * 62` with `_SEP = "-" * 62` and `"    ↳ %s"` with `"    -> %s"` in `answer_service.py` — all ASCII now, displays cleanly everywhere
+- Watching logs: `Get-Content pipeline.log -Wait -Encoding utf8` in a second terminal
+
+**2. Retrieval accuracy problem identified**
+- Example query: "Which team member raised the confusion around CE classification code?"
+- System returned: Karan (wrong) — his chunk had strong keyword matches ("CE", "code", "query")
+- Correct answer: Rhythm Jalhotra — she introduced the confusion, but her chunk had fewer keyword matches
+- Root cause: vector similarity search ranks by topic mention density, not by causal origin. Karan was responding to the confusion; Rhythm was the one who raised it.
+- This is a broader problem class: "who raised X", "who was confused about Y", "who first mentioned Z", "who disagreed with W" — all fail the same way
+
+**3. Production architecture designed**
+- Problem with current architecture: hard-coded 7-intent routing means every new query pattern requires new code (new intent + new retrieval function + new prompt)
+- Three-component production pipeline agreed:
+  - **Step 1: Flexible Query Understanding** — replace fixed 7-intent classifier with LLM JSON extraction: `{topic, intent_type, named_speaker, needs_summary}`. New query patterns handled by LLM automatically, no code changes.
+  - **Step 2: Hybrid Retrieval (BM25 + Dense)** — current pure vector search misses exact phrases. BM25 handles "CE classification code" exact match; dense handles semantic similarity. Combined via Reciprocal Rank Fusion, k=25 candidates.
+  - **Step 3: LLM Re-ranking** — after broad retrieval, one Gemini Flash Lite call scores all 25 chunks against the true query intent. Re-ranker reads both query AND chunk simultaneously — understands "raised confusion" ≠ "mentioned topic". Promotes Rhythm's chunk (expressing confusion) over Karan's (discussing topic). Fixes ALL current and future query patterns without special-casing.
+
+**4. Decisions: what NOT to build right now**
+- **Meeting index (fast-path lookup)**: deferred. One LLM call per meeting to extract structured topics/confusion/decisions. Not needed since re-ranking handles these queries. Can add later for meta queries like "how many topics were discussed?"
+- **`contains_confusion` signal in chunking**: deferred. Would be free (regex), but re-ranking handles confusion queries already without it.
+- **Per-chunk LLM enrichment at ingestion**: explicitly rejected. 200 chunks per meeting × LLM call = unacceptable cost. Wrong direction entirely. Cost should scale with queries, not with data size.
+
+**Implementation order decided:**
+1. Step 3 (LLM Re-ranking) first — highest impact, zero schema changes, no re-ingestion
+2. Step 2 (BM25 Hybrid) second
+3. Step 1 (Flexible Query Understanding) last — replaces current classifier
+
+**What's next:**
+- Start implementing Step 3: LLM re-ranker after current retrieval
+
+---
+
+### Session 15 (2026-05-18) — Pipeline Logging + Dev Mode Bug Fix
+
+**Topics covered:**
+- User noticed terminal showed no pipeline activity when submitting Streamlit queries
+- Built a full pipeline trace logger: every query now prints a 4-step trace to stderr in the terminal where `streamlit run` was launched
+- Diagnosed root cause of "DB shows zero / pipeline not running": `DEVELOPMENT_MODE` was missing from `.env`, defaulting to `false`. Production path requires a live Fireflies webhook payload — empty `{}` → 3 retries → drops. Nothing stored.
+- Fixed by adding `DEVELOPMENT_MODE=true` to `.env`
+- Confirmed 521 docs already in ChromaDB from previous session are intact; skip-check correctly prevents re-ingestion
+
+**What was built:**
+- `app/logging_config.py` — new: `setup_pipeline_logging()` wires a clean stderr handler
+- `streamlit_app.py` — calls `setup_pipeline_logging()` at startup
+- `answer_service.py` — 4-step trace: CLASSIFY → RETRIEVE (each doc shown) → BUILD PROMPT → LLM CALL → DONE
+- `query_intent.py` — logs matched regex pattern per classification
+- `retriever.py` — logs each retrieved doc with meeting/date/speaker/content preview; removed old noisy log line
+- `.env` — `DEVELOPMENT_MODE=true` added
+
+**Decisions made:**
+- Pipeline logging writes to stderr (not stdout) so Streamlit doesn't swallow it
+- Noisy third-party libraries suppressed to WARNING level — only our modules at DEBUG
+
+**What's next:**
+- POC is complete. Post-POC roadmap: Type 3 Miscommunication Detection (highest value), D1 auto-registration, role-based speaker queries, multi-project scale test
+
+---
+
 ### Session 14 (2026-05-14) — Phase 5 Validation Complete: POC DONE
 
 **Topics covered:**
@@ -465,6 +530,83 @@ A project-scoped AI chatbot for Project Managers. PM selects a project → asks 
 **Phase 1 status after this session:** 9/10 Must Do tasks complete. One remaining: speaker normalization verification.
 
 **What's next:** Verify speaker_id slug consistency across multiple meetings → Phase 1 complete → start Phase 2 (RAG engine)
+
+---
+
+---
+
+## Production Architecture (Post-POC)
+
+> POC is complete and validated. The section below documents the agreed production-level retrieval architecture. POC code is NOT removed — production changes are additive.
+
+### Problem With POC Architecture (Why It Doesn't Scale)
+
+Current pipeline is a hard-coded decision tree:
+```
+Query → fixed 7-bucket intent → pre-wired retrieval per bucket → LLM answer
+```
+Every new query pattern (origin, disagreement, confusion, first-mention) requires:
+1. New intent value in the enum
+2. New retrieval function
+3. New prompt template
+4. New regex fallback
+This will never stop. There are infinite query patterns.
+
+Also: pure vector search ranks by keyword/semantic similarity, not by causal relevance.
+"Who raised confusion about CE code?" → Karan (wrong, more keywords) instead of Rhythm (correct, fewer keywords).
+
+### Production Pipeline — 3 Components
+
+```
+Query
+  │
+  ▼
+Step 1 — Flexible Query Understanding    (1 LLM call — replaces 7 fixed intents)
+  │       LLM extracts JSON:
+  │       {topic, intent_type, named_speaker, needs_summary, temporal_focus}
+  │       New query patterns handled automatically — no code changes needed
+  │
+  ▼
+Step 2 — Hybrid Retrieval                (zero LLM cost — pure math)
+  │       BM25 keyword search + Dense vector search
+  │       Combined via Reciprocal Rank Fusion → k=25 candidates
+  │       Better recall: exact phrases (BM25) + semantic meaning (dense)
+  │
+  ▼
+Step 3 — LLM Re-ranking                  (1 LLM call — core accuracy fix)
+  │       Scores all 25 chunks against the true query intent
+  │       Understands "raised confusion" ≠ "mentioned topic"
+  │       Works for ANY query type without new code
+  │       Returns top 8-10 chunks
+  │
+  ▼
+Step 4 — Answer Generation               (1 LLM call — same as POC)
+```
+
+### What Each Step Fixes
+
+| Step | Problem it solves |
+|---|---|
+| Query Understanding | Stops "add new intent for every pattern" cycle |
+| Hybrid Retrieval | Exact phrases like "CE code" missed by pure embeddings |
+| Re-ranking | Wrong chunk ranked #1 (Karan vs Rhythm) — fixes ALL future cases |
+
+### Decisions Locked for Production
+
+| Decision | Choice | Why |
+|---|---|---|
+| Re-ranking model | Gemini Flash Lite (already in stack) | 1 call per query, ~$0.001, no new dependency |
+| BM25 library | `rank_bm25` Python library | No new database needed, works alongside ChromaDB |
+| Query understanding | LLM JSON extraction | Flexible, no fixed taxonomy, handles any pattern |
+| Meeting index | **Deferred** | Re-ranking handles origin/causal queries; add later only for meta queries |
+| Per-chunk LLM enrichment | **Rejected** | Scales with data size, not queries — wrong cost model |
+| `contains_confusion` signal | **Deferred** | Re-ranking makes it unnecessary for now |
+
+### Implementation Order
+
+1. **Step 3 (Re-ranking)** — implement first. Highest impact, no schema changes, no re-ingestion.
+2. **Step 2 (BM25 Hybrid)** — implement second. Improves recall for exact phrases.
+3. **Step 1 (Flexible Query Understanding)** — implement last. Replaces current 7-intent classifier.
 
 ---
 

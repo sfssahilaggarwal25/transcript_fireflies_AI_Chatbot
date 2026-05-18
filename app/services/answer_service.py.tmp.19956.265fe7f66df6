@@ -460,7 +460,7 @@ def answer_question(query: str, project_id: str) -> dict:
             documents = rerank_documents(
                 query, documents,
                 intent_hint=intent.value,
-                topic_hint=_subject_topic_hint(understanding.topic),
+                topic_hint=understanding.topic,
             )
         else:
             logger.info("[3/5] RERANK   skipped (summary — chronological order preserved)")

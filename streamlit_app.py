@@ -88,23 +88,42 @@ def render_sources(sources: list[dict]):
         return
     with st.expander(f"📎 {len(sources)} source{'s' if len(sources) > 1 else ''}", expanded=False):
         for i, s in enumerate(sources):
-            st.markdown(
-                f"**{i + 1}. {s['speaker_name']}** &nbsp;·&nbsp; "
-                f"📅 {s['meeting_title']} &nbsp;·&nbsp; "
-                f"`{s['meeting_date']}`"
-            )
+            if s.get("is_summary"):
+                st.markdown(
+                    f"**{i + 1}. 📋 Meeting Summary** &nbsp;·&nbsp; "
+                    f"📅 {s['meeting_title']} &nbsp;·&nbsp; "
+                    f"`{s['meeting_date']}`"
+                )
+            else:
+                st.markdown(
+                    f"**{i + 1}. {s['speaker_name']}** &nbsp;·&nbsp; "
+                    f"📅 {s['meeting_title']} &nbsp;·&nbsp; "
+                    f"`{s['meeting_date']}`"
+                )
             if s.get("content_preview"):
                 st.caption(f"❝ {s['content_preview']}{'…' if len(s.get('content_preview','')) == 200 else ''}")
             if i < len(sources) - 1:
                 st.divider()
 
 
+_NOT_FOUND_PREFIXES = ("No meeting was found", "I couldn't find relevant")
+
 def render_chat_message(msg: dict):
     with st.chat_message("user"):
         st.markdown(msg["question"])
     with st.chat_message("assistant"):
         st.markdown(intent_badge_html(msg["intent"]), unsafe_allow_html=True)
-        st.markdown(msg["answer"])
+
+        # Show approximate-date notice above the answer
+        if msg.get("notice"):
+            st.info(msg["notice"], icon="📅")
+
+        answer = msg["answer"]
+        if any(answer.startswith(p) for p in _NOT_FOUND_PREFIXES):
+            st.warning(answer, icon="⚠️")
+        else:
+            st.markdown(answer)
+
         render_sources(msg["sources"])
 
 
@@ -113,16 +132,18 @@ def ask_and_store(question: str, project_id: str):
         result = answer_question(question, project_id)
         st.session_state.messages.append({
             "question": question,
-            "answer": result["answer"],
-            "intent": result["intent"],
-            "sources": result["sources"],
+            "answer":   result["answer"],
+            "intent":   result["intent"],
+            "sources":  result["sources"],
+            "notice":   result.get("notice"),
         })
     except Exception as e:
         st.session_state.messages.append({
             "question": question,
-            "answer": f"Something went wrong: {str(e)}",
-            "intent": "general_query",
-            "sources": [],
+            "answer":   f"Something went wrong: {str(e)}",
+            "intent":   "general_query",
+            "sources":  [],
+            "notice":   None,
         })
 
 

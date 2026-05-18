@@ -4,6 +4,38 @@
 
 ---
 
+## Session 16 (2026-05-18) — Logging ASCII Fix + Production Architecture Design
+
+**Logging ASCII fix (`app/services/answer_service.py`):**
+- [x] `_SEP = "─" * 62` → `_SEP = "-" * 62` — box-drawing char U+2500 caused garbled output (`â"€â"€`) when pipeline.log was read on Windows (UTF-8 file read as cp1252)
+- [x] `"    ↳ %s (%s) | %s"` → `"    -> %s (%s) | %s"` — same encoding issue with arrow char U+21B3
+- [x] `app/logging_config.py` — confirmed `sys.__stderr__` + `log.handlers.clear()` pattern; `pipeline.log` FileHandler (UTF-8) is the reliable log output path on Windows/Streamlit
+
+**Production architecture design (no code changes — design only):**
+- [x] Root cause identified: dense vector similarity ranks by topic keyword density, not causal origin. "Who raised confusion about X?" returns the person who discussed X most, not who originated the confusion.
+- [x] 3-component production pipeline designed and documented:
+  - **Step 3 (implement first):** LLM Re-ranking — `rerank_documents(query, docs, intent_hint)` in `retriever.py`; post-retrieval Gemini Flash Lite call scores each chunk against true query intent; fixes ranking accuracy for ALL query types
+  - **Step 2 (implement second):** BM25 Hybrid Retrieval — `hybrid_retrieve()` with `rank_bm25`; RRF merge of dense + keyword results; improves recall before re-ranking
+  - **Step 1 (implement last):** Flexible Query Understanding — `understand_query()` returning structured JSON; replaces fixed 7-intent enum with LLM extraction; handles arbitrary query patterns
+- [x] Implementation order locked: Step 3 → Step 2 → Step 1 (re-ranking highest impact, no schema change; query understanding replaces existing classifier last)
+- [x] Per-chunk LLM enrichment at ingestion rejected — cost scales with data size, not query volume; wrong cost model for production
+- [x] Meeting index step deferred — adds latency and one more Gemini call per query; low marginal value when re-ranking already handles causal origin queries
+- [x] `DISCUSSION.md` updated — Session 16 log + new "Production Architecture (Post-POC)" section added
+- [x] `TODO.md` updated — new "Production Phase — Retrieval Architecture Upgrade" section added with full task breakdown (Steps 1/2/3)
+
+---
+
+## Session 15 (2026-05-18) — Pipeline Logging + Dev Mode Bug Fix
+
+- [x] **`app/logging_config.py`** — new file: `setup_pipeline_logging()` configures a stderr handler for our app modules at DEBUG level. Noisy libraries (httpx, google, langchain, chromadb, tenacity) suppressed to WARNING. Call once at startup.
+- [x] **`streamlit_app.py`** — `setup_pipeline_logging()` called at import time so every Streamlit query prints a full pipeline trace to the terminal where `streamlit run` was launched.
+- [x] **`app/services/answer_service.py`** — full 4-step trace added to `answer_question()`: PIPELINE START (query + project), [1/4] CLASSIFY INTENT, [2/4] RETRIEVE (strategy + filter + every doc with meeting/speaker/content preview), [3/4] BUILD PROMPT (doc count + context chars + prompt preview), [4/4] LLM CALL, PIPELINE DONE (timing + unique sources + answer preview).
+- [x] **`app/services/query_intent.py`** — logs which regex (`_DECISION_RE`, `_SPEAKER_RE`, etc.) matched and the resulting intent on every classification.
+- [x] **`app/services/retrieval/retriever.py`** — logs each retrieved document: meeting title, date, speaker, and first 90 chars of content. Removed old verbose "Retrieving documents | query=..." line; kept filter as DEBUG so it only shows when debug level is active.
+- [x] **`.env` bug fix** — `DEVELOPMENT_MODE=true` was missing from `.env`. Without it `Config.DEVELOPMENT_MODE` defaulted to `false`, running the production webhook path which requires a live Fireflies payload and dropped every call. Added the key so the hardcoded `CONSTANT_TRANSCRIPT` pipeline runs correctly.
+
+---
+
 ## Session 14 (2026-05-14) — Phase 5 Validation: POC COMPLETE
 
 **Accuracy test — 30/30 (100%):**

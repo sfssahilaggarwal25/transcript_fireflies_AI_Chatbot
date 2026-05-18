@@ -7,24 +7,30 @@ def setup_pipeline_logging() -> None:
     Configure console logging for pipeline trace output.
     Call once at app startup (streamlit_app.py or main.py).
 
-    Output goes to stderr so Streamlit does not swallow it.
-    Only our app modules are set to DEBUG; noisy libraries stay at WARNING.
+    Writes to both sys.__stderr__ (terminal) and pipeline.log (file fallback).
     """
     fmt = logging.Formatter("%(message)s")
 
-    handler = logging.StreamHandler(sys.stderr)
-    handler.setFormatter(fmt)
+    # Terminal handler — use sys.__stderr__ (original fd, not Streamlit-patched sys.stderr)
+    stderr_handler = logging.StreamHandler(sys.__stderr__)
+    stderr_handler.setFormatter(fmt)
+
+    # File handler — always reliable regardless of terminal state
+    file_handler = logging.FileHandler("pipeline.log", mode="a", encoding="utf-8")
+    file_handler.setFormatter(fmt)
 
     # Our modules — full trace
     for name in (
         "app.services.answer_service",
         "app.services.query_intent",
         "app.services.retrieval.retriever",
+        "app.services.retrieval.reranker",
     ):
         log = logging.getLogger(name)
+        log.handlers.clear()          # drop stale handlers from hot-reload
         log.setLevel(logging.DEBUG)
-        if not log.handlers:
-            log.addHandler(handler)
+        log.addHandler(stderr_handler)
+        log.addHandler(file_handler)
         log.propagate = False
 
     # Everything else — suppress noise

@@ -1,92 +1,112 @@
-# SPRINT 1 — Level 1: Foundation
+# SPRINT 1 — POC: Foundation through Validation  [COMPLETE]
 
-> One sprint = one focused week. Only 3 objectives. Finish these before touching anything else.
-
----
+> Phases 1–5 complete. POC validated 2026-05-14.
 
 ```
 ╔══════════════════════════════════════════════════════╗
-║           LEVEL 1  —  FOUNDATION                    ║
-║           "Get chunks into ChromaDB"                ║
+║           POC — ALL PHASES                          ║
+║           Phases 1 → 5 Complete                     ║
 ╠══════════════════════════════════════════════════════╣
-║  XP Available:  300 XP                              ║
-║  Difficulty:    ★★☆☆☆                               ║
-║  Unlocks:       Level 2 — RAG Engine                ║
+║  XP Earned:  1500 / 1500 XP   COMPLETE              ║
+║  Accuracy:   30/30 (100%)                           ║
+║  Speed:      avg 3.4s (target <10s)                 ║
 ╚══════════════════════════════════════════════════════╝
 ```
 
----
+### What was built
+- ChromaDB + Gemini embeddings storage pipeline
+- Full 5-level chunk metadata schema
+- 7-intent query classifier + per-intent retrieval strategies
+- Gemini-powered answer generation with source attribution
+- Streamlit UI — project selector, chat history, intent badges, source panel
+- 30-question test suite — 100% pass rate
 
-## Current Phase: Phase 1
-
-## Objective: ChromaDB + Full Metadata Schema
-
----
-
-## This Sprint's Objectives
-
-### OBJECTIVE 1 — Resolve the 2 Open Questions   `[  ]`  +50 XP
-> These block ALL coding. Answer these first in DISCUSSION.md.
-
-- [ ] Decide: how does `project_id` get assigned to a meeting?
-- [ ] Decide: how does `speaker_role` get set per project?
+### What was deferred
+- Type 3 Miscommunication Detection — needs design discussion
+- Auto-registration of new meeting IDs — manual `projects.json` for now
 
 ---
 
-### OBJECTIVE 2 — ChromaDB Setup + Storage Layer   `[  ]`  +100 XP
-> Replace the `# TODO: Store chunks` with real storage.
-
-- [ ] Install ChromaDB (`uv add chromadb`)
-- [ ] Create `app/services/storage/db.py` — ChromaDB client + collection init
-- [ ] Create `app/services/storage/chunk_store.py` — `store_chunks()`, `get_chunks_by_meeting()`
-- [ ] Wire into `webhook_handler.py:126` — replace TODO comment
-
 ---
 
-### OBJECTIVE 3 — Upgrade Chunk Metadata to Full 5-Level Schema   `[  ]`  +150 XP
-> Current chunks are missing 4 of 5 metadata levels. This is what makes the 6 query types possible.
+# SPRINT 2 — Production: Retrieval Architecture Upgrade  [IN PROGRESS]
 
-- [ ] Add Level 1 fields: `company_id`, `project_id`, `project_name`
-- [ ] Add Level 2 fields: `meeting_number`, `meeting_type`
-- [ ] Add Level 3 fields: `speaker_id`, `speaker_role`
-- [ ] Add Level 4 fields: `chunk_index`, `chunk_type`, `is_meeting_summary`
-- [ ] Add Level 5 fields: `contains_decision`, `contains_commitment`, `sentiment`
-- [ ] Speaker normalization — consistent `speaker_id` across meetings
-- [ ] Content signal detection — auto-set Level 5 flags per chunk
-
----
-
-## Sprint Rewards
-
-```
-Complete all 3 objectives →  LEVEL UP to Phase 2 (RAG Engine)
-Complete Objective 1      →  Open Questions resolved badge
-Complete Objective 2      →  "First Blood" — first data in DB
-Complete Objective 3      →  "Schema Lord" — full metadata working
-```
-
----
-
-## Sprint Progress
-
-```
-OBJECTIVE 1   [░░░░░░░░░░]   0%   Open Questions
-OBJECTIVE 2   [░░░░░░░░░░]   0%   ChromaDB Setup
-OBJECTIVE 3   [░░░░░░░░░░]   0%   Metadata Upgrade
-
-OVERALL       [░░░░░░░░░░]   0%   Level 1 Complete
-```
-
-> Update this file manually as tasks complete, OR say "update files" to have Claude sync everything.
-
----
-
-## Next Level Preview (Locked)
+> Problem: POC dense search ranks by keyword density, not causal origin. "Who raised confusion about X?" returns the wrong person.
+> Fix: 3-component pipeline. Cost scales with queries, not data size.
 
 ```
 ╔══════════════════════════════════════════════════════╗
-║    LEVEL 2  —  RAG ENGINE              🔒 LOCKED    ║
-║    "Answer questions from transcript data"          ║
-║    Requires: Level 1 complete                       ║
+║     PRODUCTION — RETRIEVAL UPGRADE                  ║
+║     "Fix ranking accuracy + scalable pipeline"      ║
+╠══════════════════════════════════════════════════════╣
+║  Steps:     3 (implement in order: 3 → 2 → 1)      ║
+║  Re-ingest: Not required for any step               ║
+║  Status:    Not started                             ║
 ╚══════════════════════════════════════════════════════╝
 ```
+
+---
+
+## Step 3 — LLM Re-ranking  `[Implement First]`
+
+**Why:** Highest impact fix. The right chunk is already in ChromaDB — it just isn't ranked first.
+One Gemini Flash Lite call after retrieval re-scores chunks by true query intent.
+
+**What changes:**
+- New file `app/services/retrieval/reranker.py` — `rerank_documents(query, documents, intent_hint)`
+- `app/services/answer_service.py` — call `rerank_documents()` after `_retrieve_for_intent()`
+
+**Validates when:** "Who raised confusion about CE classification code?" returns Rhythm Jalhotra (not Karan)
+
+```
+STATUS:   [ ] Not started
+COST:     +1 Gemini Flash Lite call per query (~$0.001)
+RE-INGEST: No
+```
+
+---
+
+## Step 2 — Hybrid Retrieval (BM25 + Dense)  `[Implement Second]`
+
+**Why:** Dense search misses exact phrase matches. BM25 keyword search catches them. Merge both with Reciprocal Rank Fusion before re-ranking.
+
+**What changes:**
+- `pyproject.toml` — add `rank_bm25`
+- `app/services/retrieval/retriever.py` — add `hybrid_retrieve(query, project_id, filters, k=25)`
+- `app/services/answer_service.py` — swap `retrieve_documents()` for `hybrid_retrieve()`
+
+```
+STATUS:   [ ] Not started
+COST:     Zero (BM25 is pure math)
+RE-INGEST: No
+```
+
+---
+
+## Step 1 — Flexible Query Understanding  `[Implement Last]`
+
+**Why:** Current 7-intent enum requires new code per query pattern. LLM JSON extraction handles any pattern with zero code changes.
+
+**What changes:**
+- `app/services/query_intent.py` — add `understand_query()` returning `{topic, intent_type, named_speaker, needs_summary, temporal_focus}`; keep old `classify_query_intent()` as fallback
+- `app/services/answer_service.py` — update routing to use flexible output
+
+```
+STATUS:   [ ] Not started
+COST:     Neutral (replaces existing classifier call)
+RE-INGEST: No
+```
+
+---
+
+## Sprint 2 Progress
+
+```
+Step 3 — LLM Re-ranking         [          ]   0%   Not started
+Step 2 — BM25 Hybrid Retrieval  [          ]   0%   Not started
+Step 1 — Flexible Query         [          ]   0%   Not started
+
+OVERALL                         [          ]   0%
+```
+
+> Update this file manually as steps complete, OR say "update files" at session end.

@@ -93,28 +93,103 @@
 
 ---
 
-## New File/Folder Structure to Create
+---
 
-```
-app/
-├── services/
-│   ├── storage/
-│   │   ├── __init__.py
-│   │   ├── db.py             # ChromaDB init
-│   │   └── chunk_store.py    # store/retrieve chunks
-│   ├── embeddings/
-│   │   ├── __init__.py
-│   │   └── embedder.py       # embed_text()
-│   ├── retrieval/
-│   │   ├── __init__.py
-│   │   ├── retriever.py      # retrieve(query, project_id, filters)
-│   │   ├── classifier.py     # question type classifier
-│   │   └── router.py         # routes to correct strategy
-│   ├── prompts/
-│   │   ├── __init__.py
-│   │   └── templates.py      # 6 prompt templates
-│   └── ai/
-│       ├── __init__.py
-│       └── chat_model.py     # generate_answer()
-streamlit_app.py
-```
+## Post-POC — Next Steps (Production Readiness)
+
+> POC is complete. The following are the recommended next steps before a real production build.
+
+- [ ] **Type 3 — Miscommunication / Contradiction Detection** — most valuable differentiator vs Otter.ai. Needs design decision on what to return when one side has no chunks. Build first among post-POC features.
+- [ ] **D1 — Auto-registration of new meeting IDs** — currently manual (`projects.json`). Must solve before production. Options: Fireflies "meeting created" webhook → auto-register; PM assignment UI; or pending queue.
+- [ ] **Role-based speaker queries** — "What did the client say?" (not just names). Full design in `FUTURE_SCOPE.md`. Build when PM feedback shows it's needed.
+- [ ] **Add more projects / meetings** — currently 1 project, 2 meetings. Test with 3+ projects and 5+ meetings to verify scope isolation and timeline queries at scale.
+- [ ] **Confidence scoring** — flag low-confidence answers when retrieval returns low relevance docs.
+- [ ] **PM usability test** — sit a real PM down, observe where they get confused, iterate on UI.
+
+---
+
+---
+
+## Production Phase — Retrieval Architecture Upgrade
+
+> POC architecture uses hard-coded 7-intent routing + pure vector search. This breaks on any query pattern not explicitly coded (origin queries, causal queries, confusion queries, etc.).
+> Production pipeline replaces this with a 3-component scalable architecture.
+> POC code stays untouched — these are additive changes in new functions/modules.
+
+### Why This Is Needed
+
+Current failure example: "Who raised confusion about CE classification code?"
+- System returned Karan (wrong) — his chunk had more keyword matches
+- Correct answer was Rhythm Jalhotra — she introduced the confusion
+- Root cause: vector similarity ranks by topic density, not causal origin
+- This class of failure affects all "who raised / who first mentioned / who was confused about" queries
+- Fix requires re-ranking, not adding more intents
+
+---
+
+### Step 3 — LLM Re-ranking `[Must Do — Implement First]`
+
+**Why first:** Highest impact. Fixes the ranking accuracy problem for ALL query types without schema changes or re-ingestion. The right chunk is already in the DB — it's just not ranked #1.
+
+**What it does:** After existing retrieval gets top-k candidates, one Gemini Flash Lite call scores each chunk against the true query intent. A chunk expressing confusion ranks higher than one merely mentioning the topic.
+
+- [ ] Create `app/services/retrieval/reranker.py` — new file: `rerank_documents(query, documents, intent_hint)`
+  - Input: query string + list of retrieved Documents + intent hint from query understanding
+  - Sends query + all chunk previews to `gemini-2.5-flash-lite`
+  - Prompt instructs: score by true relevance to query intent, not keyword overlap
+  - Returns documents re-sorted by score, top 8-10
+- [ ] Wire re-ranker into `answer_service.py` after `_retrieve_for_intent()` call
+  - All intents go through re-ranking except SUMMARY (fetches by metadata, no ranking needed)
+- [ ] Log re-ranking scores in pipeline trace (which chunks moved up/down)
+- [ ] Test with the CE code query — verify Rhythm's chunk ranks above Karan's
+
+**Files changed:** new `app/services/retrieval/reranker.py`, `app/services/answer_service.py`
+**Cost:** +1 Gemini Flash Lite call per query (~$0.001)
+**Re-ingestion needed:** No
+
+---
+
+### Step 2 — Hybrid Retrieval (BM25 + Dense) `[Must Do — Implement Second]`
+
+**Why:** Pure vector/dense search misses exact phrase matches. "CE classification code" as a phrase may be semantically diluted by the embedding. BM25 finds exact keyword matches that dense search misses. Combined = better recall before re-ranking.
+
+**What it does:** Run BM25 keyword search alongside existing dense search. Merge both result sets using Reciprocal Rank Fusion → top 25 candidates → pass to re-ranker.
+
+- [ ] Add `rank_bm25` to `pyproject.toml` dependencies
+- [ ] Build BM25 index from existing ChromaDB documents at query time
+  - Fetch all chunks for the project from raw collection
+  - Build BM25 index over `page_content` fields
+  - Run keyword search, get scored results
+- [ ] Add `hybrid_retrieve(query, project_id, filters, k=25)` to `retriever.py`
+  - Stage 1a: existing dense `similarity_search` → top 25
+  - Stage 1b: BM25 keyword search → top 25
+  - Stage 2: Reciprocal Rank Fusion to merge both lists → deduplicated top 25
+- [ ] Replace `retrieve_documents()` calls in `answer_service.py` with `hybrid_retrieve()`
+- [ ] Log in pipeline trace: how many unique docs from dense-only vs BM25-only vs overlap
+
+**Files changed:** `app/services/retrieval/retriever.py`, `app/services/answer_service.py`, `pyproject.toml`
+**Cost:** Zero — BM25 is pure math
+**Re-ingestion needed:** No
+
+---
+
+### Step 1 — Flexible Query Understanding `[Must Do — Implement Last]`
+
+**Why last:** Steps 2 and 3 work with existing intent routing. This step replaces the 7-intent classifier entirely. Do it after re-ranking and hybrid retrieval are validated.
+
+**Why needed:** Current 7-intent hard-coded routing requires new code for every new query pattern. Flexible JSON extraction handles any pattern via LLM understanding — no code changes for new query types.
+
+**What it does:** Replace `classify_query_intent()` returning a fixed enum with an LLM call returning structured JSON: `{topic, intent_type, named_speaker, needs_summary, temporal_focus}`. Retrieval parameters derived dynamically from this JSON.
+
+- [ ] Add `understand_query(query, project_id)` to `query_intent.py`
+  - Returns structured dict, not a fixed enum value
+  - Only 2 genuine routing decisions remain: `needs_summary=true` → summary collection; `named_speaker` → add speaker filter
+  - Everything else → hybrid retrieval + re-ranking
+- [ ] Keep old `classify_query_intent()` as fallback (regex) if LLM call fails
+- [ ] Update `answer_service.py` routing to use flexible understanding output
+- [ ] Update pipeline trace logging to show extracted JSON fields
+- [ ] Validate: run existing 30 test questions — all should still pass
+
+**Files changed:** `app/services/query_intent.py`, `app/services/answer_service.py`
+**Cost:** Neutral — replaces existing classifier LLM call
+**Re-ingestion needed:** No
