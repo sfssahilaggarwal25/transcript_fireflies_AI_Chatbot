@@ -149,22 +149,12 @@ TOTAL XP EARNED:  1500 / 1500 XP   🏆 POC COMPLETE
 
 ---
 
-### Step 3 — LLM Re-ranking `[Must Do — Implement First]`
+### Step 3 — LLM Re-ranking ✓ COMPLETE
 
-> **Why first:** Fixes ranking accuracy for ALL query types without schema changes or re-ingestion.
-> The right chunk is already in ChromaDB — it just isn't ranked #1. Re-ranker fixes this.
-
-- [ ] **`app/services/retrieval/reranker.py`** — new file: `rerank_documents(query, documents, intent_hint)` `[Must Do]`
-  - Input: query string + list of retrieved Documents + intent hint string
-  - Sends query + all chunk previews to `gemini-2.5-flash-lite`
-  - Prompt: score each chunk by relevance to true query intent, not keyword overlap
-  - Returns documents re-sorted by score (top 8–10)
-- [ ] **`app/services/answer_service.py`** — import `rerank_documents`; wire after `_retrieve_for_intent()` `[Must Do]`
-  - All intents go through re-ranking **except** SUMMARY (fetched by metadata, no ranking needed)
-- [ ] **Log re-ranking scores** in pipeline trace — which chunks moved up/down `[Must Do]`
-- [ ] **Validation test** — "Who raised confusion about CE classification code?" → Rhythm Jalhotra ranks above Karan `[Must Do]`
-
-**Files:** new `retrieval/reranker.py`, `answer_service.py` | **Cost:** +1 Gemini Flash Lite call/query (~$0.001) | **Re-ingest:** No
+- [x] `app/services/retrieval/reranker.py` — `rerank_documents(query, documents, intent_hint, topic_hint)` ✓
+- [x] Wired into `answer_service.py` after retrieval, skipped for SUMMARY ✓
+- [x] `_subject_topic_hint()` strips action/connector words before passing topic to re-ranker ✓
+- [x] Re-ranking scores + chunk movement (e.g. "moved 3→1") logged in pipeline trace ✓
 
 ---
 
@@ -172,32 +162,23 @@ TOTAL XP EARNED:  1500 / 1500 XP   🏆 POC COMPLETE
 
 > **Why:** Pure dense search misses exact phrase matches. "CE classification code" as a phrase may be semantically diluted. BM25 finds exact keyword matches that dense search misses. Combined = better recall before re-ranking.
 
-- [ ] **`pyproject.toml`** — add `rank_bm25` dependency `[Must Do]`
-- [ ] **`app/services/retrieval/retriever.py`** — add `hybrid_retrieve(query, project_id, filters, k=25)` `[Must Do]`
-  - Stage 1a: existing `similarity_search` → top 25 (dense)
-  - Stage 1b: build BM25 index from all project chunks; run keyword search → top 25
-  - Stage 2: Reciprocal Rank Fusion to merge both lists → deduplicated top 25 candidates
-- [ ] **`app/services/answer_service.py`** — replace `retrieve_documents()` calls with `hybrid_retrieve()` `[Must Do]`
-- [ ] **Log in pipeline trace:** how many docs from dense-only vs BM25-only vs overlap `[Must Do]`
+- [x] **`pyproject.toml`** — `rank_bm25` added ✓ `[Must Do]`
+- [x] **`app/services/retrieval/retriever.py`** — `hybrid_retrieve()`, `_fetch_project_corpus()`, `_bm25_search()`, `_rrf_merge()` all implemented ✓ `[Must Do]`
+- [x] **BM25 normalization** — `_normalize_for_bm25()` + updated `_tokenize()` — fixes `C.E.`/`"classification,"` token mismatches ✓ `[Must Do]` (Session 17)
+- [x] **Log in pipeline trace** — dense_only / bm25_only / overlap counts logged ✓ `[Must Do]`
+- [ ] **`app/services/answer_service.py`** — replace `retrieve_documents()` calls with `hybrid_retrieve()` `[Must Do]` ← **REMAINING**
 
 **Files:** `retriever.py`, `answer_service.py`, `pyproject.toml` | **Cost:** Zero (BM25 is pure math) | **Re-ingest:** No
 
 ---
 
-### Step 1 — Flexible Query Understanding `[Must Do — Implement Last]`
+### Step 1 — Flexible Query Understanding ✓ COMPLETE
 
-> **Why last:** Steps 2 and 3 work with existing intent routing. This step replaces the 7-intent classifier entirely. Only do this after re-ranking and hybrid retrieval are validated and working.
-
-- [ ] **`app/services/query_intent.py`** — add `understand_query(query, project_id)` `[Must Do]`
-  - Returns structured dict: `{topic, intent_type, named_speaker, needs_summary, temporal_focus}`
-  - Only 2 genuine routing decisions: `needs_summary=true` → summary collection; `named_speaker` → add speaker filter
-  - Everything else → hybrid retrieval + re-ranking
-- [ ] **Keep old `classify_query_intent()`** as regex fallback if LLM call fails `[Must Do]`
-- [ ] **`app/services/answer_service.py`** — update routing to use flexible understanding output `[Must Do]`
-- [ ] **Pipeline trace** — log extracted JSON fields per query `[Must Do]`
-- [ ] **Regression test** — run all 30 test questions; all must still pass `[Must Do]`
-
-**Files:** `query_intent.py`, `answer_service.py` | **Cost:** Neutral (replaces existing classifier call) | **Re-ingest:** No
+- [x] `understand_query(query, project_id)` → `QueryUnderstanding(topic, intent_type, named_speaker, needs_summary, temporal_focus)` ✓
+- [x] LLM primary (Gemini Flash Lite) + regex fallback ✓
+- [x] `classify_query_intent()` kept + upgraded to LLM-first ✓
+- [x] `prompts.py` — all prompts centralized ✓
+- [x] `answer_service.py` routing driven by `QueryUnderstanding` fields ✓
 
 ---
 

@@ -96,6 +96,41 @@ _FALSE_COMMITMENT_RE = re.compile(
 )
 
 
+# ── Tier 2b: Junk detection ───────────────────────────────────────────────────
+
+_STOPWORDS = frozenset({
+    "the", "a", "an", "and", "or", "of", "in", "on", "at", "to", "for",
+    "is", "are", "was", "were", "be", "been", "being", "have", "has", "had",
+    "do", "does", "did", "will", "would", "could", "should", "may", "might",
+    "it", "its", "this", "that", "these", "those", "i", "we", "you", "he",
+    "she", "they", "my", "our", "your", "his", "her", "their", "what", "how",
+    "just", "very", "so", "as", "if", "but", "not", "no", "yes", "um", "uh",
+    "like", "okay", "ok", "yeah", "hmm", "actually",
+})
+
+
+def _is_low_quality(text: str) -> bool:
+    """Return True if chunk text is too low quality to be indexed."""
+    tokens = text.lower().split()
+    if not tokens:
+        return True
+    # Drop repetitive text (high token repetition)
+    if len(set(tokens)) / len(tokens) < 0.4:
+        return True
+    # Drop if fewer than 4 meaningful words remain after removing stopwords/fillers
+    meaningful = [t for t in tokens if t not in _STOPWORDS and len(t) > 2]
+    return len(meaningful) < 4
+
+
+# ── Tier 2b: Topic-shift split ────────────────────────────────────────────────
+
+_TOPIC_SHIFT_RE = re.compile(
+    r"^(now[,\s]|next[,\s]|another point|separately[,\s]|also[,\s]|"
+    r"moving on|switching to|on another|by the way)",
+    re.IGNORECASE,
+)
+
+
 def _detect_signals(text: str) -> dict:
     """
     Detect decision / commitment / question signals from transcript chunk text.
@@ -143,6 +178,10 @@ def build_summary_chunk(summary_text: str, meeting_meta: dict, chunk_index: int)
         "chunk_index":        chunk_index,
         "chunk_type":         "summary",
         "is_meeting_summary": True,
+        "start_time":         None,
+        "end_time":           None,
+        "prev_chunk_id":      None,
+        "next_chunk_id":      None,
         "contains_decision":  False,
         "contains_commitment": False,
         "contains_question":  False,
@@ -162,19 +201,22 @@ def create_chunks(sentences, meeting_meta):
     """
     Utterance-based chunking: one chunk = one speaker block.
     Chunk metadata follows the full 5-level schema.
-    Fields marked PLACEHOLDER are upgraded in later phases.
+
+    Tier 2a additions: start_time / end_time (ms from API), prev_chunk_id / next_chunk_id.
+    Tier 2b additions: MAX_CHARS raised to 500, junk detection, topic-shift splits.
     """
     chunks = []
     current_chunk = []
+    current_times = []   # list of (rawStartTimeMs, rawEndTimeMs) per sentence
     current_speaker = None
     chunk_index = 1
 
-    MAX_CHARS = 250
+    MAX_CHARS = 500   # raised from 250 — reduces semantic splits at utterance boundaries
     MIN_CHARS = 80
     HARD_MIN = 15
 
     def flush_chunk(force=False):
-        nonlocal current_chunk, chunk_index
+        nonlocal current_chunk, current_times, chunk_index
 
         if not current_chunk:
             return
@@ -183,10 +225,21 @@ def create_chunks(sentences, meeting_meta):
 
         if len(chunk_text) < HARD_MIN:
             current_chunk = []
+            current_times = []
             return
 
         if len(chunk_text) < MIN_CHARS and not force:
             return
+
+        if _is_low_quality(chunk_text):
+            current_chunk = []
+            current_times = []
+            return
+
+        valid_starts = [ms for ms, _ in current_times if ms is not None]
+        valid_ends   = [ms for _, ms in current_times if ms is not None]
+        start_time = min(valid_starts) if valid_starts else None
+        end_time   = max(valid_ends)   if valid_ends   else None
 
         chunks.append({
             # Identity
@@ -197,21 +250,29 @@ def create_chunks(sentences, meeting_meta):
             "meeting_title":  meeting_meta["title"],
             "meeting_date":   meeting_meta["date"],
             "meeting_number": meeting_meta.get("meeting_number", 0),
-            "meeting_type":   "unknown",  # PLACEHOLDER — needs config (client_call / planning / etc.)
+            "meeting_type":   "unknown",
 
             # Level 3 — Speaker
             "speaker_name": current_speaker,
             "speaker_id":   _make_speaker_id(current_speaker),
-            "speaker_role": "unknown",    # overridden by _stamp_project_and_roles() in webhook_handler
+            "speaker_role": "unknown",    # overridden by _stamp_project_and_roles()
 
             # Level 4 — Chunk position
-            "chunk_index":       chunk_index,
-            "chunk_type":        "utterance",
-            "is_meeting_summary": False,  # True only for summary chunks (added in Phase 1)
+            "chunk_index":        chunk_index,
+            "chunk_type":         "utterance",
+            "is_meeting_summary": False,
+
+            # Tier 2a: timing (ms from meeting start; None when API doesn't provide it)
+            "start_time": start_time,
+            "end_time":   end_time,
+
+            # Tier 2a: adjacency links (filled in post-loop pass below)
+            "prev_chunk_id": None,
+            "next_chunk_id": None,
 
             # Level 5 — Content signals
             **_detect_signals(chunk_text),
-            "sentiment":           "neutral",
+            "sentiment": "neutral",
 
             # Content
             "text":        chunk_text,
@@ -220,10 +281,13 @@ def create_chunks(sentences, meeting_meta):
 
         chunk_index += 1
         current_chunk = []
+        current_times = []
 
     for s in sentences:
-        text = s["text"].strip()
-        speaker = s["speaker_name"]
+        text     = s["text"].strip()
+        speaker  = s["speaker_name"]
+        start_ms = s.get("rawStartTimeMs")
+        end_ms   = s.get("rawEndTimeMs")
 
         if len(text) < 8:
             continue
@@ -231,14 +295,25 @@ def create_chunks(sentences, meeting_meta):
         if speaker != current_speaker:
             flush_chunk(force=True)
             current_chunk = []
+            current_times = []
             current_speaker = speaker
+        elif current_chunk and _TOPIC_SHIFT_RE.match(text):
+            # Same speaker but sentence opens a new topic — split here
+            flush_chunk(force=True)
 
         projected = " ".join(current_chunk + [text])
         if len(projected) > MAX_CHARS:
             flush_chunk(force=True)
 
         current_chunk.append(text)
+        current_times.append((start_ms, end_ms))
 
     flush_chunk(force=True)
+
+    # ── Post-loop adjacency linking pass ──────────────────────────────────────
+    # Only utterance chunks are linked — summary chunk is separate.
+    for i, chunk in enumerate(chunks):
+        chunk["prev_chunk_id"] = chunks[i - 1]["chunk_id"] if i > 0 else None
+        chunk["next_chunk_id"] = chunks[i + 1]["chunk_id"] if i < len(chunks) - 1 else None
 
     return chunks

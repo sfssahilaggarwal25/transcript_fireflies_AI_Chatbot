@@ -7,6 +7,7 @@ from typing import Optional
 from pydantic import BaseModel, ValidationError
 
 from app.config import Config
+from app.services.prompts import CLASSIFIER_SYSTEM_PROMPT, UNDERSTANDING_PROMPT_TEMPLATE
 
 logger = logging.getLogger(__name__)
 
@@ -84,28 +85,6 @@ def _regex_fallback(query: str) -> QueryIntent:
 
 # ── LLM classifier ────────────────────────────────────────────────────────────
 
-_SYSTEM_PROMPT = """You are a query classifier for an AI meeting intelligence system used by Project Managers.
-Classify the user's question into exactly one of these 7 intent types:
-
-- decision_query   : asks about decisions made, finalized, approved, agreed upon, locked in
-- commitment_query : asks about action items, who will do what, follow-ups, next steps, deliverables
-- summary_query    : asks for a summary, overview, recap, or high-level view of the project or meetings
-- speaker_query    : asks what a specific person (by name) said, mentioned, or thinks
-- question_query   : asks which explicit questions were asked during a meeting (e.g. "What questions did X raise?", "What was asked about Y?")
-- timeline_query   : asks how something changed over time, across meetings, or compares two time periods
-- general_query    : any other question — including "who raised confusion/an issue/a concern about X", "who first mentioned X", "who was confused about X"
-
-Rules:
-- "Who raised confusion/concern/disagreement about X?" → general_query (this asks about causal origin, NOT a list of questions)
-- question_query is ONLY for explicit requests to list or retrieve the questions asked during a meeting
-- If a name is mentioned AND the query is about what that person said/thinks/believes → speaker_query
-- If asking about change across meetings (even without date keywords) → timeline_query
-- When in doubt between two types, pick the one the PM most likely wants
-
-Return ONLY valid JSON with no markdown, no code fences, nothing else:
-{"intent": "<intent_value>", "confidence": "<high|medium|low>", "reason": "<one sentence>"}"""
-
-
 def _call_llm_classifier(query: str) -> ClassificationResult | None:
     """
     Call Gemini Flash Lite to classify the query intent.
@@ -120,7 +99,7 @@ def _call_llm_classifier(query: str) -> ClassificationResult | None:
         client = genai.Client(api_key=Config.GEMINI_API_KEY)
         response = client.models.generate_content(
             model=_CLASSIFIER_MODEL,
-            contents=f"{_SYSTEM_PROMPT}\n\nQuestion: {query}",
+            contents=f"{CLASSIFIER_SYSTEM_PROMPT}\n\nQuestion: {query}",
         )
         raw = response.text.strip()
 
@@ -180,36 +159,6 @@ class QueryUnderstanding(BaseModel):
     temporal_focus: Optional[str] = None # "cross_meeting" → per-meeting timeline retrieval
 
 
-_UNDERSTANDING_PROMPT = """\
-You are a query analyzer for an AI meeting transcript search system used by Project Managers.
-Extract structured understanding from the query below.
-
-Known speakers in this project: {speaker_list}
-
-Return ONLY valid JSON, no markdown, no code fences:
-{{
-  "topic": "<main subject or topic, 1-10 words>",
-  "intent_type": "<one of: decision_query | commitment_query | summary_query | speaker_query | question_query | timeline_query | general_query>",
-  "named_speaker": "<full exact speaker name if a person is explicitly named in the query, else null>",
-  "needs_summary": <true if asking for a project/meeting summary or overview, else false>,
-  "temporal_focus": "<'cross_meeting' if comparing across meetings or how something changed over time, else null>"
-}}
-
-Intent type guide:
-- decision_query   : decisions made, finalized, approved, agreed upon
-- commitment_query : action items, who will do what, follow-ups, deliverables
-- summary_query    : summary, overview, recap, high-level view (set needs_summary=true)
-- speaker_query    : what a specific named person said, mentioned, or thinks
-- question_query   : which explicit questions were asked during a meeting (e.g. "What questions did X raise?")
-- timeline_query   : how something changed across meetings (set temporal_focus='cross_meeting')
-- general_query    : anything else — including "who raised confusion/concern/issue about X", "who first mentioned X", "who was confused about X"
-
-Rules for named_speaker:
-- Only set when a person's name appears in the query
-- Use the known speakers list to canonicalize: "Karan" → "Karan Middha"
-- If the name doesn't match any known speaker, set null"""
-
-
 def _build_understanding_from_regex(query: str) -> QueryUnderstanding:
     intent = _regex_fallback(query)
     return QueryUnderstanding(
@@ -235,6 +184,7 @@ def understand_query(query: str, project_id: str) -> QueryUnderstanding:
     """
     if not query or not query.strip():
         raise ValueError("Query cannot be empty.")
+    
     cleaned = query.strip()
 
     try:
@@ -243,7 +193,7 @@ def understand_query(query: str, project_id: str) -> QueryUnderstanding:
     except Exception:
         speaker_list = "none"
 
-    prompt = _UNDERSTANDING_PROMPT.format(speaker_list=speaker_list)
+    prompt = UNDERSTANDING_PROMPT_TEMPLATE.format(speaker_list=speaker_list)
 
     try:
         from google import genai

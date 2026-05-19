@@ -20,6 +20,7 @@ from app.services.retrieval.retriever import (
 from app.services.retrieval.reranker import rerank_documents
 from app.services.storage.db import get_raw_collection
 from app.services.storage.project_store import get_speaker_names
+from app.services.prompts import ANSWER_PROMPT_TEMPLATES
 
 logger = logging.getLogger(__name__)
 
@@ -221,6 +222,67 @@ def _retrieve_for_understanding(
     return hybrid_retrieve(query, project_id, hard_filters=hard_filters, k=25), None
 
 
+_EXPAND_TOP_N = 5   # expand prev/next neighbors for top N re-ranked docs
+
+
+def _expand_context(documents: list[Document], n: int = _EXPAND_TOP_N) -> list[Document]:
+    """
+    For the top-n docs, fetch their prev/next neighbors from ChromaDB and
+    inject them adjacent to their anchor doc. Max 2*n DB lookups (constant cost).
+
+    Neighbors are tagged with _position='before'/'after' in metadata so
+    _build_context() can label them and _extract_sources() can skip them.
+    """
+    if not documents:
+        return documents
+
+    collection = get_raw_collection()
+    existing_ids: set[str] = {doc.metadata.get("chunk_id", "") for doc in documents}
+    result: list[Document] = []
+
+    for doc in documents[:n]:
+        m = doc.metadata
+
+        if m.get("is_meeting_summary"):
+            result.append(doc)
+            continue
+
+        prev_id = m.get("prev_chunk_id")
+        if prev_id and prev_id not in existing_ids:
+            try:
+                rows = collection.get(ids=[prev_id], include=["documents", "metadatas"])
+                if rows.get("ids"):
+                    result.append(Document(
+                        page_content=rows["documents"][0],
+                        metadata={**rows["metadatas"][0], "_position": "before"},
+                    ))
+                    existing_ids.add(prev_id)
+            except Exception:
+                pass
+
+        result.append(doc)
+
+        next_id = m.get("next_chunk_id")
+        if next_id and next_id not in existing_ids:
+            try:
+                rows = collection.get(ids=[next_id], include=["documents", "metadatas"])
+                if rows.get("ids"):
+                    result.append(Document(
+                        page_content=rows["documents"][0],
+                        metadata={**rows["metadatas"][0], "_position": "after"},
+                    ))
+                    existing_ids.add(next_id)
+            except Exception:
+                pass
+
+    for doc in documents[n:]:
+        if doc.metadata.get("chunk_id", "") not in existing_ids:
+            result.append(doc)
+            existing_ids.add(doc.metadata.get("chunk_id", ""))
+
+    return result
+
+
 def _build_context(documents: list[Document]) -> str:
     parts = []
     for i, doc in enumerate(documents, 1):
@@ -230,96 +292,21 @@ def _build_context(documents: list[Document]) -> str:
         speaker = meta.get("speaker_name", "Unknown Speaker")
         role = meta.get("speaker_role", "")
         speaker_line = f"{speaker} ({role})" if role else speaker
-        parts.append(
-            f"[{i}] Meeting: {meeting} ({date})\n"
-            f"Speaker: {speaker_line}\n"
-            f"Content: {doc.page_content}"
-        )
+
+        position = meta.get("_position", "")
+        if position == "before":
+            label = f"[{i}] [CONTEXT — just before] Meeting: {meeting} ({date})\n"
+        elif position == "after":
+            label = f"[{i}] [CONTEXT — just after] Meeting: {meeting} ({date})\n"
+        else:
+            label = f"[{i}] Meeting: {meeting} ({date})\n"
+
+        parts.append(label + f"Speaker: {speaker_line}\nContent: {doc.page_content}")
     return "\n\n".join(parts)
 
 
-_PROMPT_TEMPLATES = {
-    QueryIntent.DECISION: (
-        "You are an AI assistant analyzing meeting transcripts for a project manager.\n"
-        "Answer the question by identifying specific decisions that were made, who made them, and when.\n\n"
-        "Rules:\n"
-        "- Only state decisions that are explicitly confirmed in the transcripts\n"
-        "- Include the meeting title and speaker for each decision\n"
-        "- If no clear decision was made, say so directly\n\n"
-        "Context from meeting transcripts:\n{context}\n\n"
-        "Question: {query}\n\nAnswer:"
-    ),
-    QueryIntent.COMMITMENT: (
-        "You are an AI assistant analyzing meeting transcripts for a project manager.\n"
-        "Extract action items, commitments, and next steps from the transcripts.\n\n"
-        "Rules:\n"
-        "- For each commitment, state: who committed, what they will do, and deadline if mentioned\n"
-        "- Only include explicit commitments, not vague intentions\n"
-        "- If no commitments are found, say so directly\n\n"
-        "Context from meeting transcripts:\n{context}\n\n"
-        "Question: {query}\n\nAnswer:"
-    ),
-    QueryIntent.SUMMARY: (
-        "You are an AI assistant summarizing project progress for a project manager.\n"
-        "Synthesize the following meeting summaries into a cohesive project overview.\n\n"
-        "Rules:\n"
-        "- Cover: key decisions made, current status, open issues, and next steps\n"
-        "- Present information chronologically (earliest meeting first)\n"
-        "- Be concise — focus on what a PM needs to know\n\n"
-        "Meeting summaries (in chronological order):\n{context}\n\n"
-        "Question: {query}\n\nAnswer:"
-    ),
-    QueryIntent.SPEAKER: (
-        "You are an AI assistant analyzing meeting transcripts for a project manager.\n"
-        "Answer the question based on what a specific speaker said across meetings.\n\n"
-        "Rules:\n"
-        "- Attribute statements to the correct speaker by name\n"
-        "- Note if their position changed across different meetings\n"
-        "- Include meeting title and date for key statements\n\n"
-        "Context from meeting transcripts:\n{context}\n\n"
-        "Question: {query}\n\nAnswer:"
-    ),
-    QueryIntent.TIMELINE: (
-        "You are an AI assistant analyzing meeting transcripts for a project manager.\n"
-        "Answer the question by comparing status, decisions, or progress across time periods.\n\n"
-        "Rules:\n"
-        "- Present information chronologically\n"
-        "- Highlight what changed between meetings\n"
-        "- Include meeting dates when referencing status or decisions\n\n"
-        "Context from meeting transcripts:\n{context}\n\n"
-        "Question: {query}\n\nAnswer:"
-    ),
-    QueryIntent.QUESTION: (
-        "You are an AI assistant analyzing meeting transcripts for a project manager.\n"
-        "Find and summarize questions that were raised in the meetings.\n\n"
-        "Rules:\n"
-        "- List each question with who asked it and which meeting it came from\n"
-        "- If the question was answered in the transcript, include the answer\n"
-        "- If the question was left unresolved, note that explicitly\n\n"
-        "Context from meeting transcripts:\n{context}\n\n"
-        "Question: {query}\n\nAnswer:"
-    ),
-    QueryIntent.GENERAL: (
-        "You are an AI assistant answering questions about past meetings for a project manager.\n"
-        "Answer based strictly on the transcript content provided below.\n\n"
-        "Rules:\n"
-        "- Base your answer only on the provided context\n"
-        "- Always give the best answer the evidence supports — if evidence is partial or indirect,\n"
-        "  commit to the most supported conclusion and note the confidence inline (e.g. 'based on\n"
-        "  available transcripts...'). Only say 'not found' if no relevant content exists at all.\n"
-        "- Include meeting title and speaker references where relevant\n"
-        "- When the question asks who raised, expressed, discovered, or originated something,\n"
-        "  identify the speaker whose words most directly demonstrate that action — judge by the\n"
-        "  substance and intent of what was said, not literal keyword matching.\n"
-        "  Prioritize the originator over someone who merely referenced or described it afterward.\n\n"
-        "Context from meeting transcripts:\n{context}\n\n"
-        "Question: {query}\n\nAnswer:"
-    ),
-}
-
-
 def _build_prompt(query: str, context: str, intent: QueryIntent) -> str:
-    template = _PROMPT_TEMPLATES.get(intent, _PROMPT_TEMPLATES[QueryIntent.GENERAL])
+    template = ANSWER_PROMPT_TEMPLATES.get(intent.value, ANSWER_PROMPT_TEMPLATES["general_query"])
     return template.format(query=query, context=context)
 
 
@@ -338,6 +325,11 @@ def _extract_sources(documents: list[Document]) -> list[dict]:
 
     for doc in documents:
         meta = doc.metadata
+
+        # Skip neighbor chunks injected by _expand_context — not primary sources
+        if meta.get("_position"):
+            continue
+
         is_summary = meta.get("is_meeting_summary", False)
 
         meeting_title = meta.get("meeting_title", "Unknown Meeting")
@@ -465,8 +457,19 @@ def answer_question(query: str, project_id: str) -> dict:
         else:
             logger.info("[3/5] RERANK   skipped (summary — chronological order preserved)")
 
+        # ── STEP 3.5: context expansion ──────────────────────────────────
+        # Fetch prev/next neighbors for top-5 re-ranked docs — 10 DB lookups max.
+        # Must happen BEFORE the trim so neighbors count toward the final window.
+        if not understanding.needs_summary:
+            pre_expand = len(documents)
+            documents = _expand_context(documents, n=_EXPAND_TOP_N)
+            logger.info(
+                "  expanded   : %d → %d docs (neighbors added for top %d)",
+                pre_expand, len(documents), _EXPAND_TOP_N,
+            )
+
         # ── STEP 4: build context + prompt ───────────────────────────────
-        # Trim to top 10 after re-ranking. We retrieve 25 candidates so the
+        # Trim to top 10 after expansion. We retrieve 25 candidates so the
         # re-ranker has options; the LLM gets only the most relevant ones.
         _CONTEXT_TOP_N = 10
         if len(documents) > _CONTEXT_TOP_N:

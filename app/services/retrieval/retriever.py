@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Optional
 
 from langchain_core.documents import Document
@@ -135,20 +136,7 @@ def retrieve_documents(
             filter=metadata_filter,
         )
 
-        logger.info("  retrieved  : %d documents", len(documents))
-        for i, doc in enumerate(documents, 1):
-            m = doc.metadata
-            preview = doc.page_content[:90].replace("\n", " ")
-            logger.info(
-                "  doc[%d/%d]  : %s (%s) | %s | \"%s...\"",
-                i,
-                len(documents),
-                m.get("meeting_title", "?")[:35],
-                m.get("meeting_date", "?"),
-                m.get("speaker_name", "?"),
-                preview,
-            )
-
+        _log_chunk_list("DENSE (retrieve_documents)", documents)
         return documents
 
     except Exception as e:
@@ -260,10 +248,56 @@ def retrieve_timeline_documents(
     return all_docs
 
 
+# ── Debug logging ─────────────────────────────────────────────────────────────
+
+_DIV  = "=" * 64
+_SEP  = "-" * 64
+
+def _log_chunk_list(label: str, docs: list[Document]) -> None:
+    """Log each doc in a stage with full text — for debugging retrieval accuracy."""
+    logger.info(_DIV)
+    logger.info("  %s  [%d docs]", label, len(docs))
+    logger.info(_DIV)
+    for i, doc in enumerate(docs, 1):
+        m   = doc.metadata
+        txt = doc.page_content.replace("\n", " ").strip()
+        logger.info(
+            "  [%d] speaker   : %s",
+            i, m.get("speaker_name", "?"),
+        )
+        logger.info(
+            "       meeting   : %s  (%s)",
+            m.get("meeting_title", "?"), m.get("meeting_date", "?"),
+        )
+        logger.info(
+            "       signals   : decision=%s | commitment=%s | question=%s",
+            m.get("contains_decision",   "?"),
+            m.get("contains_commitment", "?"),
+            m.get("contains_question",   "?"),
+        )
+        logger.info("       chunk_id  : %s", m.get("chunk_id", "?"))
+        logger.info("       TEXT      : %s", txt)
+        logger.info(_SEP)
+
+
 # ── Hybrid retrieval (BM25 + dense) ───────────────────────────────────────────
 
+def _normalize_for_bm25(text: str) -> str:
+    text = text.lower()
+    # Canonicalize acronyms: C.E.→ce, P.M.→pm, U.S.A.→usa, C-E→ce, C. E.→ce
+    # Requires at least one dot/dash/slash so normal single-letter words are never merged
+    text = re.sub(
+        r'(?<!\w)[a-z](?:\s*[.\-\/]+\s*[a-z])+[.\-\/]*(?!\w)',
+        lambda m: re.sub(r'[^a-z]', '', m.group()),
+        text,
+    )
+    text = re.sub(r'[^\w\s]', ' ', text)   # remove remaining punctuation
+    text = re.sub(r'\s+', ' ', text).strip()
+    return text
+
+
 def _tokenize(text: str) -> list[str]:
-    return text.lower().split()
+    return _normalize_for_bm25(text).split()
 
 
 def _fetch_project_corpus(
@@ -365,32 +399,22 @@ def hybrid_retrieve(
     vectorstore = get_vectorstore()
     dense_docs = vectorstore.similarity_search(query=query, k=k, filter=dense_filter)
     logger.debug("  filter     : %s", dense_filter)
-    logger.info("  dense      : %d docs", len(dense_docs))
+    _log_chunk_list("STAGE 1a — DENSE", dense_docs)
 
     # Stage 1b: BM25
     corpus = _fetch_project_corpus(project_id, hard_filters)
     bm25_docs = _bm25_search(query, corpus, k=k)
-    logger.info("  bm25       : %d docs (corpus size=%d)", len(bm25_docs), len(corpus))
+    logger.info("  corpus size: %d docs", len(corpus))
+    _log_chunk_list("STAGE 1b — BM25", bm25_docs)
 
     # Stage 2: RRF merge
     merged, stats = _rrf_merge(dense_docs, bm25_docs)
     logger.info(
-        "  hybrid     : dense_only=%d | bm25_only=%d | overlap=%d | total=%d",
+        "  rrf stats  : dense_only=%d | bm25_only=%d | overlap=%d | total=%d",
         stats["dense_only"], stats["bm25_only"], stats["overlap"], len(merged),
     )
 
     result = merged[:k]
-    logger.info("  retrieved  : %d documents (hybrid)", len(result))
-    for i, doc in enumerate(result, 1):
-        m = doc.metadata
-        preview = doc.page_content[:90].replace("\n", " ")
-        logger.info(
-            "  doc[%d/%d]  : %s (%s) | %s | \"%s...\"",
-            i, len(result),
-            m.get("meeting_title", "?")[:35],
-            m.get("meeting_date", "?"),
-            m.get("speaker_name", "?"),
-            preview,
-        )
+    _log_chunk_list("STAGE 2 — HYBRID (after RRF, top %d)" % k, result)
 
     return result

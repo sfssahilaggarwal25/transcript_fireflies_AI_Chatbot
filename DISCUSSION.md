@@ -104,6 +104,61 @@ A project-scoped AI chatbot for Project Managers. PM selects a project → asks 
 
 ## Discussion Log
 
+### Session 17 (2026-05-19) — BM25 Fixes + Full Pipeline Audit
+
+**Topics covered:**
+
+**1. BM25 normalization fix**
+- `_tokenize()` in `retriever.py` only did `.lower().split()` — no punctuation removal, no abbreviation handling
+- `"C.E."` → token `"c.e."` never matched query token `"ce"` — exact phrase matching was broken
+- Fix: Added `_normalize_for_bm25(text)`: lowercase → collapse abbreviations → remove punctuation → collapse whitespace
+- `_tokenize()` updated to call it — both corpus and query go through same function, always in sync
+- `import re` added to `retriever.py`
+
+**2. Acronym canonicalization fix (Issue 3 — P1)**
+- Initial regex `(?<=[a-z])\.(?=[a-z])` only handled dot-between-letters. Failed for `C. E.` (dot+space), `C-E` (dash), `C/E` (slash)
+- Replaced with general pattern: `(?<!\w)[a-z](?:\s*[.\-\/]+\s*[a-z])+[.\-\/]*(?!\w)` using lambda to strip non-letters from match
+- Handles: `C.E.→ce`, `P.M.→pm`, `U.S.A.→usa`, `C-E→ce`, `C. E.→ce` — all acronym variants, not just CE
+- Requires at least one dot/dash/slash — plain `"c e"` (space only) is NOT merged (safe)
+
+**3. Full chunk text logging added to retriever.py**
+- Previous logging: 90-char preview only — impossible to debug accuracy issues
+- Added `_log_chunk_list(label, docs)` — logs each doc with full TEXT, speaker, meeting, chunk_id, signals
+- `hybrid_retrieve()` now logs three separate stages: `STAGE 1a — DENSE`, `STAGE 1b — BM25`, `STAGE 2 — HYBRID (after RRF)`
+- `retrieve_documents()` also updated to use `_log_chunk_list`
+- Watch with: `Get-Content pipeline.log -Wait -Encoding utf8`
+
+**4. Full pipeline audit — all 3 production steps already complete**
+- Discovered that tracking files (SPRINT.md, TODO.md, TASKS.md) were stale — all 3 steps are fully implemented
+- `query_intent.py`: `understand_query()` + `QueryUnderstanding` (topic, intent_type, named_speaker, needs_summary, temporal_focus) — LLM primary, regex fallback ✓
+- `prompts.py` (new file): `CLASSIFIER_SYSTEM_PROMPT` + `UNDERSTANDING_PROMPT_TEMPLATE` + `ANSWER_PROMPT_TEMPLATES` (7 templates) ✓
+- `reranker.py`: `rerank_documents()` with origin-vs-discussion scoring, Gemini Flash Lite, fallback to original order ✓
+- `answer_service.py`: full 5-step pipeline — understand → hybrid_retrieve(k=25) → rerank → top 10 → LLM answer ✓
+
+**5. Chunking issues identified (7 issues researched)**
+- Issue 1: Hard char split (MAX_CHARS=250) can split semantically connected sentences — MEDIUM impact
+- Issue 2: No `prev_chunk_id`/`next_chunk_id` — retriever gets decontextualized chunks — HIGH impact
+- Issue 3: Weak junk detection (`len >= 8` only) — MEDIUM impact on BM25 corpus quality
+- Issue 4: No ASR corruption detection (abrupt sentence endings) — LOW-MEDIUM for this dataset
+- Issue 5: No speaker confidence — depends on Fireflies API plan
+- Issue 6: No topic-shift detection (same speaker, different topic merged) — MEDIUM for BM25
+- Issue 7: No timestamps (`rawStartTimeMs`/`rawEndTimeMs` not fetched) — HIGH for temporal queries
+
+**6. Adjacency linking design decision**
+- Question: store `prev/next` IDs only, or inline the text too?
+- Decision: **IDs only** — text already in DB, `collection.get(ids=[...])` is O(1) free lookup. Inline text = 3× storage duplication, ChromaDB metadata size limits.
+- Expansion strategy: **post-rerank, top 5 only** — NOT on all 25 candidates
+  - Re-ranker scores clean 25-chunk list → picks top 5 → expand context only for those 5 = 10 DB lookups max
+  - Expanding all 25 before re-ranking = 50 DB calls + bloated re-ranker input = wrong approach
+  - At any data scale, always exactly 10 extra lookups per query (constant cost)
+- Implementation: `expand_context()` function added after re-rank step in `answer_service.py` — Tier 2
+
+**What's next:**
+- All 3 production steps complete — Sprint 2 is done
+- Tier 2 re-ingestion pass: `prev_chunk_id`/`next_chunk_id`, timestamps from Fireflies API, soft char limits, junk detection — all chunking fixes in one re-ingestion
+
+---
+
 ### Session 16 (2026-05-18) — Production Architecture: Retrieval Accuracy Problem + Plan
 
 **Topics covered:**

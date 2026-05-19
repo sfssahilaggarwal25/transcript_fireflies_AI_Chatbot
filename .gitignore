@@ -75,3 +75,11 @@ test_output.txt
 .python-version
 
 reingest.py
+
+# Temporary files
+*.tmp
+*.tmp.*
+*~
+*.bak
+*.swp
+*.swo

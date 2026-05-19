@@ -4,6 +4,51 @@
 
 ---
 
+## Session 17 (2026-05-19) — BM25 Fixes + Full Pipeline Audit
+
+**BM25 normalization (`app/services/retrieval/retriever.py`):**
+- [x] `_normalize_for_bm25(text)` — general acronym canonicalization + punctuation removal
+  - Pattern: `(?<!\w)[a-z](?:\s*[.\-\/]+\s*[a-z])+[.\-\/]*(?!\w)` with lambda strip — handles `C.E.→ce`, `P.M.→pm`, `U.S.A.→usa`, `C-E→ce`, `C. E.→ce`
+  - Requires at least one dot/dash/slash — plain `"c e"` never merged (safe)
+  - Then removes remaining punctuation, collapses whitespace
+- [x] `_tokenize(text)` updated to call `_normalize_for_bm25` — applies to both corpus and query
+- [x] `import re` added
+
+**Full chunk logging (`app/services/retrieval/retriever.py`):**
+- [x] `_log_chunk_list(label, docs)` — logs each doc with full TEXT, speaker, meeting, chunk_id, signals
+- [x] `_DIV` / `_SEP` constants for visual separation in logs
+- [x] `hybrid_retrieve()` now logs 3 stages: `STAGE 1a — DENSE`, `STAGE 1b — BM25`, `STAGE 2 — HYBRID (after RRF, top k)`
+- [x] `retrieve_documents()` updated to use `_log_chunk_list` — removed old 90-char preview loop
+
+**Production pipeline audit — all 3 steps confirmed complete:**
+- [x] **Step 1 — Flexible Query Understanding** (`app/services/query_intent.py`)
+  - `understand_query(query, project_id)` → `QueryUnderstanding(topic, intent_type, named_speaker, needs_summary, temporal_focus)`
+  - LLM (Gemini Flash Lite) primary with `UNDERSTANDING_PROMPT_TEMPLATE`; regex fallback on LLM failure
+  - `classify_query_intent()` also upgraded: LLM-first with `CLASSIFIER_SYSTEM_PROMPT`, regex fallback
+- [x] **`app/services/prompts.py`** — new file created
+  - `CLASSIFIER_SYSTEM_PROMPT` — 7-intent classification with causal-origin rules
+  - `UNDERSTANDING_PROMPT_TEMPLATE` — structured JSON extraction with speaker canonicalization
+  - `ANSWER_PROMPT_TEMPLATES` — 7 templates moved here from `answer_service.py`
+- [x] **Step 2 — Hybrid Retrieval** (`app/services/retrieval/retriever.py`) — confirmed wired
+  - `hybrid_retrieve()` called from `_retrieve_for_understanding()` in `answer_service.py`
+  - `hard_filters` passed for speaker queries; `k=25` candidates
+- [x] **Step 3 — LLM Re-ranking** (`app/services/retrieval/reranker.py`) — confirmed wired
+  - `rerank_documents(query, documents, intent_hint, topic_hint)` called after retrieval
+  - `_subject_topic_hint()` strips action words from topic before passing to re-ranker
+  - Skipped for SUMMARY intent (chronological order already correct)
+- [x] **`app/services/answer_service.py`** — full 5-step pipeline
+  - Step 1: `understand_query()` → Step 2: `_retrieve_for_understanding()` → Step 3: `rerank_documents()` → Step 4: trim to top 10 + build context → Step 5: `_call_gemini()`
+  - Date filtering for SUMMARY queries with `_extract_month_day()` + ±1 day tolerance
+  - `_build_not_found_message()` lists available meeting dates when date query has no match
+  - `_log_retrieval_strategy()` logs retrieval path in pipeline trace
+
+**Design decisions locked this session:**
+- [x] Adjacency linking: store `prev_chunk_id`/`next_chunk_id` as IDs only (not inline text) — text fetched at retrieval time via `collection.get(ids=[...])`
+- [x] Context expansion: post-rerank, top 5 only — 10 DB lookups max, constant cost regardless of data size
+- [x] BM25 normalization: query-time (not metadata-stored) — accuracy fix, latency optimization deferred
+
+---
+
 ## Session 16 (2026-05-18) — Logging ASCII Fix + Production Architecture Design
 
 **Logging ASCII fix (`app/services/answer_service.py`):**

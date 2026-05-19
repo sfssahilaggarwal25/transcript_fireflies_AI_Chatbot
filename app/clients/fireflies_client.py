@@ -39,6 +39,8 @@ def fetch_transcript(transcript_id: str) -> Dict[str, Any]:
         sentences {
           text
           speaker_name
+          rawStartTimeMs
+          rawEndTimeMs
         }
         summary {
           overview

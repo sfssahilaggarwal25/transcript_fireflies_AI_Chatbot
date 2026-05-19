@@ -127,69 +127,70 @@ Current failure example: "Who raised confusion about CE classification code?"
 
 ---
 
-### Step 3 — LLM Re-ranking `[Must Do — Implement First]`
+### Step 3 — LLM Re-ranking ✓ COMPLETE
 
-**Why first:** Highest impact. Fixes the ranking accuracy problem for ALL query types without schema changes or re-ingestion. The right chunk is already in the DB — it's just not ranked #1.
-
-**What it does:** After existing retrieval gets top-k candidates, one Gemini Flash Lite call scores each chunk against the true query intent. A chunk expressing confusion ranks higher than one merely mentioning the topic.
-
-- [ ] Create `app/services/retrieval/reranker.py` — new file: `rerank_documents(query, documents, intent_hint)`
-  - Input: query string + list of retrieved Documents + intent hint from query understanding
-  - Sends query + all chunk previews to `gemini-2.5-flash-lite`
-  - Prompt instructs: score by true relevance to query intent, not keyword overlap
-  - Returns documents re-sorted by score, top 8-10
-- [ ] Wire re-ranker into `answer_service.py` after `_retrieve_for_intent()` call
-  - All intents go through re-ranking except SUMMARY (fetches by metadata, no ranking needed)
-- [ ] Log re-ranking scores in pipeline trace (which chunks moved up/down)
-- [ ] Test with the CE code query — verify Rhythm's chunk ranks above Karan's
-
-**Files changed:** new `app/services/retrieval/reranker.py`, `app/services/answer_service.py`
-**Cost:** +1 Gemini Flash Lite call per query (~$0.001)
-**Re-ingestion needed:** No
+- [x] `app/services/retrieval/reranker.py` — `rerank_documents(query, documents, intent_hint, topic_hint)` ✓
+- [x] Wired into `answer_service.py` after `_retrieve_for_understanding()` ✓
+- [x] Skipped for SUMMARY intent (chronological order correct) ✓
+- [x] Re-ranking scores + chunk movement logged in pipeline trace ✓
+- [x] `_subject_topic_hint()` strips action words so re-ranker gets clean subject terms ✓
 
 ---
 
-### Step 2 — Hybrid Retrieval (BM25 + Dense) `[Must Do — Implement Second]`
+### Step 2 — Hybrid Retrieval (BM25 + Dense) ✓ COMPLETE
 
-**Why:** Pure vector/dense search misses exact phrase matches. "CE classification code" as a phrase may be semantically diluted by the embedding. BM25 finds exact keyword matches that dense search misses. Combined = better recall before re-ranking.
-
-**What it does:** Run BM25 keyword search alongside existing dense search. Merge both result sets using Reciprocal Rank Fusion → top 25 candidates → pass to re-ranker.
-
-- [ ] Add `rank_bm25` to `pyproject.toml` dependencies
-- [ ] Build BM25 index from existing ChromaDB documents at query time
-  - Fetch all chunks for the project from raw collection
-  - Build BM25 index over `page_content` fields
-  - Run keyword search, get scored results
-- [ ] Add `hybrid_retrieve(query, project_id, filters, k=25)` to `retriever.py`
-  - Stage 1a: existing dense `similarity_search` → top 25
-  - Stage 1b: BM25 keyword search → top 25
-  - Stage 2: Reciprocal Rank Fusion to merge both lists → deduplicated top 25
-- [ ] Replace `retrieve_documents()` calls in `answer_service.py` with `hybrid_retrieve()`
-- [ ] Log in pipeline trace: how many unique docs from dense-only vs BM25-only vs overlap
-
-**Files changed:** `app/services/retrieval/retriever.py`, `app/services/answer_service.py`, `pyproject.toml`
-**Cost:** Zero — BM25 is pure math
-**Re-ingestion needed:** No
+- [x] `rank_bm25` in `pyproject.toml` ✓
+- [x] `hybrid_retrieve()`, `_fetch_project_corpus()`, `_bm25_search()`, `_rrf_merge()` in `retriever.py` ✓
+- [x] BM25 normalization: `_normalize_for_bm25()` — general acronym canonicalization + punctuation removal ✓ (Session 17)
+- [x] Full 3-stage logging: DENSE / BM25 / HYBRID with complete chunk text ✓ (Session 17)
+- [x] Wired into `answer_service.py` via `_retrieve_for_understanding()` ✓
 
 ---
 
-### Step 1 — Flexible Query Understanding `[Must Do — Implement Last]`
+### Step 1 — Flexible Query Understanding ✓ COMPLETE
 
-**Why last:** Steps 2 and 3 work with existing intent routing. This step replaces the 7-intent classifier entirely. Do it after re-ranking and hybrid retrieval are validated.
+- [x] `understand_query(query, project_id)` in `query_intent.py` — returns `QueryUnderstanding(topic, intent_type, named_speaker, needs_summary, temporal_focus)` ✓
+- [x] LLM primary (Gemini Flash Lite) + regex fallback when LLM fails ✓
+- [x] `classify_query_intent()` kept and upgraded to LLM-first with regex fallback ✓
+- [x] `prompts.py` — `CLASSIFIER_SYSTEM_PROMPT` + `UNDERSTANDING_PROMPT_TEMPLATE` + 7 answer templates ✓
+- [x] `answer_service.py` routing uses `QueryUnderstanding` fields directly ✓
+- [x] Pipeline trace logs: topic, intent, speaker, summary flag, temporal focus per query ✓
 
-**Why needed:** Current 7-intent hard-coded routing requires new code for every new query pattern. Flexible JSON extraction handles any pattern via LLM understanding — no code changes for new query types.
+---
 
-**What it does:** Replace `classify_query_intent()` returning a fixed enum with an LLM call returning structured JSON: `{topic, intent_type, named_speaker, needs_summary, temporal_focus}`. Retrieval parameters derived dynamically from this JSON.
+---
 
-- [ ] Add `understand_query(query, project_id)` to `query_intent.py`
-  - Returns structured dict, not a fixed enum value
-  - Only 2 genuine routing decisions remain: `needs_summary=true` → summary collection; `named_speaker` → add speaker filter
-  - Everything else → hybrid retrieval + re-ranking
-- [ ] Keep old `classify_query_intent()` as fallback (regex) if LLM call fails
-- [ ] Update `answer_service.py` routing to use flexible understanding output
-- [ ] Update pipeline trace logging to show extracted JSON fields
-- [ ] Validate: run existing 30 test questions — all should still pass
+## Sprint 3 — Chunking Improvements (Single Re-ingestion Pass)
 
-**Files changed:** `app/services/query_intent.py`, `app/services/answer_service.py`
-**Cost:** Neutral — replaces existing classifier LLM call
-**Re-ingestion needed:** No
+> All 3 production pipeline steps are complete. Next focus: fix chunking quality so the pipeline gets better raw material.
+> **Do all of these together in one re-ingestion pass** — re-ingestion costs Gemini embedding API calls (521 docs), so batch all fixes.
+
+### Tier 2a — Schema additions (Fireflies API + metadata)
+
+- [ ] **`app/clients/fireflies_client.py`** — add `rawStartTimeMs`, `rawEndTimeMs` to GraphQL sentences query
+- [ ] **`app/services/transcript/chunking.py`** — store `start_time` / `end_time` per chunk (ms from API)
+- [ ] **`app/services/transcript/chunking.py`** — add `prev_chunk_id` / `next_chunk_id` after all chunks built (post-loop linking pass)
+  - Link by `chunk_index` within same meeting: chunk N's `next_chunk_id` = chunk N+1's `chunk_id`
+  - First chunk: `prev_chunk_id = None`. Last chunk: `next_chunk_id = None`
+
+### Tier 2b — Chunking quality fixes
+
+- [ ] **Soft char limit** — raise `MAX_CHARS` from 250 → 500 (reduces split-at-boundary semantic breaks)
+- [ ] **Junk detection** — add `_is_low_quality(text)` check in `create_chunks()` before appending
+  - Drop if unique token ratio < 0.4 (`len(set(tokens)) / len(tokens)`)
+  - Drop if meaningful word count < 4 (after removing stopwords/fillers)
+- [ ] **Topic-shift split** — split same-speaker block if sentence starts with topic-change marker
+  - Keywords: `"now"`, `"another point"`, `"next"`, `"separately"`, `"also"`, `"moving on"`, `"switching to"`
+
+### Tier 2c — Context expansion (post-rerank)
+
+- [ ] **`app/services/answer_service.py`** — add `_expand_context(docs, top_n=5)` after re-rank step
+  - For each of top 5 docs: fetch `prev_chunk_id` + `next_chunk_id` via `collection.get(ids=[...])`
+  - Attach neighbor text to `_build_context()` call: `[BEFORE] ... [CHUNK] ... [AFTER] ...`
+  - 10 DB lookups max per query, constant cost regardless of project size
+
+### Re-ingestion checklist (do once, all Tier 2 fixes applied)
+- [ ] Wipe `chroma_db/` folder
+- [ ] Run dev mode pipeline — re-ingest both meetings with new schema
+- [ ] Verify: `chunk_index`, `prev_chunk_id`, `next_chunk_id`, `start_time`, `end_time` present on sample chunks via `inspect_db.py`
+- [ ] Re-run 30 test questions — all should still pass

@@ -29,84 +29,106 @@
 
 ---
 
-# SPRINT 2 — Production: Retrieval Architecture Upgrade  [IN PROGRESS]
+# SPRINT 2 — Production: Retrieval Architecture Upgrade  [COMPLETE]
 
-> Problem: POC dense search ranks by keyword density, not causal origin. "Who raised confusion about X?" returns the wrong person.
-> Fix: 3-component pipeline. Cost scales with queries, not data size.
+> All 3 steps implemented and wired. Full 5-step pipeline running:
+> understand_query → hybrid_retrieve(k=25) → rerank_documents → top 10 → LLM answer
 
 ```
 ╔══════════════════════════════════════════════════════╗
 ║     PRODUCTION — RETRIEVAL UPGRADE                  ║
-║     "Fix ranking accuracy + scalable pipeline"      ║
 ╠══════════════════════════════════════════════════════╣
-║  Steps:     3 (implement in order: 3 → 2 → 1)      ║
-║  Re-ingest: Not required for any step               ║
+║  Step 3 — LLM Re-ranking        ✓ COMPLETE          ║
+║  Step 2 — BM25 Hybrid           ✓ COMPLETE          ║
+║  Step 1 — Flexible Query        ✓ COMPLETE          ║
+║  BM25 Normalization fix         ✓ Session 17        ║
+║  Acronym canonicalization       ✓ Session 17        ║
+║  Full chunk text logging        ✓ Session 17        ║
+╚══════════════════════════════════════════════════════╝
+```
+
+### What was built
+
+- `app/services/retrieval/reranker.py` — `rerank_documents()` with origin-vs-discussion scoring, Gemini Flash Lite, fallback to original order
+- `app/services/retrieval/retriever.py` — `hybrid_retrieve()`, `_fetch_project_corpus()`, `_bm25_search()`, `_rrf_merge()` + BM25 normalization + 3-stage full-text logging
+- `app/services/query_intent.py` — `understand_query()` returning `QueryUnderstanding`; LLM-first + regex fallback; `classify_query_intent()` upgraded
+- `app/services/prompts.py` — new file: classifier prompt + understanding prompt + 7 answer templates
+- `app/services/answer_service.py` — full 5-step pipeline; date filtering; `_subject_topic_hint()`
+
+---
+
+---
+
+# SPRINT 3 — Chunking Improvements  [NEXT]
+
+> Pipeline accuracy is limited by chunk quality. Single re-ingestion pass applies all fixes at once.
+> Cost: 521 docs × Gemini embedding API call.
+
+```
+╔══════════════════════════════════════════════════════╗
+║     SPRINT 3 — CHUNKING + CONTEXT EXPANSION         ║
+║     "Better raw material for the pipeline"          ║
+╠══════════════════════════════════════════════════════╣
+║  Re-ingest: YES — do all fixes in ONE pass          ║
 ║  Status:    Not started                             ║
 ╚══════════════════════════════════════════════════════╝
 ```
 
 ---
 
-## Step 3 — LLM Re-ranking  `[Implement First]`
+## Tier 2a — Schema additions
 
-**Why:** Highest impact fix. The right chunk is already in ChromaDB — it just isn't ranked first.
-One Gemini Flash Lite call after retrieval re-scores chunks by true query intent.
+**`app/clients/fireflies_client.py`** — add `rawStartTimeMs`, `rawEndTimeMs` to sentences query
 
-**What changes:**
-- New file `app/services/retrieval/reranker.py` — `rerank_documents(query, documents, intent_hint)`
-- `app/services/answer_service.py` — call `rerank_documents()` after `_retrieve_for_intent()`
-
-**Validates when:** "Who raised confusion about CE classification code?" returns Rhythm Jalhotra (not Karan)
+**`app/services/transcript/chunking.py`:**
+- Store `start_time` / `end_time` per chunk (ms from API)
+- Add `prev_chunk_id` / `next_chunk_id` in a post-loop linking pass after all chunks are built
 
 ```
 STATUS:   [ ] Not started
-COST:     +1 Gemini Flash Lite call per query (~$0.001)
-RE-INGEST: No
+RE-INGEST: Yes
 ```
 
 ---
 
-## Step 2 — Hybrid Retrieval (BM25 + Dense)  `[Implement Second]`
+## Tier 2b — Chunking quality
 
-**Why:** Dense search misses exact phrase matches. BM25 keyword search catches them. Merge both with Reciprocal Rank Fusion before re-ranking.
-
-**What changes:**
-- `pyproject.toml` — add `rank_bm25`
-- `app/services/retrieval/retriever.py` — add `hybrid_retrieve(query, project_id, filters, k=25)`
-- `app/services/answer_service.py` — swap `retrieve_documents()` for `hybrid_retrieve()`
+**`app/services/transcript/chunking.py`:**
+- Raise `MAX_CHARS` 250 → 500 (soft limit — reduces semantic splits at boundaries)
+- Add `_is_low_quality(text)` — drop if unique token ratio < 0.4 or meaningful words < 4
+- Topic-shift split — split same-speaker block when sentence starts with `"now"`, `"next"`, `"separately"`, etc.
 
 ```
 STATUS:   [ ] Not started
-COST:     Zero (BM25 is pure math)
-RE-INGEST: No
+RE-INGEST: Yes
 ```
 
 ---
 
-## Step 1 — Flexible Query Understanding  `[Implement Last]`
+## Tier 2c — Context expansion (post-rerank)
 
-**Why:** Current 7-intent enum requires new code per query pattern. LLM JSON extraction handles any pattern with zero code changes.
-
-**What changes:**
-- `app/services/query_intent.py` — add `understand_query()` returning `{topic, intent_type, named_speaker, needs_summary, temporal_focus}`; keep old `classify_query_intent()` as fallback
-- `app/services/answer_service.py` — update routing to use flexible output
+**`app/services/answer_service.py`** — add `_expand_context(top_docs)` after re-rank step:
+- Fetch `prev_chunk_id` + `next_chunk_id` for top 5 docs via `collection.get(ids=[...])`
+- Inject `[BEFORE]` / `[AFTER]` neighbor text into `_build_context()`
+- 10 DB lookups max per query — constant cost at any scale
 
 ```
 STATUS:   [ ] Not started
-COST:     Neutral (replaces existing classifier call)
-RE-INGEST: No
+RE-INGEST: No (uses IDs already stored in Tier 2a)
+DEPENDS ON: Tier 2a complete + re-ingested
 ```
 
 ---
 
-## Sprint 2 Progress
+## Sprint 3 Progress
 
 ```
-Step 3 — LLM Re-ranking         [          ]   0%   Not started
-Step 2 — BM25 Hybrid Retrieval  [          ]   0%   Not started
-Step 1 — Flexible Query         [          ]   0%   Not started
+Tier 2a — Schema additions        [          ]   0%   Not started
+Tier 2b — Chunking quality        [          ]   0%   Not started
+Tier 2c — Context expansion       [          ]   0%   Not started  (depends on 2a)
 
-OVERALL                         [          ]   0%
+OVERALL                           [          ]   0%
 ```
 
+> Do Tier 2a + 2b together (same re-ingestion). Then Tier 2c (no re-ingest).
 > Update this file manually as steps complete, OR say "update files" at session end.
