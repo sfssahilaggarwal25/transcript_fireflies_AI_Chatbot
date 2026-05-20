@@ -12,6 +12,7 @@ from app.services.query_intent import (
     QueryIntent,
     QueryUnderstanding,
     understand_query,
+    is_metadata_query,
 )
 from app.services.retrieval.retriever import (
     hybrid_retrieve,
@@ -398,6 +399,66 @@ def _build_not_found_message(intent: QueryIntent, query: str, project_id: str) -
     )
 
 
+def _handle_metadata_query(query: str, project_id: str) -> dict:
+    """
+    Answer structural queries (list meetings, list speakers, count meetings)
+    directly from ChromaDB metadata — zero embedding calls, zero LLM calls.
+
+    Sub-type detection order:
+      1. speaker/participant keywords  → list speakers + roles
+      2. meeting/count/when keywords   → list meetings + dates
+      3. fallback                      → both speakers and meetings
+    """
+    collection = get_raw_collection()
+    results = collection.get(
+        where={"project_id": {"$eq": project_id}},
+        include=["metadatas"],
+    )
+    metadatas = results.get("metadatas", [])
+
+    q = query.lower()
+
+    if any(w in q for w in ["speaker", "participant", "attendee", "who are"]):
+        seen: set[tuple] = set()
+        for m in metadatas:
+            name = m.get("speaker_name", "")
+            role = m.get("speaker_role", "")
+            if name and not m.get("is_meeting_summary"):
+                seen.add((name, role))
+        speakers = sorted(seen, key=lambda x: x[0])
+        if not speakers:
+            answer = "No speakers found for this project."
+        else:
+            lines = "\n".join(
+                f"  • {name}" + (f" ({role})" if role else "")
+                for name, role in speakers
+            )
+            answer = f"This project has {len(speakers)} speaker(s):\n{lines}"
+
+    else:
+        seen_meetings: set[tuple] = set()
+        for m in metadatas:
+            title = m.get("meeting_title", "")
+            date  = m.get("meeting_date", "")
+            mid   = m.get("meeting_id", "")
+            if mid and title:
+                seen_meetings.add((date, title))
+        meetings = sorted(seen_meetings)
+        if not meetings:
+            answer = "No meetings found for this project."
+        else:
+            lines = "\n".join(f"  • {date} — {title}" for date, title in meetings)
+            answer = f"This project has {len(meetings)} meeting(s):\n{lines}"
+
+    logger.info("  metadata   : answered directly from raw collection (0 LLM calls)")
+    return {
+        "answer": answer,
+        "sources": [],
+        "intent": QueryIntent.METADATA.value,
+        "notice": None,
+    }
+
+
 def answer_question(query: str, project_id: str) -> dict:
     """
     Answer a question using the RAG pipeline.
@@ -413,6 +474,10 @@ def answer_question(query: str, project_id: str) -> dict:
         raise ValueError("Query cannot be empty.")
     if not project_id or not project_id.strip():
         raise ValueError("project_id is required.")
+
+    if is_metadata_query(query):
+        logger.info("PIPELINE SHORT-CIRCUIT: metadata_query — skipping embedding + LLM")
+        return _handle_metadata_query(query, project_id)
 
     import time
     t_start = time.time()

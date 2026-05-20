@@ -1,6 +1,7 @@
 from typing import Dict, Any, List
 import logging
 import re
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -67,17 +68,43 @@ def normalize_transcript(raw_data: Dict[str, Any]) -> Dict[str, Any]:
     for s in sentences:
         cleaned = _clean_sentence(s["text"])
         if len(cleaned) >= 8:
+            # Normalize timing to start_time/end_time in seconds regardless of source format.
+            # Live Fireflies API returns rawStartTimeMs/rawEndTimeMs (int, ms).
+            # CONSTANT_TRANSCRIPT uses start_time/end_time (float, seconds) directly.
+            if "rawStartTimeMs" in s or "rawEndTimeMs" in s:
+                raw_start = s.get("rawStartTimeMs")
+                raw_end = s.get("rawEndTimeMs")
+                start_s = raw_start / 1000.0 if raw_start is not None else None
+                end_s = raw_end / 1000.0 if raw_end is not None else None
+            else:
+                start_s = s.get("start_time")
+                end_s = s.get("end_time")
+
             cleaned_sentences.append({
                 **s,
                 "text": cleaned,
                 "speaker_name": _clean_speaker_name(s["speaker_name"]),
+                "start_time": start_s,
+                "end_time": end_s,
             })
 
     summary_raw = transcript.get("summary")
+
+    # Parse date from dateString (ISO format) or fall back to date field.
+    date_str = None
+    date_string_raw = transcript.get("dateString")
+    if date_string_raw:
+        try:
+            date_str = date_string_raw.split("T")[0]  # "2026-03-19T06:44:26.000Z" → "2026-03-19"
+        except (AttributeError, IndexError):
+            pass
+    if not date_str:
+        date_str = transcript.get("date")
+
     normalized = {
         "meeting_id": transcript["id"],
         "title": transcript["title"],
-        "date": transcript.get("date"),
+        "date": date_str,
         "sentences": cleaned_sentences,
         "summary": summary_raw if isinstance(summary_raw, dict) else {},
     }

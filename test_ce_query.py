@@ -11,7 +11,9 @@ setup_pipeline_logging()
 
 from app.services.answer_service import answer_question
 
-QUERY      = "Who raised the confusion about CE classification code?"
+# QUERY      = "Who raised the confusion about CE classification code?"
+QUERY      = "How do we calculate change in OCA?"
+
 PROJECT_ID = "proj_nolocode_001"
 
 print("=" * 64)

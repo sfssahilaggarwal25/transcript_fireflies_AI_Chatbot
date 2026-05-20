@@ -1,3 +1,92 @@
+# SPRINT 5 — Agentic Tool Calling for Compound Queries  [PLANNED]
+
+> Enables the LLM to compose metadata + semantic retrieval itself for analytical questions
+> that cannot be answered by a single retrieval path.
+> Prerequisite: Sprint 4 test suite must be complete so regressions are caught.
+
+```
+╔══════════════════════════════════════════════════════╗
+║     SPRINT 5 — LLM TOOL CALLING                     ║
+║     "Let the LLM decide how to retrieve"            ║
+╠══════════════════════════════════════════════════════╣
+║  Tool definitions (4 tools)     [ ] Not started     ║
+║  Gemini function-calling loop   [ ] Not started     ║
+║  Fallback to current pipeline   [ ] Not started     ║
+║  Test suite coverage            [ ] Not started     ║
+╚══════════════════════════════════════════════════════╝
+```
+
+### Why tool calling — and why NOT for simple metadata queries
+
+Simple metadata queries (list meetings, list speakers, count meetings) are handled
+by the `METADATA` intent short-circuit in `answer_question()` — 0 LLM calls, ~80ms.
+Tool calling is NOT needed there.
+
+Tool calling IS needed for **compound analytical queries** where the LLM must decide
+which retrieval operations to compose:
+
+| Query | Why the code can't pre-determine the path |
+|---|---|
+| "How many times did Sahil mention the budget?" | Needs speaker filter (metadata) + semantic search (budget) + count |
+| "Which meeting had the most unresolved questions?" | Needs all meetings (metadata) + question density per meeting |
+| "Did we discuss deployment in the May 9th meeting?" | Needs date filter (metadata) + semantic search within that meeting |
+
+### Tools to define (Gemini function calling schema)
+
+```python
+tools = [
+    {
+        "name": "search_transcripts",
+        "description": "Semantic search over transcript chunks for a topic",
+        "parameters": {
+            "query": str,          # semantic search string
+            "project_id": str,     # required — scope enforcement
+            "speaker_name": str,   # optional filter
+            "meeting_date": str,   # optional ISO date filter
+            "k": int,              # number of results
+        }
+    },
+    {
+        "name": "list_meetings",
+        "description": "List all meetings in the project with dates",
+        "parameters": {"project_id": str}
+    },
+    {
+        "name": "list_speakers",
+        "description": "List all speakers and their roles in the project",
+        "parameters": {"project_id": str}
+    },
+    {
+        "name": "count_chunks_matching",
+        "description": "Count transcript chunks matching a speaker + keyword filter",
+        "parameters": {
+            "project_id": str,
+            "speaker_name": str,   # optional
+            "keyword": str,        # BM25 keyword to match
+        }
+    },
+]
+```
+
+### Implementation plan
+
+1. Define tool schemas as dicts matching Gemini function-calling format
+2. Pass tools to `client.models.generate_content()` with `tools=` parameter
+3. If response contains `function_call`: execute the named function, send result back as `function_response`
+4. Loop until LLM returns a text answer (max 3 tool calls per query)
+5. If no tool call in first response: fall back to current `answer_question()` pipeline
+6. Every tool call must enforce `project_id` — no exceptions
+
+### Critical constraint
+
+`project_id` must be injected server-side into every tool call argument — never
+trusted from the LLM's output. The LLM receives it as context but the backend
+validates and re-applies it on every tool execution.
+
+---
+
+---
+
 # SPRINT 1 — POC: Foundation through Validation  [COMPLETE]
 
 > Phases 1–5 complete. POC validated 2026-05-14.
@@ -59,76 +148,103 @@
 
 ---
 
-# SPRINT 3 — Chunking Improvements  [NEXT]
+# SPRINT 4 — Test Suite & Evaluation Infrastructure  [IN PROGRESS]
 
-> Pipeline accuracy is limited by chunk quality. Single re-ingestion pass applies all fixes at once.
-> Cost: 521 docs × Gemini embedding API call.
+> Automated testing pipeline so any pipeline change can be verified quickly.
+> New developers and testers can run the full suite in 3 commands.
+> Started Session 18 (2026-05-20).
+
+```
+╔══════════════════════════════════════════════════════╗
+║     SPRINT 4 — AUTOMATED TEST SUITE                 ║
+║     "Verify pipeline quality after every change"    ║
+╠══════════════════════════════════════════════════════╣
+║  Query bank (easy/medium/hard)  ✓ COMPLETE          ║
+║  query_generator.py             ✓ COMPLETE          ║
+║  test_runner.py                 ✓ COMPLETE          ║
+║  report_generator.py            ✓ COMPLETE          ║
+║  TESTING_GUIDE.md               ✓ COMPLETE          ║
+║  run_tests.py (master runner)   [ ] Not started     ║
+║  LLM answer evaluator           [ ] Not started     ║
+║  Regression tracker             [ ] Not started     ║
+║  First run: 10/12 passed (83.3%)                    ║
+╚══════════════════════════════════════════════════════╝
+```
+
+### What was built (Session 18)
+
+- `app/tests/query_bank/easy.json` — 12 queries, all 5 easy intents, schema: `expected_intent`, `expected_strategy`, `tags`, `notes`, `evaluation_hints`
+- `app/tests/query_bank/medium.json` — 7 queries needing LLM classifier (paraphrased, date-filtered, speaker names)
+- `app/tests/query_bank/hard.json` — 7 edge-case queries (contradiction, relative dates, negative-space reasoning)
+- `app/tests/query_generator.py` — Gemini-powered query generation grounded in real ChromaDB summary chunks; `--project-id`, `--count`, `--dry-run` flags
+- `app/tests/test_runner.py` — calls real `answer_question()` directly; `_LogCapture` attached to each pipeline logger (bypasses `propagate=False`); live progress table; per-query JSON results + `run_metadata.json`
+- `app/tests/report_generator.py` — `summary.md` with ASCII progress bar, results table, intent breakdown, failed query traces, sources coverage
+- `app/tests/TESTING_GUIDE.md` — Mermaid flowchart, 3-command quick start, full script reference, manual query schema
+
+### What's remaining in Sprint 4
+
+- [ ] `run_tests.py` — one command: query_generator → test_runner → report_generator → open summary.md
+- [ ] LLM answer evaluator — score answer quality 1–10 (currently only checks intent match + has_answer)
+- [ ] Regression tracker — diff two run folders to detect improvements/regressions
+- [ ] Extend runner to medium + hard difficulty levels
+
+### Known failure (to fix)
+
+- `easy_005` + `easy_011` — `general_query` misclassified as `summary_query` by LLM classifier
+- Root cause: "project meetings" and "last project sync" phrasing triggers summary intent even without explicit keywords
+- Fix: either rephrase the queries or tighten `UNDERSTANDING_PROMPT_TEMPLATE` for general intent
+
+---
+
+## Sprint 4 Progress
+
+```
+Query bank                        [██████████] 100%  ✓ COMPLETE
+query_generator.py                [██████████] 100%  ✓ COMPLETE
+test_runner.py                    [██████████] 100%  ✓ COMPLETE
+report_generator.py               [██████████] 100%  ✓ COMPLETE
+TESTING_GUIDE.md                  [██████████] 100%  ✓ COMPLETE
+run_tests.py                      [          ]   0%  Not started
+LLM evaluator                     [          ]   0%  Not started
+Regression tracker                [          ]   0%  Not started
+
+OVERALL                           [██████░░░░]  60%
+```
+
+---
+
+---
+
+# SPRINT 3 — Chunking Improvements  [COMPLETE]
+
+> Completed Session 19 (2026-05-20). All tiers done in one re-ingestion pass.
 
 ```
 ╔══════════════════════════════════════════════════════╗
 ║     SPRINT 3 — CHUNKING + CONTEXT EXPANSION         ║
 ║     "Better raw material for the pipeline"          ║
 ╠══════════════════════════════════════════════════════╣
-║  Re-ingest: YES — do all fixes in ONE pass          ║
-║  Status:    Not started                             ║
+║  Tier 2a — Schema additions     ✓ COMPLETE          ║
+║  Tier 2b — Chunking quality     ✓ COMPLETE          ║
+║  Tier 2c — Context expansion    ✓ COMPLETE          ║
+║  Re-ingestion: 352 chunks       ✓ COMPLETE          ║
+║  CE query accuracy verified     ✓ Bhavneet correct  ║
 ╚══════════════════════════════════════════════════════╝
 ```
-
----
-
-## Tier 2a — Schema additions
-
-**`app/clients/fireflies_client.py`** — add `rawStartTimeMs`, `rawEndTimeMs` to sentences query
-
-**`app/services/transcript/chunking.py`:**
-- Store `start_time` / `end_time` per chunk (ms from API)
-- Add `prev_chunk_id` / `next_chunk_id` in a post-loop linking pass after all chunks are built
-
-```
-STATUS:   [ ] Not started
-RE-INGEST: Yes
-```
-
----
-
-## Tier 2b — Chunking quality
-
-**`app/services/transcript/chunking.py`:**
-- Raise `MAX_CHARS` 250 → 500 (soft limit — reduces semantic splits at boundaries)
-- Add `_is_low_quality(text)` — drop if unique token ratio < 0.4 or meaningful words < 4
-- Topic-shift split — split same-speaker block when sentence starts with `"now"`, `"next"`, `"separately"`, etc.
-
-```
-STATUS:   [ ] Not started
-RE-INGEST: Yes
-```
-
----
-
-## Tier 2c — Context expansion (post-rerank)
-
-**`app/services/answer_service.py`** — add `_expand_context(top_docs)` after re-rank step:
-- Fetch `prev_chunk_id` + `next_chunk_id` for top 5 docs via `collection.get(ids=[...])`
-- Inject `[BEFORE]` / `[AFTER]` neighbor text into `_build_context()`
-- 10 DB lookups max per query — constant cost at any scale
-
-```
-STATUS:   [ ] Not started
-RE-INGEST: No (uses IDs already stored in Tier 2a)
-DEPENDS ON: Tier 2a complete + re-ingested
-```
-
----
 
 ## Sprint 3 Progress
 
 ```
-Tier 2a — Schema additions        [          ]   0%   Not started
-Tier 2b — Chunking quality        [          ]   0%   Not started
-Tier 2c — Context expansion       [          ]   0%   Not started  (depends on 2a)
+Tier 2a — Schema additions        [██████████] 100%  ✓ COMPLETE
+Tier 2b — Chunking quality        [██████████] 100%  ✓ COMPLETE
+Tier 2c — Context expansion       [██████████] 100%  ✓ COMPLETE
 
-OVERALL                           [          ]   0%
+OVERALL                           [██████████] 100%  ✓ COMPLETE
 ```
 
-> Do Tier 2a + 2b together (same re-ingestion). Then Tier 2c (no re-ingest).
-> Update this file manually as steps complete, OR say "update files" at session end.
+### What was built
+
+- `chunking.py` — `MAX_CHARS=500`, `_is_low_quality()`, `_TOPIC_SHIFT_RE`, `start_time`/`end_time`, `prev_chunk_id`/`next_chunk_id`
+- `normalize.py` — `dateString` ISO parsing; unified `start_time`/`end_time` normalization (handles both API ms format and CONSTANT_TRANSCRIPT seconds format)
+- `answer_service.py` — `_expand_context()` fetches prev/next neighbors for top-5 re-ranked docs
+- Re-ingested: 352 chunks (2 meetings), all adjacency links valid, timestamps in seconds

@@ -95,6 +95,18 @@
 
 ---
 
+## Test Suite — Next Steps
+
+> Easy-level automated testing is working. These are the next improvements in priority order.
+
+- [ ] **`run_tests.py`** — one master command that chains: query_generator → test_runner → report_generator. Accepts `--project-id` and `--count`. Opens `summary.md` automatically on finish.
+- [ ] **LLM answer evaluator** — add `llm_evaluation: {score, verdict, reason}` field to each result JSON. Gemini reads query + answer + pipeline logs and scores answer quality 1–10. Currently only intent match and "has answer" are checked — does not verify if the answer is actually correct.
+- [ ] **Regression tracker** — `compare.py` that diffs two run folders side by side: what improved, what regressed, what stayed the same. Useful after pipeline changes.
+- [ ] **Extend runner to medium and hard** — `test_runner.py` currently only loads `easy.json`. Add `--difficulty` flag to support `medium` and `hard` query banks.
+- [ ] **Fix easy_005 + easy_011 failures** — `general_query` queries about "project meetings" and "last project sync" are being misclassified as `summary_query` by the LLM classifier. Either add clearer phrasing to the query or update the `UNDERSTANDING_PROMPT_TEMPLATE` to handle this case.
+
+---
+
 ## Post-POC — Next Steps (Production Readiness)
 
 > POC is complete. The following are the recommended next steps before a real production build.
@@ -160,37 +172,22 @@ Current failure example: "Who raised confusion about CE classification code?"
 
 ---
 
-## Sprint 3 — Chunking Improvements (Single Re-ingestion Pass)
+## Sprint 3 — Chunking Improvements ✓ COMPLETE (Session 19)
 
-> All 3 production pipeline steps are complete. Next focus: fix chunking quality so the pipeline gets better raw material.
-> **Do all of these together in one re-ingestion pass** — re-ingestion costs Gemini embedding API calls (521 docs), so batch all fixes.
+### Tier 2a — Schema additions ✓
+- [x] `app/clients/fireflies_client.py` — `rawStartTimeMs`/`rawEndTimeMs` in GraphQL sentences query
+- [x] `app/services/transcript/chunking.py` — `start_time`/`end_time` per chunk (seconds, normalized via normalize.py)
+- [x] `app/services/transcript/chunking.py` — `prev_chunk_id`/`next_chunk_id` via post-loop linking pass
 
-### Tier 2a — Schema additions (Fireflies API + metadata)
+### Tier 2b — Chunking quality fixes ✓
+- [x] `MAX_CHARS` raised 250 → 500
+- [x] `_is_low_quality(text)` — unique token ratio + meaningful word count
+- [x] `_TOPIC_SHIFT_RE` — same-speaker topic-shift split
 
-- [ ] **`app/clients/fireflies_client.py`** — add `rawStartTimeMs`, `rawEndTimeMs` to GraphQL sentences query
-- [ ] **`app/services/transcript/chunking.py`** — store `start_time` / `end_time` per chunk (ms from API)
-- [ ] **`app/services/transcript/chunking.py`** — add `prev_chunk_id` / `next_chunk_id` after all chunks built (post-loop linking pass)
-  - Link by `chunk_index` within same meeting: chunk N's `next_chunk_id` = chunk N+1's `chunk_id`
-  - First chunk: `prev_chunk_id = None`. Last chunk: `next_chunk_id = None`
+### Tier 2c — Context expansion ✓
+- [x] `_expand_context(docs, top_n=5)` in `answer_service.py`
+- [x] Neighbors labeled `[CONTEXT — just before/after]`, excluded from sources
 
-### Tier 2b — Chunking quality fixes
-
-- [ ] **Soft char limit** — raise `MAX_CHARS` from 250 → 500 (reduces split-at-boundary semantic breaks)
-- [ ] **Junk detection** — add `_is_low_quality(text)` check in `create_chunks()` before appending
-  - Drop if unique token ratio < 0.4 (`len(set(tokens)) / len(tokens)`)
-  - Drop if meaningful word count < 4 (after removing stopwords/fillers)
-- [ ] **Topic-shift split** — split same-speaker block if sentence starts with topic-change marker
-  - Keywords: `"now"`, `"another point"`, `"next"`, `"separately"`, `"also"`, `"moving on"`, `"switching to"`
-
-### Tier 2c — Context expansion (post-rerank)
-
-- [ ] **`app/services/answer_service.py`** — add `_expand_context(docs, top_n=5)` after re-rank step
-  - For each of top 5 docs: fetch `prev_chunk_id` + `next_chunk_id` via `collection.get(ids=[...])`
-  - Attach neighbor text to `_build_context()` call: `[BEFORE] ... [CHUNK] ... [AFTER] ...`
-  - 10 DB lookups max per query, constant cost regardless of project size
-
-### Re-ingestion checklist (do once, all Tier 2 fixes applied)
-- [ ] Wipe `chroma_db/` folder
-- [ ] Run dev mode pipeline — re-ingest both meetings with new schema
-- [ ] Verify: `chunk_index`, `prev_chunk_id`, `next_chunk_id`, `start_time`, `end_time` present on sample chunks via `inspect_db.py`
-- [ ] Re-run 30 test questions — all should still pass
+### Re-ingestion ✓
+- [x] ChromaDB wiped and re-ingested — 352 chunks, correct dates, timestamps, adjacency links
+- [x] CE query verified correct after re-ingest — Bhavneet Mhajan correctly attributed

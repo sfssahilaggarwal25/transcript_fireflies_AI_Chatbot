@@ -2,14 +2,15 @@
 
 ## Session Start Protocol (ALWAYS do this first)
 
-At the start of EVERY conversation, before doing anything else, read these 3 files in order:
+At the start of EVERY conversation, before doing anything else, read these 4 files in order:
 
 1. `DISCUSSION.md` — current phase, open questions, design decisions, last session log
 2. `TODO.md` — what's remaining, ordered by phase
 3. `DONE.md` — what's already implemented (so you don't suggest re-doing it)
+4. `SPRINT.md` — active sprint, progress bars, what's in progress vs paused vs complete
 
 Then give the user a 3-line status summary:
-- Current phase we're in
+- Which sprint is active and its current completion percentage
 - What was last worked on
 - What's the next task to pick up
 
@@ -19,12 +20,13 @@ Do this even if the user doesn't ask. It ensures every session starts with full 
 
 ## End-of-Session Protocol
 
-When the user says **"update files"** or **"session done"**, immediately update all 4 tracking files:
+When the user says **"update files"** or **"session done"**, immediately update all 5 tracking files:
 
 1. **DISCUSSION.md** — add a new session log entry with: date, topics covered, decisions made, open questions resolved or added, what's next
 2. **DONE.md** — move any tasks completed this session from TODO to DONE
 3. **TODO.md** — remove completed tasks, add any new tasks discovered
 4. **TASKS.md** — update task status if any `[Must Do]` items were completed
+5. **SPRINT.md** — update the active sprint's status box and progress bars; if a sprint completes, mark it `[COMPLETE]` and set the next sprint to `[IN PROGRESS]`
 
 ---
 
@@ -32,8 +34,8 @@ When the user says **"update files"** or **"session done"**, immediately update 
 
 This is an AI Meeting Intelligence POC for Project Managers. It answers questions about past meetings by searching Fireflies.ai transcripts using RAG.
 
-**Stack:** FastAPI + ChromaDB + Claude API + Streamlit  
-**Current phase:** Phase 1 — ChromaDB setup + metadata schema upgrade
+**Stack:** FastAPI + ChromaDB + Gemini API + Streamlit  
+**Current sprint:** Sprint 4 — Automated Test Suite (60% complete)
 
 **Critical rule:** Every query must be filtered by `project_id` at the backend. This is not a UI feature — it is a backend enforcement rule.
 
@@ -43,20 +45,27 @@ This is an AI Meeting Intelligence POC for Project Managers. It answers question
 
 | File | Purpose |
 |------|---------|
+| `SPRINT.md` | Active sprint status, progress bars, what's in progress vs paused |
+| `OPEN_QUESTIONS.md` | All unresolved design questions (9 categories, P1/P2/P3 priority) |
 | `TASKS.md` | Master task list with `[Must Do]` tags |
 | `DONE.md` | Completed work |
 | `TODO.md` | Remaining work, ordered by phase |
 | `DISCUSSION.md` | Design decisions, open questions, session log |
 | `DEVELOPMENT_GUIDE.md` | Architecture, data flow, env setup |
-| `app/handlers/webhook_handler.py` | Main pipeline — storage TODO at line 126 |
-| `app/services/transcript/chunking.py` | Chunking — needs metadata upgrade (Phase 1) |
+| `app/tests/TESTING_GUIDE.md` | Test suite commands, Mermaid flowchart, how to read reports |
+| `app/tests/query_bank/easy.json` | Easy-level test queries (12 queries, 5 intents) |
+| `app/services/answer_service.py` | Full 5-step RAG pipeline — understand → retrieve → rerank → prompt → LLM |
+| `app/services/retrieval/retriever.py` | Hybrid retrieval (dense + BM25 + RRF) |
 
 ---
 
-## Open Questions (Resolve Before Phase 1 Coding)
+## Open Questions
 
-1. How does `project_id` get assigned to a meeting? (manual config / Fireflies API / PM labels it)
-2. How does speaker role (client / pm / developer) get assigned? (config file / PM labels / LLM inference)
+All open questions are tracked in `OPEN_QUESTIONS.md` (9 categories, P1/P2/P3 priority).  
+The SessionStart hook runs `.claude/scripts/open_questions.py` at every session start to show the count and all P1 items automatically.
+
+To resolve a question: change `[ ]` → `[x]` in `OPEN_QUESTIONS.md` and add a row to the Resolved Archive table.  
+To add a question: pick the right category section, add `- [ ] [P1/P2/P3] Question text` with a `> **Why it matters:**` line below it.
 
 ---
 

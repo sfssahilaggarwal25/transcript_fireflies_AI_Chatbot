@@ -4,6 +4,93 @@
 
 ---
 
+## Session 19 (2026-05-20) — Sprint 3: Chunking Improvements + Config Normalization
+
+**Sprint 3 — All tiers complete:**
+
+**Tier 2a — Schema additions:**
+- [x] `app/clients/fireflies_client.py` — `rawStartTimeMs`/`rawEndTimeMs` in GraphQL sentences query (live API)
+- [x] `app/services/transcript/chunking.py` — `start_time`/`end_time` stored per chunk (seconds); reads from normalized sentences
+- [x] `app/services/transcript/chunking.py` — `prev_chunk_id`/`next_chunk_id` added via post-loop linking pass; first chunk `prev=None`, last chunk `next=None`
+
+**Tier 2b — Chunking quality fixes:**
+- [x] `MAX_CHARS` raised 250 → 500 — reduces semantic splits at utterance boundaries
+- [x] `_is_low_quality(text)` — drops chunks if unique token ratio < 0.4 OR meaningful word count (non-stopword, len>2) < 4
+- [x] `_TOPIC_SHIFT_RE` — splits same-speaker block when sentence starts with `"now"`, `"next"`, `"another point"`, `"separately"`, `"also"`, `"moving on"`, `"switching to"`, `"on another"`, `"by the way"`
+- [x] `_STOPWORDS` frozenset — used by `_is_low_quality()` to determine meaningful word count
+
+**Tier 2c — Context expansion:**
+- [x] `_EXPAND_TOP_N = 5` constant in `answer_service.py`
+- [x] `_expand_context(documents, n=5)` — for top-5 re-ranked docs, fetches `prev_chunk_id`/`next_chunk_id` neighbors via `collection.get(ids=[...])`; tags neighbors with `_position='before'/'after'` in metadata; prevents duplicates via `existing_ids` set; max 10 DB lookups per query
+- [x] `_build_context()` updated — labels neighbor chunks as `[CONTEXT — just before/after]`
+- [x] `_extract_sources()` updated — skips chunks where `meta.get("_position")` is set (neighbors not shown as sources)
+- [x] Wired into `answer_service.py` pipeline: `documents = _expand_context(documents)` after rerank step (skipped for SUMMARY intent)
+
+**Config.py field normalization:**
+- [x] `app/services/transcript/normalize.py` — `dateString` parsing: splits ISO string on `"T"` → `YYYY-MM-DD`; falls back to `date` field if `dateString` absent
+- [x] `app/services/transcript/normalize.py` — timestamp normalization in cleaned_sentences: detects `rawStartTimeMs`/`rawEndTimeMs` (live API, ms int) → converts to seconds; or uses `start_time`/`end_time` directly (CONSTANT_TRANSCRIPT, seconds float). Downstream always receives consistent `start_time`/`end_time` in seconds.
+- [x] `app/services/transcript/chunking.py` — updated to read `s.get("start_time")` / `s.get("end_time")` (not `rawStartTimeMs`/`rawEndTimeMs`)
+
+**Re-ingestion verified:**
+- [x] ChromaDB wiped and re-ingested — 352 chunks (166 Nolocode meeting with Ashpreet 2026-03-19 + 186 Nolocode AI meeting 2026-03-25)
+- [x] All chunks have correct `meeting_date`, `start_time`/`end_time` (seconds), `prev_chunk_id`/`next_chunk_id`
+- [x] CE query accuracy verified — Bhavneet Mhajan correctly identified (larger chunks preserve question context)
+
+---
+
+## Session 18 (2026-05-20) — Automated Test Suite
+
+**Test infrastructure (`app/tests/`):**
+- [x] `app/tests/query_bank/easy.json` — 12 easy-level queries covering all 5 easy intents (summary, decision, commitment, question, general); schema includes `expected_intent`, `expected_strategy`, `tags`, `notes`, `evaluation_hints`
+- [x] `app/tests/query_bank/medium.json` — 7 medium-level queries (paraphrased, date-filtered, speaker name detection, cross-meeting); LLM classifier required
+- [x] `app/tests/query_bank/hard.json` — 7 hard edge-case queries (contradiction detection, relative dates, negative-space reasoning, yes/no questions that may have no answer)
+
+**`app/tests/query_generator.py`:**
+- [x] `fetch_meeting_summaries(project_id)` — fetches `is_meeting_summary=True` chunks from ChromaDB to ground Gemini in real meeting content (prevents hallucinated off-topic queries)
+- [x] `_build_prompt(existing_queries, count, summaries)` — injects real meeting summaries + regex keyword map + JSON schema + existing queries as few-shot examples
+- [x] `call_gemini(prompt)` — Gemini Flash Lite via `google.genai`, same pattern as `answer_service.py`
+- [x] `validate_queries()` — schema check + intent check + deduplication against existing queries
+- [x] `save_merged()` — auto-increments IDs, merges with existing, updates count in `_metadata`
+- [x] CLI: `--project-id` (grounds queries in real ChromaDB data), `--count`, `--dry-run`
+
+**`app/tests/test_runner.py`:**
+- [x] `_LogCapture` handler — collects formatted log lines into a list; attached directly to each of the 4 pipeline loggers (bypasses `propagate=False` in `logging_config.py`)
+- [x] `_PIPELINE_LOGGERS` — list of all 4 loggers that need direct attachment
+- [x] `run_single_query()` — calls real `answer_question()`, measures time, compares intent, detects "not found" responses, captures pipeline logs in `finally` block
+- [x] `create_run_folder()` — timestamped `test_results/YYYY-MM-DD_HH-MM/easy/`
+- [x] `save_result()` — individual `easy_NNN_result.json` per query with full pipeline trace
+- [x] `save_run_metadata()` — aggregate `run_metadata.json` (pass rate, avg time, intent mismatches)
+- [x] `print_progress()` — live table during run, intent mismatch shown inline
+- [x] `print_summary()` — final pass/fail/error counts with failure details
+- [x] CLI: `--project-id` (required), `--dry-run`
+
+**`app/tests/report_generator.py`:**
+- [x] `find_run_folder()` — auto-picks latest run or accepts `--run` flag for specific folder
+- [x] `_section_summary()` — ASCII progress bar + stats table
+- [x] `_section_results_table()` — every query as one row, failed rows bold actual intent
+- [x] `_section_intent_breakdown()` — pass rate per intent type (spots which classifier path is weakest)
+- [x] `_section_failures()` — per-failure: what failed, why, full pipeline trace in code block
+- [x] `_section_sources()` — which meetings were referenced and how often
+- [x] Writes `summary.md` into the run folder
+- [x] CLI: `--run` (optional, defaults to latest)
+
+**`app/tests/TESTING_GUIDE.md`:**
+- [x] Quick Start (3 commands)
+- [x] Mermaid flowchart of the full test system
+- [x] Folder structure diagram
+- [x] Script reference with all CLI flags and when to run each
+- [x] Pass/fail rules table
+- [x] How to read result files and `summary.md`
+- [x] Manual query addition schema
+- [x] Project ID reference table
+
+**First real test run:**
+- [x] Ran `test_runner.py` against `proj_nolocode_001` — 10/12 passed (83.3%)
+- [x] 2 failures: `easy_005` + `easy_011` — `general_query` misclassified as `summary_query` by LLM classifier
+- [x] Pipeline logs captured correctly in all result files after `propagate=False` fix
+
+---
+
 ## Session 17 (2026-05-19) — BM25 Fixes + Full Pipeline Audit
 
 **BM25 normalization (`app/services/retrieval/retriever.py`):**

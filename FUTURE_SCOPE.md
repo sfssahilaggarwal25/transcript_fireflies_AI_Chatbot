@@ -115,6 +115,34 @@ Only if real PM usage reveals these as actual problems. Not worth building specu
 
 ---
 
+## 5 — Silence-Based Topic Splitting
+
+**What it is:**
+When a gap between two consecutive sentences is ≥ 30 seconds, force a chunk boundary even if the speaker did not change. A long pause = screen share, document lookup, or natural topic transition.
+
+**Where to implement:**
+[`app/services/transcript/chunking.py`](app/services/transcript/chunking.py) — inside `create_chunks()`, after the speaker-change check and before the `_TOPIC_SHIFT_RE` check (approximately line 335). Add one condition:
+
+```python
+elif current_chunk and start_ms is not None:
+    last_end = current_times[-1][1] if current_times else None
+    if last_end is not None and (start_ms - last_end) >= 30.0:
+        flush_chunk(force=True)
+```
+
+**Why deferred (confirmed from real transcript data):**
+Checked both Nolocode transcripts. The current `_TOPIC_SHIFT_RE` handles verbal transitions ("moving on", "let's go to the next", etc.). The two real cases where silence matters are:
+
+1. Same-speaker pause before a topic-shift phrase that does NOT start with a keyword (e.g., Bhavneet: "Okay." → 35.6s pause → "Okay, let's go to the next query." at 1180→1215s in T1). The "Okay." is < HARD_MIN so it gets dropped — no incorrect chunk merge occurs today.
+2. Pre-meeting dead time (T2: 295s gap at 226→522s, 74s gap at 132→206s) — administrative wait while participants join. These short filler phrases are already dropped by junk detection.
+
+**When to build:**
+- Production: when meeting count per project exceeds 5
+- Longer meetings (90+ minutes) where same-speaker pauses cover screen sharing of different documents
+- When incorrect `prev_chunk_id`/`next_chunk_id` adjacency links between unrelated topics are observed in answer quality regression testing
+
+---
+
 ## 4 — Type 6: Multi-Meeting Date Range Filtering
 
 **What it is:**

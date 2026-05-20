@@ -14,6 +14,15 @@ def _load():
     return _projects_cache
 
 
+def reload_projects_cache() -> None:
+    """
+    Force a fresh read of projects.json on the next call to any project store function.
+    Call this after adding a new meeting to projects.json while the server is running.
+    """
+    global _projects_cache
+    _projects_cache = None
+
+
 def get_project_for_meeting(meeting_id: str) -> dict | None:
     """Return project scope fields for a meeting_id, or None if not mapped."""
     projects = _load()

@@ -96,6 +96,25 @@ _FALSE_COMMITMENT_RE = re.compile(
 )
 
 
+# ── Tier 2b: Confirmation/agreement signal ───────────────────────────────────
+# Detects short but semantically rich responses: client confirming a decision
+# ("Correct.", "Exactly.", "Agreed."), expressing doubt ("Are you sure?"),
+# or disputing something ("That's wrong.", "I disagree.").
+# Used only as a bypass signal — keeps these chunks from being quality-filtered.
+# Not stored as a chunk metadata field (no schema change needed).
+
+_CONFIRMATION_RE = re.compile(
+    r"\b("
+    r"correct|exactly|absolutely|confirmed|agreed|"
+    r"that's right|that is right|sounds good|looks good|"
+    r"makes sense|fair enough|go ahead|perfect|"
+    r"not correct|that's wrong|i disagree|are you sure|"
+    r"you sure|double check|double-check|are you certain"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
 # ── Tier 2b: Junk detection ───────────────────────────────────────────────────
 
 _STOPWORDS = frozenset({
@@ -104,7 +123,7 @@ _STOPWORDS = frozenset({
     "do", "does", "did", "will", "would", "could", "should", "may", "might",
     "it", "its", "this", "that", "these", "those", "i", "we", "you", "he",
     "she", "they", "my", "our", "your", "his", "her", "their", "what", "how",
-    "just", "very", "so", "as", "if", "but", "not", "no", "yes", "um", "uh",
+    "just", "very", "so", "as", "if", "but", "not", "um", "uh",
     "like", "okay", "ok", "yeah", "hmm", "actually",
 })
 
@@ -114,12 +133,17 @@ def _is_low_quality(text: str) -> bool:
     tokens = text.lower().split()
     if not tokens:
         return True
-    # Drop repetitive text (high token repetition)
+    # Drop repetitive text — but only if the repeated token is a filler/stopword.
+    # Meaningful repetition ("no no no no" = strong disagreement) is kept.
     if len(set(tokens)) / len(tokens) < 0.4:
-        return True
-    # Drop if fewer than 4 meaningful words remain after removing stopwords/fillers
+        most_repeated = max(set(tokens), key=tokens.count)
+        if most_repeated in _STOPWORDS:
+            return True
+    # Drop if fewer than 2 meaningful words remain after removing stopwords/fillers.
+    # Threshold lowered from 4 → 2 for meeting transcripts where short direct answers
+    # ("OCA will be prepaid closed.", "Change in earnings.") carry full semantic weight.
     meaningful = [t for t in tokens if t not in _STOPWORDS and len(t) > 2]
-    return len(meaningful) < 4
+    return len(meaningful) < 2
 
 
 # ── Tier 2b: Topic-shift split ────────────────────────────────────────────────
@@ -231,7 +255,18 @@ def create_chunks(sentences, meeting_meta):
         if len(chunk_text) < MIN_CHARS and not force:
             return
 
-        if _is_low_quality(chunk_text):
+        # Detect signals first — chunks containing a decision, commitment, or question
+        # bypass the quality filter entirely. A short commitment like "I'll do it."
+        # must survive even if it has few meaningful words.
+        signals = _detect_signals(chunk_text)
+        has_signal = (
+            signals["contains_decision"]
+            or signals["contains_commitment"]
+            or signals["contains_question"]
+            or bool(_CONFIRMATION_RE.search(chunk_text))
+        )
+
+        if not has_signal and _is_low_quality(chunk_text):
             current_chunk = []
             current_times = []
             return
@@ -270,8 +305,8 @@ def create_chunks(sentences, meeting_meta):
             "prev_chunk_id": None,
             "next_chunk_id": None,
 
-            # Level 5 — Content signals
-            **_detect_signals(chunk_text),
+            # Level 5 — Content signals (pre-computed above)
+            **signals,
             "sentiment": "neutral",
 
             # Content
@@ -284,10 +319,10 @@ def create_chunks(sentences, meeting_meta):
         current_times = []
 
     for s in sentences:
-        text     = s["text"].strip()
-        speaker  = s["speaker_name"]
-        start_ms = s.get("rawStartTimeMs")
-        end_ms   = s.get("rawEndTimeMs")
+        text      = s["text"].strip()
+        speaker   = s["speaker_name"]
+        start_ms  = s.get("start_time")
+        end_ms    = s.get("end_time")
 
         if len(text) < 8:
             continue

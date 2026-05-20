@@ -22,6 +22,7 @@ class QueryIntent(str, Enum):
     SUMMARY    = "summary_query"
     SPEAKER    = "speaker_query"
     TIMELINE   = "timeline_query"
+    METADATA   = "metadata_query"
 
 
 class ClassificationResult(BaseModel):
@@ -70,6 +71,30 @@ _TIMELINE_RE = re.compile(
     r"\bfrom .{0,20} to .{0,20} meeting\b)",
     re.IGNORECASE,
 )
+
+
+_METADATA_RE = re.compile(
+    r"\bhow many meetings?\b"
+    r"|\blist (?:all )?(?:the )?meetings?\b"
+    r"|\blist (?:all )?(?:the )?speakers?\b"
+    r"|\bshow (?:all )?(?:the )?meetings?\b"
+    r"|\bshow (?:all )?(?:the )?speakers?\b"
+    r"|\bwho are (?:all )?(?:the )?speakers?\b"
+    r"|\bwhat meetings?\b.{0,20}\bproject\b"
+    r"|\bwhen was.{0,15}(?:last|latest|first|recent) meeting\b"
+    r"|\ball (?:the )?meetings? in this project\b",
+    re.IGNORECASE,
+)
+
+
+def is_metadata_query(query: str) -> bool:
+    """
+    Fast regex pre-check — runs before the LLM classifier.
+    Returns True for pure structural queries (list meetings, list speakers,
+    count meetings, last meeting date) that need zero semantic search.
+    Kept narrow intentionally: misses go to the full pipeline, not vice versa.
+    """
+    return bool(_METADATA_RE.search(query.strip()))
 
 
 def _regex_fallback(query: str) -> QueryIntent:

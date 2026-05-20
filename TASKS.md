@@ -13,9 +13,32 @@ Phase 2 — RAG Engine       [██████████] 100%   8/8  tasks 
 Phase 3 — Query Taxonomy   [██████████] 100%  10/10 tasks    ✓ COMPLETE
 Phase 4 — Streamlit UI     [██████████] 100%   8/8  tasks    ✓ COMPLETE
 Phase 5 — Validation       [██████████] 100%   6/6  tasks    ✓ COMPLETE
+Sprint 3 — Chunking        [██████████] 100%   all  tasks    ✓ COMPLETE
+Test Suite (Session 18)    [██████░░░░]  60%   3/5  tasks    🔄 IN PROGRESS
 
 TOTAL XP EARNED:  1500 / 1500 XP   🏆 POC COMPLETE
 ```
+
+### Sprint 3 Tasks — Chunking Improvements (Session 19) ✓ COMPLETE
+
+- [x] `fireflies_client.py` — `rawStartTimeMs`/`rawEndTimeMs` in GraphQL query `[Must Do]`
+- [x] `normalize.py` — `dateString` ISO parsing + unified `start_time`/`end_time` normalization (ms API → seconds) `[Must Do]`
+- [x] `chunking.py` — `start_time`/`end_time` per chunk (seconds); `prev_chunk_id`/`next_chunk_id` adjacency links `[Must Do]`
+- [x] `chunking.py` — `MAX_CHARS=500`, `_is_low_quality()`, `_TOPIC_SHIFT_RE` `[Must Do]`
+- [x] `answer_service.py` — `_expand_context()` neighbors for top-5 docs `[Must Do]`
+- [x] Re-ingest: 352 chunks, verified timestamps + adjacency links + CE query accuracy `[Must Do]`
+
+### Test Suite Tasks
+
+- [x] Query banks defined (`easy.json` 12 queries, `medium.json` 7, `hard.json` 7) `[Must Do]`
+- [x] `query_generator.py` — generates grounded queries via Gemini + ChromaDB summaries `[Must Do]`
+- [x] `test_runner.py` — runs easy queries, captures pipeline logs, saves results `[Must Do]`
+- [x] `report_generator.py` — generates `summary.md` from results `[Must Do]`
+- [x] `TESTING_GUIDE.md` — Mermaid flowchart + command reference for new developers `[Must Do]`
+- [ ] `run_tests.py` — one-command master runner chaining all 3 scripts `[Must Do]`
+- [ ] LLM answer evaluator — score answer quality 1–10, not just intent match `[Nice to Have]`
+- [ ] Regression tracker — compare two runs, detect improvements/regressions `[Nice to Have]`
+- [ ] Extend runner to medium + hard difficulty levels `[Nice to Have]`
 
 > **POC VALIDATED (2026-05-14):**
 > Accuracy 30/30 (100%) | Scope isolation PASS | Multi-meeting synthesis PASS | Speed avg 3.4s (target <10s)

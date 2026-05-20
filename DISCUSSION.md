@@ -104,6 +104,109 @@ A project-scoped AI chatbot for Project Managers. PM selects a project → asks 
 
 ## Discussion Log
 
+### Session 19 (2026-05-20) — Sprint 3 Complete + Config Field Normalization
+
+**Topics covered:**
+
+**1. Sprint 3 — All tiers implemented and re-ingested**
+- Tier 2a: `start_time`/`end_time` (seconds) + `prev_chunk_id`/`next_chunk_id` added to every chunk
+- Tier 2b: `MAX_CHARS` raised 250→500, `_is_low_quality()` junk filter (unique token ratio + meaningful word count), `_TOPIC_SHIFT_RE` topic-shift split for same-speaker blocks
+- Tier 2c: `_expand_context()` in `answer_service.py` — fetches prev/next neighbors for top-5 re-ranked docs; neighbors labeled `[CONTEXT — just before/after]`; excluded from `_extract_sources()`
+- Re-ingestion: 352 chunks (166 + 186 across 2 meetings), adjacency links all valid
+
+**2. Config.py updated by user — CONSTANT_TRANSCRIPT field format changes**
+- `date` field renamed to `dateString` with ISO format (`"2026-03-19T06:44:26.000Z"`)
+- Sentence timestamps: `rawStartTimeMs`/`rawEndTimeMs` (int, ms) → `start_time`/`end_time` (float, seconds)
+- Second transcript summary: `"summary": "null"` (already handled by `isinstance(summary_raw, dict)` check)
+
+**3. normalize.py updated — unified timestamp + date normalization**
+- `dateString` parsed by splitting on `"T"` to get `YYYY-MM-DD` — falls back to `date` field if absent
+- Sentence timestamp normalization: detects `rawStartTimeMs`/`rawEndTimeMs` (live Fireflies API) → converts ms → seconds; or uses `start_time`/`end_time` directly (CONSTANT_TRANSCRIPT). Downstream code always sees consistent `start_time`/`end_time` in seconds regardless of source.
+
+**4. chunking.py updated — reads normalized field names**
+- `s.get("rawStartTimeMs")` → `s.get("start_time")`
+- `s.get("rawEndTimeMs")` → `s.get("end_time")`
+
+**5. CE query accuracy improved**
+- After Sprint 3 re-ingestion with larger chunks (MAX_CHARS=500), CE query now correctly attributes to **Bhavneet Mhajan** — no longer Ngũmi Gituro
+- Root cause of previous failure: smaller chunks (250 chars) broke Bhavneet's "Is it CE or re?" statement into a decontextualized fragment; larger chunks preserve the full question context
+
+**Decisions made:**
+- `normalize.py` is the canonical place for timestamp normalization — chunking.py never reads raw API field names directly, always reads normalized `start_time`/`end_time`
+- `fireflies_client.py` GraphQL query keeps `rawStartTimeMs`/`rawEndTimeMs` (correct Fireflies API field names); `normalize.py` converts on the way through
+
+**What's next:**
+- Sprint 3 is COMPLETE — all chunking improvements done and verified
+- Sprint 4 (automated test suite) is still in progress — `run_tests.py`, LLM evaluator, regression tracker remain
+
+---
+
+### Session 18 (2026-05-20) — Automated Test Suite Built
+
+**Topics covered:**
+
+**1. Hook system deep-dive**
+- Explained the two-layer system: CLAUDE.md (instructions to Claude) + `.claude/settings.json` hooks (shell commands at lifecycle events)
+- Hooks cannot make Claude write files — they inject `systemMessage` into Claude's context; only CLAUDE.md instructions trigger actual file updates
+- Current hooks: `SessionStart` (quest board status), `Stop` (reminder to type "update files")
+- Available hook events: `SessionStart`, `Stop`, `PreToolCall`, `PostToolCall`, `UserPromptSubmit`
+
+**2. Automated test suite designed and built**
+- Full 6-step pipeline: query bank → query generator → test runner → report generator → summary.md
+- Scope: easy-level only for now (medium and hard query banks defined but runner not extended to them yet)
+
+**3. Query bank created (`app/tests/query_bank/`)**
+- `easy.json` — 12 queries covering all 5 easy intents; must contain regex-trigger keywords; Gemini-generated queries are grounded in real ChromaDB summary chunks via `--project-id` flag
+- `medium.json` — 7 queries requiring LLM intent classification (paraphrased, date-filtered, speaker-name detection)
+- `hard.json` — 7 edge-case queries testing graceful degradation, contradiction detection, negative-space reasoning
+
+**4. `query_generator.py` built**
+- Reads existing `easy.json` as few-shot examples
+- Fetches `is_meeting_summary=True` chunks from ChromaDB via `fetch_meeting_summaries(project_id)` to ground Gemini in real meeting content (not generic hallucinated topics)
+- Calls Gemini Flash Lite to generate N new queries matching the schema and difficulty
+- Validates schema + deduplicates + re-assigns sequential IDs + merges into `easy.json`
+- `--dry-run` flag previews without saving; `--project-id` flag required for grounded generation
+
+**5. `test_runner.py` built**
+- Calls `answer_question(query, project_id)` directly (no HTTP, no mocking — real pipeline)
+- Captures full pipeline logs using `_LogCapture` handler attached directly to each pipeline logger
+- Critical fix: `logging_config.py` sets `propagate=False` on all 4 pipeline loggers — had to attach capture handler directly to each logger, not to the parent `"app"` logger
+- Pass criteria: `intent_match=True` AND `has_answer=True` (not a "not found" response)
+- Saves `easy_NNN_result.json` per query + `run_metadata.json` aggregate
+- Live progress table printed during run with intent mismatch shown inline
+
+**6. `report_generator.py` built**
+- Reads latest (or specified) run folder automatically
+- Generates `summary.md` with: ASCII progress bar, results table, intent breakdown by type, failed query details with full pipeline trace in code blocks, sources coverage table
+- `--run` flag targets a specific run folder
+
+**7. `TESTING_GUIDE.md` created**
+- Quick Start (3 commands at the top)
+- Mermaid flowchart of the full system
+- Folder structure, script reference, pass/fail rules, how to read results
+- Manual query addition schema with valid field values
+- Project ID reference table
+
+**8. First real test run results (project: proj_nolocode_001)**
+- 10/12 passed (83.3%)
+- 2 failures: `easy_005` and `easy_011` — both `general_query` misclassified as `summary_query`
+- Root cause: queries about "project meetings" and "last project sync" trigger summary intent in the LLM classifier even without explicit summary keywords
+
+**Decisions made:**
+- Query generator uses Gemini (not Claude API) — consistent with rest of project stack, no new API key needed
+- Log capture attaches to specific loggers directly, not parent — required because of `propagate=False` in `logging_config.py`
+- Test results stored in timestamped folders — never overwritten, runs accumulate for future regression comparison
+
+**Open questions from this session:**
+- None
+
+**What's next:**
+- Option A: `run_tests.py` — one command chains query_generator → test_runner → report_generator
+- Option B: LLM answer evaluator — score answer quality 1–10 using Gemini, not just intent match
+- Option C: Regression tracker — compare two runs to detect improvements or regressions
+
+---
+
 ### Session 17 (2026-05-19) — BM25 Fixes + Full Pipeline Audit
 
 **Topics covered:**

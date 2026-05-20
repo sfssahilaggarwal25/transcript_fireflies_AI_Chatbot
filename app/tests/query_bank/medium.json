@@ -1,0 +1,108 @@
+{
+  "_metadata": {
+    "difficulty": "medium",
+    "description": "Queries that require LLM intent classification because they are paraphrased, involve speaker name detection, date filtering, or cross-meeting retrieval. The regex fallback would misclassify or miss these. Tests the system's real-world robustness.",
+    "count": 7,
+    "intents_covered": ["summary_query", "speaker_query", "timeline_query", "commitment_query", "decision_query"]
+  },
+  "queries": [
+    {
+      "id": "medium_001",
+      "query": "Can you recap what happened in the 9th May meeting?",
+      "expected_intent": "summary_query",
+      "expected_strategy": "summary_chunks_with_date_filter",
+      "tags": ["summary", "date-filter", "paraphrased"],
+      "notes": "'recap' is not in _SUMMARY_RE regex — only LLM classifies this correctly. Also tests _extract_month_day() date parsing logic. Checks that the date filter fires correctly.",
+      "evaluation_hints": {
+        "must_contain": ["content specific to the May 9th (or nearest) meeting"],
+        "must_not_contain": ["content from other meetings"],
+        "should_cite_sources": true,
+        "expected_source_type": "is_meeting_summary=True, meeting_date near 2025-05-09"
+      }
+    },
+    {
+      "id": "medium_002",
+      "query": "What did [Speaker Name] mention about the project timeline?",
+      "expected_intent": "speaker_query",
+      "expected_strategy": "hybrid_retrieve_with_speaker_name_filter",
+      "tags": ["speaker", "name-detection", "topic-filter"],
+      "notes": "Replace [Speaker Name] with a real speaker from your project. Tests _detect_speaker_name() which tries full name then first name. Also checks that speaker_name hard filter is applied to hybrid retrieval.",
+      "evaluation_hints": {
+        "must_contain": ["content attributed to the named speaker"],
+        "must_not_contain": ["content from other speakers presented as the named speaker's words"],
+        "should_cite_sources": true,
+        "expected_source_type": "chunks where speaker_name matches"
+      }
+    },
+    {
+      "id": "medium_003",
+      "query": "How has the project scope changed across the meetings?",
+      "expected_intent": "timeline_query",
+      "expected_strategy": "per_meeting_retrieval_merged_chronologically",
+      "tags": ["timeline", "cross-meeting", "comparison"],
+      "notes": "'across the meetings' triggers cross_meeting temporal_focus. Tests per-meeting retrieval where each meeting is queried separately and results merged chronologically — not a single flat search.",
+      "evaluation_hints": {
+        "must_contain": ["references to more than one meeting", "chronological progression"],
+        "must_not_contain": ["only one meeting referenced"],
+        "should_cite_sources": true,
+        "expected_source_type": "chunks from multiple meetings, sorted by meeting_date"
+      }
+    },
+    {
+      "id": "medium_004",
+      "query": "What has the team promised to deliver before the next sprint?",
+      "expected_intent": "commitment_query",
+      "expected_strategy": "hybrid_retrieve_contains_commitment_filter",
+      "tags": ["commitment", "paraphrased", "no-keyword"],
+      "notes": "'promised to deliver' is not in _COMMITMENT_RE regex — LLM must recognize this as commitment intent. Tests whether the LLM classifier catches intent when user avoids standard keywords.",
+      "evaluation_hints": {
+        "must_contain": ["deliverable or promise attributed to a team member"],
+        "must_not_contain": [],
+        "should_cite_sources": true,
+        "expected_source_type": "chunks with contains_commitment=True"
+      }
+    },
+    {
+      "id": "medium_005",
+      "query": "What was agreed upon regarding the payment terms?",
+      "expected_intent": "decision_query",
+      "expected_strategy": "hybrid_retrieve_no_filter",
+      "tags": ["decision", "paraphrased", "topic-specific"],
+      "notes": "'agreed upon' hits _DECISION_RE but the topic 'payment terms' is handled by semantic search, not a hard filter. Tests that semantic retrieval finds the right topic within decision chunks.",
+      "evaluation_hints": {
+        "must_contain": ["reference to payment, pricing, or financial terms"],
+        "must_not_contain": ["unrelated decisions"],
+        "should_cite_sources": true,
+        "expected_source_type": "chunks semantically related to payment terms"
+      }
+    },
+    {
+      "id": "medium_006",
+      "query": "Walk me through what happened between the first and second meeting",
+      "expected_intent": "timeline_query",
+      "expected_strategy": "per_meeting_retrieval_merged_chronologically",
+      "tags": ["timeline", "cross-meeting", "first-second-comparison"],
+      "notes": "'between the first and second meeting' matches _TIMELINE_RE. Tests the timeline retrieval strategy — each meeting queried separately then merged chronologically.",
+      "evaluation_hints": {
+        "must_contain": ["content from two different meetings"],
+        "must_not_contain": [],
+        "should_cite_sources": true,
+        "expected_source_type": "chunks from two earliest meetings in project"
+      }
+    },
+    {
+      "id": "medium_007",
+      "query": "What concerns did [Speaker Name] raise during the meetings?",
+      "expected_intent": "speaker_query",
+      "expected_strategy": "hybrid_retrieve_with_speaker_name_filter",
+      "tags": ["speaker", "name-detection", "sentiment"],
+      "notes": "Replace [Speaker Name] with a real speaker. Tests that 'concerns raised by X' routes to speaker_query, not question_query. Validates speaker filter narrows results to only that person's statements.",
+      "evaluation_hints": {
+        "must_contain": ["concerns, objections, or risks raised by that speaker"],
+        "must_not_contain": ["statements from other speakers"],
+        "should_cite_sources": true,
+        "expected_source_type": "chunks where speaker_name matches and topic is concern/issue"
+      }
+    }
+  ]
+}
