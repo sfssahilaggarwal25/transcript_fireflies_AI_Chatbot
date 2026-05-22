@@ -11,6 +11,7 @@ from app.clients.fireflies_client import fetch_transcript
 from app.clients.gemini_client import generate_meeting_summary
 from app.services.storage.project_store import get_project_for_meeting, get_speaker_role
 from app.services.storage.chunk_store import get_distinct_meeting_ids
+from app.services.storage.db import reset_vectorstore
 
 log = get_logger("webhook_handler")
 
@@ -148,6 +149,7 @@ async def handle_fireflies_webhook(payload):
 
             all_chunks.extend(chunks)
 
+        reset_vectorstore()
         log.info(f"Pipeline complete ✓  total={_ms(pipeline_start)}  transcripts_processed={len(all_chunks) > 0}")
         return all_chunks
 
@@ -241,6 +243,7 @@ async def handle_fireflies_webhook(payload):
     stored = store_documents(documents)
     log.info(f"[6/6] ChromaDB    → {stored} documents stored  ({_ms(t)})")
 
+    reset_vectorstore()
     log.info(f"Pipeline complete ✓  total={_ms(pipeline_start)}")
     return chunks
 

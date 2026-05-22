@@ -59,6 +59,17 @@ def get_vectorstore() -> Chroma:
         ) from e
 
 
+def reset_vectorstore() -> None:
+    """
+    Force the singleton to re-initialize on the next get_vectorstore() call.
+    Call this after wiping and re-ingesting chroma_db/ — without it, the in-memory
+    HNSW index still references old IDs and throws 'Error finding id' on queries.
+    """
+    global _VECTORSTORE
+    _VECTORSTORE = None
+    logger.info("Vectorstore singleton reset — next call will reinitialize from disk")
+
+
 def get_raw_collection() -> Collection:
     """
     Return underlying raw Chroma collection.
