@@ -261,7 +261,13 @@ _STATUS_ICON = {
 }
 
 def print_progress(result: dict, index: int, total: int) -> None:
-    icon       = _STATUS_ICON.get(result["status"], "??? ")
+    eval_err   = (result.get("answer_evaluation") or {}).get("eval_error")
+    # Show EVAL_ERR on the progress line when the evaluator itself failed
+    if result["status"] == "failed" and eval_err:
+        icon = "EVAL"
+    else:
+        icon = _STATUS_ICON.get(result["status"], "??? ")
+
     ms         = result["response_time_ms"] or 0
     intent     = result["actual_intent"] or "unknown"
     query      = result["query"][:45].ljust(45)
@@ -275,7 +281,9 @@ def print_progress(result: dict, index: int, total: int) -> None:
     if result["intent_match"] is False:
         intent_note = f"  [expected={result['expected_intent']}]"
 
-    print(f"  [{index:02d}/{total}] {icon}  {ms:>5}ms  {query}  intent={intent}{intent_note}{score_str}{conf_str}")
+    eval_note = "  [eval_api_err]" if eval_err else ""
+
+    print(f"  [{index:02d}/{total}] {icon}  {ms:>5}ms  {query}  intent={intent}{intent_note}{score_str}{conf_str}{eval_note}")
 
 
 # ── Step 6: Save run metadata ─────────────────────────────────────────────────
@@ -381,17 +389,21 @@ def print_summary(results: list[dict], total_ms: int) -> None:
     if failures:
         print("\n  Failed queries:")
         for r in failures:
-            reason = r.get("failure_reason", "")
+            reason    = r.get("failure_reason", "")
+            eval_err  = (r.get("answer_evaluation") or {}).get("eval_error")
             if r["status"] == "error":
-                print(f"    {r['query_id']}  ERROR      → {r['error']}")
+                print(f"    {r['query_id']}  PIPELINE_ERR → {r['error']}")
+            elif eval_err:
+                # Evaluator itself failed — score=0 is not a real score
+                print(f"    {r['query_id']}  EVAL_ERR     → evaluator API failed: {eval_err[:60]}")
             elif reason == "intent":
-                print(f"    {r['query_id']}  INTENT     → expected={r['expected_intent']}  got={r['actual_intent']}")
+                print(f"    {r['query_id']}  INTENT       → expected={r['expected_intent']}  got={r['actual_intent']}")
             elif reason == "answer":
-                print(f"    {r['query_id']}  NO ANSWER  → pipeline returned not-found response")
+                print(f"    {r['query_id']}  NO ANSWER    → pipeline returned not-found response")
             elif reason == "low_score":
-                score    = r.get("answer_score", "?")
+                score     = r.get("answer_score", "?")
                 reasoning = (r.get("answer_evaluation") or {}).get("reasoning", "")
-                print(f"    {r['query_id']}  LOW SCORE  → score={score}/10  {reasoning[:80]}")
+                print(f"    {r['query_id']}  LOW SCORE    → score={score}/10  {reasoning[:80]}")
     else:
         print("\n  All queries passed.")
 

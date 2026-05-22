@@ -82,6 +82,41 @@ _QUESTION_START_RE = re.compile(
 )
 
 
+_DOCUMENT_SHARE_RE = re.compile(
+    r"\b("
+    r"shared (a |the |this )?(document|doc|file|spreadsheet|sheet|presentation|deck|report|pdf|link|attachment)|"
+    r"sending (over |you |across )?(the |a |this )?(document|doc|file|spreadsheet|sheet|presentation|deck|report|pdf)|"
+    r"sent (you |over |across )?(the |a |this )?(document|doc|file|spreadsheet|sheet|presentation|deck|report|pdf)|"
+    r"please find (the |a |this )?(attached|document|doc|file)|"
+    r"attached (the |a |this )?(document|doc|file|spreadsheet|sheet|report)|"
+    r"can you (share|send|provide) (the |a |this )?(document|doc|file|spreadsheet|sheet|report)|"
+    r"share (your |the |a |this )?(screen|document|doc|file|spreadsheet|presentation|deck)|"
+    r"sharing (the |a |this )?(screen|document|doc|file|spreadsheet|presentation|deck)|"
+    r"i('ll| will) share (the |a |this )?(document|doc|file|spreadsheet|link)|"
+    r"dropped (the |a |this )?(link|document|doc|file) in (the )?chat|"
+    r"put (it |the link |the doc |the file )in (the )?chat"
+    r")\b",
+    re.IGNORECASE,
+)
+
+_OPEN_ISSUE_RE = re.compile(
+    r"\b("
+    r"issue|problem|bug|error|discrepancy|mismatch|inconsistency|"
+    r"not (working|correct|right|matching|aligned|accurate)|"
+    r"something('s| is) (wrong|off|broken|incorrect)|"
+    r"doesn't (work|match|add up)|"
+    r"that('s| is) (wrong|incorrect|not right|broken)|"
+    r"concern|unclear|confusion|confused|confusing|"
+    r"need(s)? (clarification|to be fixed|to be resolved|to be addressed|to be checked)|"
+    r"still (open|pending|unresolved|outstanding)|"
+    r"not resolved|unresolved|open question|raised (an?|the) (issue|concern|question|problem)|"
+    r"flag(ged)? (this|that|an? issue|a concern)|"
+    r"pointing out|raised (this|that)|brought up"
+    r")\b",
+    re.IGNORECASE,
+)
+
+
 _FALSE_COMMITMENT_RE = re.compile(
     r"\b("
     r"we will calculate|"
@@ -157,7 +192,7 @@ _TOPIC_SHIFT_RE = re.compile(
 
 def _detect_signals(text: str) -> dict:
     """
-    Detect decision / commitment / question signals from transcript chunk text.
+    Detect decision / commitment / question / document_share / open_issue signals from chunk text.
     """
 
     cleaned = text.strip()
@@ -167,6 +202,8 @@ def _detect_signals(text: str) -> dict:
             "contains_decision": False,
             "contains_commitment": False,
             "contains_question": False,
+            "contains_document_share": False,
+            "contains_open_issue": False,
         }
 
     contains_decision = bool(_DECISION_RE.search(cleaned))
@@ -181,10 +218,16 @@ def _detect_signals(text: str) -> dict:
         or bool(_QUESTION_START_RE.match(cleaned))
     )
 
+    contains_document_share = bool(_DOCUMENT_SHARE_RE.search(cleaned))
+
+    contains_open_issue = bool(_OPEN_ISSUE_RE.search(cleaned))
+
     return {
         "contains_decision": contains_decision,
         "contains_commitment": contains_commitment,
         "contains_question": contains_question,
+        "contains_document_share": contains_document_share,
+        "contains_open_issue": contains_open_issue,
     }
 
 
@@ -206,10 +249,12 @@ def build_summary_chunk(summary_text: str, meeting_meta: dict, chunk_index: int)
         "end_time":           None,
         "prev_chunk_id":      None,
         "next_chunk_id":      None,
-        "contains_decision":  False,
-        "contains_commitment": False,
-        "contains_question":  False,
-        "sentiment":          "neutral",
+        "contains_decision":       False,
+        "contains_commitment":      False,
+        "contains_question":        False,
+        "contains_document_share":  False,
+        "contains_open_issue":      False,
+        "sentiment":                "neutral",
         "text":               summary_text,
         "text_length":        len(summary_text),
     }
@@ -226,12 +271,13 @@ def create_chunks(sentences, meeting_meta):
     Utterance-based chunking: one chunk = one speaker block.
     Chunk metadata follows the full 5-level schema.
 
-    Tier 2a additions: start_time / end_time (ms from API), prev_chunk_id / next_chunk_id.
+    Tier 2a additions: start_time / end_time (seconds, pre-converted by normalize.py),
+    prev_chunk_id / next_chunk_id.
     Tier 2b additions: MAX_CHARS raised to 500, junk detection, topic-shift splits.
     """
     chunks = []
     current_chunk = []
-    current_times = []   # list of (rawStartTimeMs, rawEndTimeMs) per sentence
+    current_times = []   # list of (start_sec, end_sec) per sentence
     current_speaker = None
     chunk_index = 1
 
@@ -263,6 +309,8 @@ def create_chunks(sentences, meeting_meta):
             signals["contains_decision"]
             or signals["contains_commitment"]
             or signals["contains_question"]
+            or signals["contains_document_share"]
+            or signals["contains_open_issue"]
             or bool(_CONFIRMATION_RE.search(chunk_text))
         )
 
@@ -271,8 +319,8 @@ def create_chunks(sentences, meeting_meta):
             current_times = []
             return
 
-        valid_starts = [ms for ms, _ in current_times if ms is not None]
-        valid_ends   = [ms for _, ms in current_times if ms is not None]
+        valid_starts = [s for s, _ in current_times if s is not None]
+        valid_ends   = [e for _, e in current_times if e is not None]
         start_time = min(valid_starts) if valid_starts else None
         end_time   = max(valid_ends)   if valid_ends   else None
 
@@ -319,10 +367,10 @@ def create_chunks(sentences, meeting_meta):
         current_times = []
 
     for s in sentences:
-        text      = s["text"].strip()
-        speaker   = s["speaker_name"]
-        start_ms  = s.get("start_time")
-        end_ms    = s.get("end_time")
+        text       = s["text"].strip()
+        speaker    = s["speaker_name"]
+        start_sec  = s.get("start_time")
+        end_sec    = s.get("end_time")
 
         if len(text) < 8:
             continue
@@ -341,7 +389,7 @@ def create_chunks(sentences, meeting_meta):
             flush_chunk(force=True)
 
         current_chunk.append(text)
-        current_times.append((start_ms, end_ms))
+        current_times.append((start_sec, end_sec))
 
     flush_chunk(force=True)
 

@@ -1,4 +1,5 @@
 import json
+import re
 import streamlit as st
 
 from app.logging_config import setup_pipeline_logging
@@ -83,22 +84,45 @@ def intent_badge_html(intent: str) -> str:
     )
 
 
+def _linkify_citations(text: str, num_sources: int) -> str:
+    """Convert inline [n] citation markers into anchor links pointing to source #n."""
+    def replacer(m):
+        n = int(m.group(1))
+        if 1 <= n <= num_sources:
+            return (
+                f'<a href="#src-{n}" '
+                f'style="color:#2563EB;font-weight:700;font-size:0.82em;'
+                f'text-decoration:none;vertical-align:super;">[{n}]</a>'
+            )
+        return m.group(0)
+    # Match [n] (1–3 digits) that is NOT followed by a colon (timestamps are [16:39] style)
+    return re.sub(r'\[(\d{1,3})\](?!:)', replacer, text)
+
+
 def render_sources(sources: list[dict]):
     if not sources:
         return
-    with st.expander(f"📎 {len(sources)} source{'s' if len(sources) > 1 else ''}", expanded=False):
+    with st.expander(f"📎 {len(sources)} source{'s' if len(sources) > 1 else ''}", expanded=True):
         for i, s in enumerate(sources):
+            # HTML anchor — clicking [n] in the answer scrolls here
+            st.markdown(f'<div id="src-{i + 1}"></div>', unsafe_allow_html=True)
+
+            ts_str = f" &nbsp;·&nbsp; ⏱ `{s['timestamp']}`" if s.get("timestamp") else ""
+
             if s.get("is_summary"):
                 st.markdown(
                     f"**{i + 1}. 📋 Meeting Summary** &nbsp;·&nbsp; "
                     f"📅 {s['meeting_title']} &nbsp;·&nbsp; "
                     f"`{s['meeting_date']}`"
+                    + ts_str
                 )
             else:
                 st.markdown(
                     f"**{i + 1}. {s['speaker_name']}** &nbsp;·&nbsp; "
                     f"📅 {s['meeting_title']} &nbsp;·&nbsp; "
                     f"`{s['meeting_date']}`"
+                    + ts_str,
+                    unsafe_allow_html=True,
                 )
             if s.get("content_preview"):
                 st.caption(f"❝ {s['content_preview']}{'…' if len(s.get('content_preview','')) == 200 else ''}")
@@ -119,12 +143,17 @@ def render_chat_message(msg: dict):
             st.info(msg["notice"], icon="📅")
 
         answer = msg["answer"]
+        sources = msg["sources"]
+
         if any(answer.startswith(p) for p in _NOT_FOUND_PREFIXES):
             st.warning(answer, icon="⚠️")
+        elif sources:
+            # Convert [n] citation markers to clickable anchor links
+            st.markdown(_linkify_citations(answer, len(sources)), unsafe_allow_html=True)
         else:
             st.markdown(answer)
 
-        render_sources(msg["sources"])
+        render_sources(sources)
 
 
 def ask_and_store(question: str, project_id: str):

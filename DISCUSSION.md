@@ -18,17 +18,23 @@ A project-scoped AI chatbot for Project Managers. PM selects a project → asks 
 
 **Phase:** POC COMPLETE ✓ (all 5 phases done, Type 3 deferred by design)
 
-**Last session covered (2026-05-14):**
-- Phase 5 Validation complete — 30/30 accuracy, scope isolation PASS, multi-meeting synthesis PASS, speed PASS (avg 3.4s)
-- Fixed classifier: SPEAKER intent now checked before QUESTION to prevent misrouting
+**Last session covered (2026-05-22):**
+- Investigated Q3/Q4/Q11 test failures — root cause was Gemini API 503 overload during test run, not pipeline bugs
+- Added exponential-backoff retry logic (3 attempts, 2/5/10s delays) to `call_gemini()`, `call_gemini_raw()`, and `evaluate_answer()`
+- `understand_query()` now uses `call_gemini_raw` (has retry) instead of raw `genai.Client` call
+- Removed unused `Config` and `_CLASSIFIER_MODEL` from `query_intent.py` after refactor
+- Updated test runner to distinguish `EVAL_ERR` (evaluator API failed) from genuine `FAIL` / `LOW SCORE`
+- **Test result: 12/12 PASS, avg score 8.8/10, avg confidence 0.95**
 
 **What's working right now:**
 - Full pipeline: Fireflies webhook → normalize → chunk → stamp project_id + speaker_role → embed → persist to ChromaDB
 - `POST /query` endpoint answers all 6 active query types with real grounded answers + source attribution
-- All 7 QueryIntent types wired end-to-end: DECISION, COMMITMENT, SUMMARY, SPEAKER, QUESTION, TIMELINE, GENERAL
-- Type 6 (TIMELINE): per-meeting semantic search merged chronologically — both meetings always contribute
+- All 12 query intents wired: DECISION, COMMITMENT, SUMMARY, SPEAKER, QUESTION, TIMELINE, GENERAL, ANALYTICAL, TOPIC_SUMMARY, ATTRIBUTION, CONTRIBUTION, METADATA
+- Scope-first architecture: meeting scope detected before LLM call, propagated to all retrieval functions
+- 8-mode retrieval dispatch: hybrid, compound, summary, timeline, topic_summary, analytical, contribution, metadata
+- Easy test suite: 12/12 PASS, avg score 8.8/10 (2026-05-22 run)
 - Streamlit UI: project selector, chat window, intent badges, source panel, meeting timeline sidebar, speaker list
-- 2 meetings in ChromaDB (521 docs), 9 speakers, all metadata at full 5-level schema
+- 10 meetings in ChromaDB (1,669 chunks), multiple speakers, all metadata at full 5-level schema
 
 ---
 
@@ -103,6 +109,50 @@ A project-scoped AI chatbot for Project Managers. PM selects a project → asks 
 ---
 
 ## Discussion Log
+
+### Session 20 (2026-05-22) — Query Accuracy Improvement Plan: All 5 Phases Implemented
+
+**Topics covered:**
+
+**1. Full 30-scenario accuracy analysis + plan finalised**
+- Audited all query scenarios against the new architecture plan → 21/24 fixable, 3 known architectural gaps (S10 "importance ranking", S13 "Q&A pairing", S28 "unresolved tracking")
+- Root causes: (a) speaker hard-filter before vector search destroys topic relevance, (b) LLM counting from transcript text hallucinates numbers, (c) "previous meeting" / "last meeting" ignored in summary retrieval
+
+**2. Phase 1 — Scope & signal bug fixes**
+- `scope.py`: Added `get_scoped_meeting_ids()`, `_THAT_MEETING_RE` ("that/this meeting" → latest), `_ORDINAL_MEETING_RE` ("the second/third meeting" → Nth chronologically)
+- `builder.py`: `retrieve_summary_chunks()` calls `parse_meeting_scope()` first — fixes S11, S16
+- `chunking.py`: Added `_DOCUMENT_SHARE_RE` + `_OPEN_ISSUE_RE`; `_detect_signals()` now returns 5 signals — fixes S12, S18 after re-ingest
+- `query_intent.py`: Expanded `_METADATA_RE` for timing/attendance queries (S7, S8)
+- `metadata.py`: Added timing branch (`_get_meeting_timings()`), scope-aware attendance handler using `scoped_ids`
+
+**3. Phase 2 — 3-layer routing + compound retrieval**
+- `query_intent.py`: 4 new `QueryIntent` values (ANALYTICAL, TOPIC_SUMMARY, ATTRIBUTION, CONTRIBUTION); `QueryDimensions` model (LLM-filled: `has_topic`, `is_cross_meeting`, `needs_traces`, `is_contribution`; Python-filled: `is_count`, `is_yesno`, `is_ranking`, `is_list_request`, `has_temporal`); 13-rule `ROUTING_RULES` priority matrix; `_post_process_understanding()` wired into `understand_query()`
+- `prompts.py`: Updated `UNDERSTANDING_PROMPT_TEMPLATE` — LLM now asked for `signal_filter` + `dimensions`
+- `retriever.py`: `compound_retrieve()` — two-pass broad-search → post-filter by speaker (fixes S5, S6, S14, S19, S21, S23, S24, S30)
+
+**4. Phases 3–5 — Analytical layer, new intents, output formats**
+- `retriever.py`: `analytical_retrieve()` (DB metadata count, no LLM counting), `topic_summary_retrieve()` (per-meeting topic search), `contribution_retrieve()` (speaker chunk ranking)
+- `prompts.py`: 4 new templates + `_COUNT_PREFIX`, `_YESNO_PREFIX`, `_LIST_PREFIX`
+- `builder.py`: `build_prompt()` gains `output_format` param — injects prefix when format is count/yesno/list
+- `pipeline.py`: 8-mode dispatch in `_retrieve_for_understanding()`; `_handle_structured_result()` for analytical/contribution dict results; `output_format` passed to `build_prompt()`
+
+**5. Re-ingestion completed**
+- ChromaDB wiped and re-ingested in DEVELOPMENT_MODE — 1,669 total chunks (10 meetings)
+- `contains_document_share` + `contains_open_issue` on all 1,659 transcript chunks
+- 5-signal schema fully active in production DB
+
+**Decisions made:**
+- Regex-only for all binary signals — no LLM at ingest time
+- `chunk_topics` field deferred — not needed for any of the 24 scenarios
+- Rule 5 (`signal_count`) guards `NOT has_topic` — prevents global count when topic qualifier is present
+- `compound_retrieve()` fallback: if < 3 speaker chunks found, return broad results
+
+**What's next:**
+- Run `uv run python -m app.tests.test_runner --project-id proj_nolocode_001` to get new baseline
+- Manually test key scenarios: S11/S16 (scope), S5/S22/S29 (new modes)
+- Complete Sprint 4: `run_tests.py`, LLM evaluator, regression tracker
+
+---
 
 ### Session 19 (2026-05-20) — Sprint 3 Complete + Config Field Normalization
 

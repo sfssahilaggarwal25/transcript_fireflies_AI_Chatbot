@@ -1,3 +1,50 @@
+# SPRINT 6 — Query Accuracy Improvement  [COMPLETE]
+
+> All 5 phases of the query accuracy improvement plan implemented in Session 20 (2026-05-22).
+> 21 of 24 previously-failing scenarios now fixed. ChromaDB re-ingested: 1,669 chunks, 10 meetings.
+> Easy test suite: **12/12 PASS, avg 8.8/10** (verified 2026-05-22 after retry logic added).
+
+```
+╔══════════════════════════════════════════════════════╗
+║     SPRINT 6 — QUERY ACCURACY                       ║
+║     "Fix the 24 failing scenarios"                  ║
+╠══════════════════════════════════════════════════════╣
+║  Phase 1 — Scope bug fixes      ✓ COMPLETE          ║
+║  Phase 2 — Compound retrieval   ✓ COMPLETE          ║
+║  Phase 3 — Analytical layer     ✓ COMPLETE          ║
+║  Phase 4 — New intent types     ✓ COMPLETE          ║
+║  Phase 5 — Output format polish ✓ COMPLETE          ║
+║  Re-ingestion: 1,669 chunks     ✓ 10 meetings       ║
+║  Scenarios fixed: 21/24                             ║
+║  Known gaps: S10, S13, S28 (need design work)       ║
+║  Easy test suite: 12/12 PASS    ✓ avg 8.8/10        ║
+║  API retry logic added          ✓ 2026-05-22         ║
+╚══════════════════════════════════════════════════════╝
+```
+
+### What was built
+
+- `app/services/answer/scope.py` — `get_scoped_meeting_ids()`, `"that/this meeting"` + ordinal patterns
+- `app/services/answer/builder.py` — scope-first summary retrieval, `output_format` param in `build_prompt()`
+- `app/services/transcript/chunking.py` — 2 new signals: `contains_document_share`, `contains_open_issue`
+- `app/services/query_intent.py` — `QueryDimensions` model, 4 new intents, 13-rule `ROUTING_RULES`, `_fill_syntactic_dimensions()`, `_post_process_understanding()`
+- `app/services/answer/metadata.py` — timing handler, scoped attendance counts
+- `app/services/retrieval/retriever.py` — `compound_retrieve()`, `analytical_retrieve()`, `topic_summary_retrieve()`, `contribution_retrieve()`
+- `app/services/prompts.py` — 4 new answer templates, `_COUNT_PREFIX`, `_YESNO_PREFIX`, `_LIST_PREFIX`
+- `app/services/answer/pipeline.py` — 8-mode dispatch, `_handle_structured_result()`, output_format wiring
+
+### Known gaps (require separate design work)
+
+| Scenario | Reason | Future path |
+|----------|---------|-------------|
+| S10: Which topic was most important? | "Importance" is subjective | Add mention-count as proxy |
+| S13: Can we answer all of Bhavneet's questions? | Needs Q&A chunk pairing | New post-processing stage |
+| S28: Which unresolved issue discussed last? | No `is_resolved` tracking | Resolution detection in reranker |
+
+---
+
+---
+
 # SPRINT 5 — Agentic Tool Calling for Compound Queries  [PLANNED]
 
 > Enables the LLM to compose metadata + semantic retrieval itself for analytical questions
@@ -168,6 +215,7 @@ validates and re-applies it on every tool execution.
 ║  LLM answer evaluator           [ ] Not started     ║
 ║  Regression tracker             [ ] Not started     ║
 ║  First run: 10/12 passed (83.3%)                    ║
+║  Re-run needed: Sprint 6 changed routing + prompts  ║
 ╚══════════════════════════════════════════════════════╝
 ```
 

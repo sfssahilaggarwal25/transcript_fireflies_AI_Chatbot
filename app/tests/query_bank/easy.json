@@ -1,279 +1,193 @@
 {
   "_metadata": {
     "difficulty": "easy",
-    "description": "Queries with direct keywords that the regex fallback classifier can handle correctly. No LLM intent classification needed. Tests basic retrieval paths and confirms the pipeline's floor-level reliability.",
+    "description": "Queries grounded in actual project data (Nolocode — M2 formulas, forecasting, AI chatbot, AWS deployment). Each query covers one intent type and one scope. Tests that the pipeline routes correctly and returns relevant answers.",
     "count": 12,
+    "project_id": "proj_nolocode_001",
     "intents_covered": [
       "summary_query",
       "decision_query",
       "commitment_query",
       "question_query",
+      "speaker_query",
       "general_query"
+    ],
+    "scopes_covered": [
+      "meeting-level",
+      "project-level"
     ]
   },
   "queries": [
     {
       "id": "easy_001",
       "query": "Give me a summary of the last meeting",
+      "scope": "meeting-level",
       "expected_intent": "summary_query",
-      "expected_strategy": "summary_chunks_raw_collection",
-      "tags": [
-        "summary",
-        "regex-catchable",
-        "no-vector-search"
-      ],
-      "notes": "The word 'summary' directly triggers _SUMMARY_RE regex. Fetches from raw collection — no vector search fires. Tests the summary chunk retrieval path.",
+      "expected_mode": "summary",
+      "tags": ["summary", "meeting-level", "last-meeting"],
+      "notes": "Simplest summary query. 'last meeting' resolves to Nolocode-meeting (2026-05-07). Should return only that meeting's summary chunk.",
       "evaluation_hints": {
-        "must_contain": [
-          "meeting title or date",
-          "key topics discussed"
-        ],
-        "must_not_contain": [
-          "I don't know",
-          "not found"
-        ],
-        "should_cite_sources": true,
-        "expected_source_type": "is_meeting_summary=True chunk"
+        "must_contain": ["meeting title or date", "at least one topic discussed in that meeting"],
+        "must_not_contain": ["I don't know", "not found"],
+        "should_be_scoped_to": "single meeting (2026-05-07 or 2026-05-05)",
+        "should_cite_sources": true
       }
     },
     {
       "id": "easy_002",
-      "query": "What decisions were made in the meetings?",
+      "query": "What decisions were made about the M2 formulas?",
+      "scope": "project-level",
       "expected_intent": "decision_query",
-      "expected_strategy": "hybrid_retrieve_no_filter",
-      "tags": [
-        "decision",
-        "regex-catchable",
-        "hybrid"
-      ],
-      "notes": "The word 'decisions' directly triggers _DECISION_RE regex. Retrieval uses hybrid (dense+BM25+RRF) without hard metadata filter — decision signals are weak hints, not hard filters.",
+      "expected_mode": "hybrid",
+      "tags": ["decision", "project-level", "M2-formulas"],
+      "notes": "Decision query with specific topic. M2 formula decisions exist in multiple meetings. Should retrieve chunks with contains_decision=True and content about M2 formulas.",
       "evaluation_hints": {
-        "must_contain": [
-          "a decision or agreement was mentioned"
-        ],
-        "must_not_contain": [
-          "I don't know"
-        ],
-        "should_cite_sources": true,
-        "expected_source_type": "speaker transcript chunks"
+        "must_contain": ["M2", "formula", "decision or agreement"],
+        "must_not_contain": ["I don't know", "no decisions found"],
+        "should_cite_sources": true
       }
     },
     {
       "id": "easy_003",
       "query": "What are the action items from our meetings?",
+      "scope": "project-level",
       "expected_intent": "commitment_query",
-      "expected_strategy": "hybrid_retrieve_contains_commitment_filter",
-      "tags": [
-        "commitment",
-        "action-items",
-        "regex-catchable"
-      ],
-      "notes": "'action items' directly triggers _COMMITMENT_RE regex. Tests the commitment path which applies contains_commitment=True metadata filter.",
+      "expected_mode": "hybrid",
+      "tags": ["commitment", "project-level", "action-items"],
+      "notes": "'action items' directly triggers commitment intent. Should return commitments from across all meetings. Over 100 commitment chunks exist in this project.",
       "evaluation_hints": {
-        "must_contain": [
-          "a task, deliverable, or follow-up item"
-        ],
+        "must_contain": ["action item, task, or follow-up"],
         "must_not_contain": [],
-        "should_cite_sources": true,
-        "expected_source_type": "chunks with contains_commitment=True"
+        "should_cite_sources": true
       }
     },
     {
       "id": "easy_004",
-      "query": "What questions did the client ask in the meetings?",
+      "query": "What questions were raised about the M2 formulas?",
+      "scope": "project-level",
       "expected_intent": "question_query",
-      "expected_strategy": "hybrid_retrieve_contains_question_filter",
-      "tags": [
-        "question",
-        "regex-catchable"
-      ],
-      "notes": "The word 'questions' triggers _QUESTION_RE regex. Tests contains_question=True metadata filter path.",
+      "expected_mode": "hybrid",
+      "tags": ["question", "project-level", "M2-formulas"],
+      "notes": "Question query with specific topic. M2 formula discussions had 43 question chunks. Should return specific questions raised about formulas.",
       "evaluation_hints": {
-        "must_contain": [
-          "a question that was raised"
-        ],
+        "must_contain": ["a question about formula, calculation, or M2"],
         "must_not_contain": [],
-        "should_cite_sources": true,
-        "expected_source_type": "chunks with contains_question=True"
+        "should_cite_sources": true
       }
     },
     {
       "id": "easy_005",
-      "query": "What was discussed in the project meetings?",
-      "expected_intent": "general_query",
-      "expected_strategy": "hybrid_retrieve_no_filter",
-      "tags": [
-        "general",
-        "broad",
-        "regex-catchable"
-      ],
-      "notes": "No specific intent keyword — falls through all regex patterns to GENERAL. Tests the default hybrid retrieval path with no metadata filter.",
+      "query": "What was discussed in the first meeting?",
+      "scope": "meeting-level",
+      "expected_intent": "summary_query",
+      "expected_mode": "summary",
+      "tags": ["summary", "meeting-level", "first-meeting"],
+      "notes": "'first meeting' resolves to Nolocode meeting with Ashpreet (2026-03-19). Should return only that meeting's summary about forecasting formulas and ONCA.",
       "evaluation_hints": {
-        "must_contain": [
-          "any relevant meeting content"
-        ],
-        "must_not_contain": [],
-        "should_cite_sources": true,
-        "expected_source_type": "speaker transcript chunks"
+        "must_contain": ["forecasting or formula or ONCA or cash flow"],
+        "must_not_contain": ["I don't know"],
+        "should_be_scoped_to": "Nolocode meeting with Ashpreet (2026-03-19)",
+        "should_cite_sources": true
       }
     },
     {
       "id": "easy_006",
-      "query": "What follow-up tasks were assigned?",
+      "query": "What commitments were made in the previous meeting?",
+      "scope": "meeting-level",
       "expected_intent": "commitment_query",
-      "expected_strategy": "hybrid_retrieve_contains_commitment_filter",
-      "tags": [
-        "commitment",
-        "follow-up",
-        "regex-catchable"
-      ],
-      "notes": "'follow-up' directly hits _COMMITMENT_RE. A second commitment query with different phrasing to verify regex coverage beyond 'action items'.",
+      "expected_mode": "compound",
+      "tags": ["commitment", "meeting-level", "previous-meeting"],
+      "notes": "'previous meeting' resolves to Nolocode-meeting (2026-05-07) which has 32 commitment chunks. Should return only commitments from that single meeting.",
       "evaluation_hints": {
-        "must_contain": [
-          "assignee or task description"
-        ],
-        "must_not_contain": [],
-        "should_cite_sources": true,
-        "expected_source_type": "chunks with contains_commitment=True"
+        "must_contain": ["a specific task, deliverable or follow-up action"],
+        "must_not_contain": ["I don't know"],
+        "should_be_scoped_to": "single meeting (2026-05-07)",
+        "should_cite_sources": true
       }
     },
     {
       "id": "easy_007",
       "query": "Give me an overview of the project progress",
+      "scope": "project-level",
       "expected_intent": "summary_query",
-      "expected_strategy": "summary_chunks_raw_collection",
-      "tags": [
-        "summary",
-        "regex-catchable",
-        "progress"
-      ],
-      "notes": "'overview' and 'progress summary' both appear in _SUMMARY_RE. Tests that the summary path fires for alternative summary phrasings.",
+      "expected_mode": "summary",
+      "tags": ["summary", "project-level", "overview"],
+      "notes": "'overview' triggers summary intent. No temporal reference → all meeting summaries returned chronologically. Should synthesize progress across all 10 meetings.",
       "evaluation_hints": {
-        "must_contain": [
-          "progress information across one or more meetings"
-        ],
+        "must_contain": ["progress or status information across meetings"],
         "must_not_contain": [],
-        "should_cite_sources": true,
-        "expected_source_type": "is_meeting_summary=True chunk"
+        "should_cite_sources": true
       }
     },
     {
       "id": "easy_008",
-      "query": "What was agreed upon in the latest sprint planning meeting?",
-      "expected_intent": "decision_query",
-      "expected_strategy": "hybrid_retrieve_no_filter",
-      "tags": [
-        "decision",
-        "agreed",
-        "regex-catchable",
-        "sprint planning"
-      ],
-      "notes": "The word 'agreed' directly triggers _DECISION_RE regex, testing the decision intent with a specific meeting context.",
+      "query": "What did Bhavneet discuss about the cash flow calculations?",
+      "scope": "project-level",
+      "expected_intent": "speaker_query",
+      "expected_mode": "compound",
+      "tags": ["speaker", "project-level", "Bhavneet", "cash-flow"],
+      "notes": "Speaker query with specific topic. Bhavneet is present in multiple meetings and specifically discussed cash flow in Nolocode-AI-meeting (2026-04-22). Compound mode: broad search → filter to Bhavneet.",
       "evaluation_hints": {
-        "must_contain": [
-          "a specific plan or agreement was mentioned"
-        ],
-        "must_not_contain": [
-          "I don't know",
-          "no agreements"
-        ],
-        "should_cite_sources": true,
-        "expected_source_type": "speaker transcript chunks"
+        "must_contain": ["Bhavneet", "cash flow or cash balance or revenue"],
+        "must_not_contain": ["I don't know", "not found"],
+        "should_cite_sources": true
       }
     },
     {
       "id": "easy_009",
-      "query": "Can you give me a high level summary of the Q3 roadmap meeting?",
-      "expected_intent": "summary_query",
-      "expected_strategy": "summary_chunks_raw_collection",
-      "tags": [
-        "summary",
-        "high-level",
-        "regex-catchable",
-        "roadmap"
-      ],
-      "notes": "The phrase 'high level summary' directly triggers _SUMMARY_RE. This tests the summary intent with a more specific type of summary request.",
+      "query": "What was decided about the save button feature?",
+      "scope": "project-level",
+      "expected_intent": "decision_query",
+      "expected_mode": "hybrid",
+      "tags": ["decision", "project-level", "save-button"],
+      "notes": "Decision query about a specific feature discussed in Nolocode-catchup and Nolocode-M2-and-M4. The save button implementation approach was a key decision point.",
       "evaluation_hints": {
-        "must_contain": [
-          "key points or overview of the roadmap discussion"
-        ],
-        "must_not_contain": [
-          "detailed notes",
-          "action items"
-        ],
-        "should_cite_sources": true,
-        "expected_source_type": "is_meeting_summary=True chunk"
+        "must_contain": ["save button or save feature", "decision or approach"],
+        "must_not_contain": ["I don't know", "no decisions"],
+        "should_cite_sources": true
       }
     },
     {
       "id": "easy_010",
-      "query": "Who committed to delivering the marketing assets?",
-      "expected_intent": "commitment_query",
-      "expected_strategy": "hybrid_retrieve_contains_commitment_filter",
-      "tags": [
-        "commitment",
-        "commit",
-        "regex-catchable",
-        "deliverables"
-      ],
-      "notes": "The word 'committed' directly triggers _COMMITMENT_RE regex. This tests the commitment intent by focusing on who is responsible for a specific task.",
+      "query": "What questions did the team have about the AWS deployment?",
+      "scope": "project-level",
+      "expected_intent": "question_query",
+      "expected_mode": "hybrid",
+      "tags": ["question", "project-level", "AWS-deployment"],
+      "notes": "Question query scoped by topic to AWS deployment meeting. Nolocode-AWS-deployment (2026-04-14) had 10 question chunks about ECS, load balancer, Jenkins pipelines.",
       "evaluation_hints": {
-        "must_contain": [
-          "a person's name associated with 'marketing assets'"
-        ],
-        "must_not_contain": [
-          "decisions made",
-          "general discussion"
-        ],
-        "should_cite_sources": true,
-        "expected_source_type": "chunks with contains_commitment=True"
+        "must_contain": ["AWS or deployment or ECS or Jenkins"],
+        "must_not_contain": [],
+        "should_cite_sources": true
       }
     },
     {
       "id": "easy_011",
-      "query": "What were the main discussion points in the last project sync?",
-      "expected_intent": "general_query",
-      "expected_strategy": "hybrid_retrieve_no_filter",
-      "tags": [
-        "general",
-        "discussion",
-        "regex-catchable",
-        "sync meeting"
-      ],
-      "notes": "While 'discussion' could be broadly interpreted, it does not have a specific regex trigger for any intent other than general_query when other keywords are absent. This tests the general_query intent for broad retrieval.",
+      "query": "What were the main discussion points in the last meeting?",
+      "scope": "meeting-level",
+      "expected_intent": "summary_query",
+      "expected_mode": "summary",
+      "tags": ["summary", "meeting-level", "last-meeting", "discussion-points"],
+      "notes": "'last meeting' resolves to Nolocode-meeting (2026-05-07). Should return discussion points about forecasting module changes and effort estimation — NOT a cross-meeting answer.",
       "evaluation_hints": {
-        "must_contain": [
-          "topics covered in the project sync"
-        ],
-        "must_not_contain": [
-          "specific decisions",
-          "action items"
-        ],
-        "should_cite_sources": true,
-        "expected_source_type": "speaker transcript chunks"
+        "must_contain": ["topic or point discussed in the meeting"],
+        "must_not_contain": ["I don't know"],
+        "should_be_scoped_to": "single meeting (2026-05-07)",
+        "should_cite_sources": true
       }
     },
     {
       "id": "easy_012",
-      "query": "What questions did we have about the new feature proposal?",
+      "query": "What questions did we have about the forecasting approach?",
+      "scope": "project-level",
       "expected_intent": "question_query",
-      "expected_strategy": "hybrid_retrieve_contains_question_filter",
-      "tags": [
-        "question",
-        "regex-catchable",
-        "feature proposal"
-      ],
-      "notes": "The word 'questions' directly triggers _QUESTION_RE regex. This tests the question intent with a specific context about a feature proposal.",
+      "expected_mode": "hybrid",
+      "tags": ["question", "project-level", "forecasting"],
+      "notes": "Question query about forecasting — a core topic across multiple meetings. Many question chunks exist mentioning forecasting formulas, pipeline approach, save/reforecast flow.",
       "evaluation_hints": {
-        "must_contain": [
-          "a question related to the feature proposal"
-        ],
-        "must_not_contain": [
-          "answers",
-          "decisions"
-        ],
-        "should_cite_sources": true,
-        "expected_source_type": "chunks with contains_question=True"
+        "must_contain": ["a question about forecasting, formula, or calculation approach"],
+        "must_not_contain": [],
+        "should_cite_sources": true
       }
     }
   ]

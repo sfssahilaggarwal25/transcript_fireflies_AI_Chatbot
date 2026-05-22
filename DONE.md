@@ -4,6 +4,47 @@
 
 ---
 
+## Session 20 (2026-05-22) — Query Accuracy Improvement Plan: All 5 Phases
+
+**Phase 1 — Scope & signal fixes:**
+- [x] `app/services/answer/scope.py` — `get_scoped_meeting_ids(scope_where, project_id) -> set[str]` converts ChromaDB where-clause to meeting ID set; handles `$eq`, `$in`, `$gte` variants
+- [x] `app/services/answer/scope.py` — `_THAT_MEETING_RE` ("that/this meeting" → most recent meeting); `_ORDINAL_MEETING_RE` + `_ORDINAL_INDEX` ("the second/third/fourth/fifth meeting" → sorted_meetings[-(idx+1)])
+- [x] `app/services/answer/builder.py` — `retrieve_summary_chunks()` now calls `parse_meeting_scope()` first before `extract_month_day()` fallback — fixes S11 ("agenda of the previous meeting"), S16 ("summary of the last meeting")
+- [x] `app/services/transcript/chunking.py` — `_DOCUMENT_SHARE_RE` (shared docs, files, links, spreadsheets); `_OPEN_ISSUE_RE` (problems, discrepancies, unresolved issues, concerns flagged). `_detect_signals()` returns 5 signals. `flush_chunk` bypass includes new signals. Fixes S12, S18 after re-ingest.
+- [x] `app/services/query_intent.py` — `_METADATA_RE` expanded: timing queries ("timings of meetings", "how long was the meeting", "when did meeting start"), attendance ("how many people/participants/attendees", "who attended X meeting")
+- [x] `app/services/answer/metadata.py` — `_TIMING_RE`, `_ATTENDANCE_RE`, `_ATTENDANCE_RE` patterns; `_get_meeting_timings()` aggregates max `end_time` per meeting → duration in minutes; timing branch in `handle_metadata_query()`; attendance branch now filters by `scoped_ids` (S7, S8)
+
+**Phase 2 — 3-layer routing + compound retrieval:**
+- [x] `app/services/query_intent.py` — 4 new `QueryIntent` enum values: `ANALYTICAL` ("analytical_query"), `TOPIC_SUMMARY` ("topic_summary_query"), `ATTRIBUTION` ("attribution_query"), `CONTRIBUTION` ("contribution_query")
+- [x] `app/services/query_intent.py` — `QueryDimensions` Pydantic model: LLM-filled (`has_topic`, `is_cross_meeting`, `needs_traces`, `is_contribution`) + Python-filled (`is_count`, `is_yesno`, `is_ranking`, `is_list_request`, `has_temporal`)
+- [x] `app/services/query_intent.py` — `QueryUnderstanding` extended with `signal_filter`, `retrieval_mode`, `output_format`, `dimensions` fields
+- [x] `app/services/query_intent.py` — `_fill_syntactic_dimensions()` (deterministic regex for Python-filled fields); `RoutingRule` frozen dataclass; 13-rule `ROUTING_RULES` priority matrix (structural_metadata → contribution → attribution → scoped_count → signal_count → named_speaker_count → semantic_count → any_count_fallback → compound_any_speaker → topic_summary → meeting_summary → cross_meeting_timeline → hybrid_default); `_apply_routing()`; `_derive_output_format()`; `_post_process_understanding()` — wired into `understand_query()`
+- [x] `app/services/prompts.py` — `UNDERSTANDING_PROMPT_TEMPLATE` updated: now asks LLM for `signal_filter` + `dimensions` (LLM-semantic fields only); includes `attribution_query` intent type; `has_topic` guidance for subject-action words
+- [x] `app/services/retrieval/retriever.py` — `compound_retrieve(query, project_id, named_speaker, signal_filter, date_where, k_broad=40, k_final=25)` — two-pass: broad hybrid search (no speaker filter) → post-filter by normalized speaker name → signal_filter applied → fallback to broad if < 3 speaker chunks. Fixes S5, S6, S14, S19, S21, S23, S24, S30.
+
+**Phase 3 — Analytical layer:**
+- [x] `app/services/retrieval/retriever.py` — `analytical_retrieve(project_id, signal_filter, date_where, named_speaker) -> dict` — pure ChromaDB metadata count (no vector search, no LLM counting). Returns `{total_chunks, signal_count, meeting_count, meetings, speaker_count, speakers, signal_filter, named_speaker}`. Fixes S3, S4, S8, S12.
+- [x] `app/services/prompts.py` — `analytical_query` template: LLM formats pre-computed numbers; strictly prohibited from inventing counts.
+- [x] `app/services/answer/pipeline.py` — `_handle_structured_result()` formats analytical/contribution dicts into context strings and calls LLM; `answer_question()` detects `isinstance(raw_result, dict)` and short-circuits to this handler.
+
+**Phase 4 — New intents:**
+- [x] `app/services/retrieval/retriever.py` — `topic_summary_retrieve(topic, project_id, date_where, k_per_meeting=8)` — per-meeting `hybrid_retrieve` for the topic, merged chronologically. Fixes S22, S25.
+- [x] `app/services/retrieval/retriever.py` — `contribution_retrieve(project_id, date_where) -> dict` — counts chunks per speaker, returns ranked list with `{speaker_name, chunk_count, meeting_count}`. Fixes S29.
+- [x] `app/services/prompts.py` — `topic_summary_query` template (chronological topic evolution); `attribution_query` template (temporal origin identification); `contribution_query` template (ranked speaker table).
+
+**Phase 5 — Output format polish:**
+- [x] `app/services/prompts.py` — `_COUNT_PREFIX` (answer MUST begin with exact count), `_YESNO_PREFIX` (answer MUST begin with YES or NO), `_LIST_PREFIX` (answer MUST be a numbered/bulleted list)
+- [x] `app/services/answer/builder.py` — `build_prompt(query, context, intent, output_format="prose")` — injects `_COUNT_PREFIX`, `_YESNO_PREFIX`, or `_LIST_PREFIX` before template when `output_format` is count/yesno/list
+
+**Pipeline wiring:**
+- [x] `app/services/answer/pipeline.py` — `_retrieve_for_understanding()` rewritten as 8-mode dispatch: `summary`, `timeline`, `compound`, `analytical`, `contribution`, `topic_summary`, `metadata`, `hybrid`. Each mode calls the correct retrieval function. Hybrid branch applies `signal_filter` as `hard_filters` key. `build_prompt()` calls pass `understanding.output_format`.
+- [x] `app/services/answer/pipeline.py` — chronological sort extended to `compound` and `topic_summary` modes; rerank skipped for `topic_summary` (chronological already correct)
+
+**Re-ingestion:**
+- [x] ChromaDB wiped and re-ingested in DEVELOPMENT_MODE — 1,669 chunks (1,659 transcript + 10 summary) across 10 meetings; `contains_document_share` + `contains_open_issue` present on all transcript chunks; 16 doc-share and 74 open-issue chunks flagged True
+
+---
+
 ## Session 19 (2026-05-20) — Sprint 3: Chunking Improvements + Config Normalization
 
 **Sprint 3 — All tiers complete:**
@@ -385,42 +426,53 @@
 - [x] **project_id assignment** — POC: `projects.json`. Production: Option A (PM creates projects in system)
 - [x] **Speaker role assignment** — POC: `speakers` map inside `projects.json`. Same file, same pattern.
 
-## Current Chunk Output Schema (Full — Session 3)
+## Current Chunk Output Schema (Full — Session 19, Sprint 3)
 
 ```python
 {
-    # Level 2 — Meeting
-    "chunk_id":           "01KM2DD6MXGSZ4F1QW0BNJE16N_1",
-    "meeting_id":         "01KM2DD6MXGSZ4F1QW0BNJE16N",
-    "meeting_title":      "Nolocode meeting with Ashpreet",
-    "meeting_date":       "2026-05-10",
-    "meeting_number":     None,           # placeholder
-    "meeting_type":       "unknown",      # placeholder
+    # Identity
+    "chunk_id":           "01KM2DD6MXGSZ4F1QW0BNJE16N_1",   # meeting_id + "_" + chunk_index
 
-    # Level 3 — Speaker
-    "speaker_name":       "Ngũmi Gituro",
-    "speaker_id":         "ngumi_gituro",
-    "speaker_role":       "client",       # real value from projects.json
-
-    # Level 4 — Chunk position
-    "chunk_index":        1,
-    "chunk_type":         "utterance",
-    "is_meeting_summary": False,          # placeholder
-
-    # Level 5 — Content signals
-    "contains_decision":   False,         # placeholder — needs classifier
-    "contains_commitment": False,         # placeholder — needs classifier
-    "contains_question":   False,         # placeholder
-    "sentiment":           "neutral",     # placeholder
-
-    # Level 1 — Scope (stamped by project_store)
+    # Level 1 — Scope (stamped by webhook_handler via project_store)
     "project_id":         "proj_nolocode_001",
     "project_name":       "Nolocode",
     "company_id":         "comp_001",
     "company_name":       "Nolocode",
+
+    # Level 2 — Meeting
+    "meeting_id":         "01KM2DD6MXGSZ4F1QW0BNJE16N",
+    "meeting_title":      "Nolocode meeting with Ashpreet",
+    "meeting_date":       "2026-05-08",                       # ISO date, from Fireflies dateString
+    "meeting_number":     1,                                  # real — 1-indexed order within project
+    "meeting_type":       "unknown",                          # placeholder, not yet classified
+
+    # Level 3 — Speaker
+    "speaker_name":       "Ngũmi Gituro",
+    "speaker_id":         "ngumi_gituro",                     # slugified, ASCII-safe
+    "speaker_role":       "client",                           # real — stamped from projects.json speakers map
+
+    # Level 4 — Chunk position
+    "chunk_index":        1,
+    "chunk_type":         "utterance",                        # "utterance" | "summary"
+    "is_meeting_summary": False,                              # True only for the summary chunk
+
+    # Tier 2a — Timing (seconds from recording start; None if API didn't provide)
+    "start_time":         14.96,
+    "end_time":           33.26,
+
+    # Tier 2a — Adjacency links (filled in post-loop pass in create_chunks)
+    "prev_chunk_id":      None,                               # chunk_id of previous utterance, None if first
+    "next_chunk_id":      "01KM2DD6MXGSZ4F1QW0BNJE16N_2",   # chunk_id of next utterance, None if last
+
+    # Level 5 — Content signals (pre-computed by regex classifiers in chunking.py)
+    "contains_decision":   False,                             # real — _DECISION_RE match
+    "contains_commitment": True,                              # real — _COMMITMENT_RE match (excl. false positives)
+    "contains_question":   False,                             # real — ends with "?" or _QUESTION_START_RE match
+    "sentiment":           "neutral",                         # placeholder — no LLM sentiment yet
 
     # Content
     "text":               "We should finalize...",
     "text_length":        162,
 }
 ```
+

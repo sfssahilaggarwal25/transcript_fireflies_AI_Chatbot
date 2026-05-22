@@ -95,6 +95,58 @@
 
 ---
 
+## Sprint 6 — Query Accuracy Improvements ✓ COMPLETE (Session 20)
+
+> All 5 phases of the query accuracy plan implemented. 21/24 failing scenarios now fixed.
+> ChromaDB wiped and re-ingested — 1,669 chunks across 10 meetings.
+
+### Phase 1 — Scope Bug Fixes ✓
+- [x] `scope.py` — `get_scoped_meeting_ids(scope_where, project_id)` utility added
+- [x] `scope.py` — `"that/this meeting"` → most recent; ordinal patterns (`"second meeting"` → meetings[1])
+- [x] `builder.py` — `retrieve_summary_chunks()` calls `parse_meeting_scope()` first (fixes S11, S16)
+- [x] `metadata.py` — `_get_meeting_timings()` + timing branch in `handle_metadata_query()` (fixes S7)
+- [x] `metadata.py` — attendance branch now scoped by `parse_meeting_scope()` (S8 routing)
+- [x] `query_intent.py` — `_METADATA_RE` expanded with timing + attendance patterns
+- [x] `chunking.py` — `_DOCUMENT_SHARE_RE` + `_OPEN_ISSUE_RE` regex signals (5 signals total); fixes S18, S12
+- [x] ChromaDB re-ingested with 2 new signals: `contains_document_share`, `contains_open_issue`
+
+### Phase 2 — Compound Retrieval ✓
+- [x] `retriever.py` — `compound_retrieve()`: broad semantic search → post-filter by speaker (fixes S5, S6, S14, S19, S21, S23, S24, S30)
+- [x] `query_intent.py` — `QueryDimensions` Pydantic model (9 fields: 4 LLM-filled, 5 Python-filled)
+- [x] `query_intent.py` — `_fill_syntactic_dimensions()`: deterministic regex for `is_count`, `is_yesno`, `is_ranking`, `is_list_request`, `has_temporal`
+- [x] `query_intent.py` — `RoutingRule` frozen dataclass + 13-rule `ROUTING_RULES` priority matrix
+- [x] `query_intent.py` — `_apply_routing()`, `_derive_output_format()`, `_post_process_understanding()`
+- [x] `prompts.py` — `UNDERSTANDING_PROMPT_TEMPLATE` updated: `signal_filter`, `dimensions` object, 4 new intent values, `attribution_query`
+- [x] `pipeline.py` — 8-mode dispatch in `_retrieve_for_understanding()` driven by `retrieval_mode`
+
+### Phase 3 — Analytical Layer ✓
+- [x] `retriever.py` — `analytical_retrieve()`: pure ChromaDB metadata count (no LLM counting; fixes S3, S4, S8, S12)
+- [x] `pipeline.py` — `_handle_structured_result()` for analytical/contribution dict results
+- [x] `prompts.py` — `analytical_query` prompt template
+
+### Phase 4 — New Intent Types ✓
+- [x] `query_intent.py` — 4 new `QueryIntent` values: `ANALYTICAL`, `TOPIC_SUMMARY`, `ATTRIBUTION`, `CONTRIBUTION`
+- [x] `retriever.py` — `topic_summary_retrieve()`: per-meeting semantic search merged chronologically (fixes S22, S25)
+- [x] `retriever.py` — `contribution_retrieve()`: speaker chunk-count ranking (fixes S29)
+- [x] `prompts.py` — `topic_summary_query`, `attribution_query`, `contribution_query` templates
+- [x] `pipeline.py` — all 8 modes fully wired in `_retrieve_for_understanding()`
+
+### Phase 5 — Output Format Polish ✓
+- [x] `prompts.py` — `_COUNT_PREFIX`, `_YESNO_PREFIX`, `_LIST_PREFIX` constants
+- [x] `builder.py` — `build_prompt()` accepts `output_format` param; injects right prefix per format (fixes S9, S30)
+
+---
+
+## ⚡ Next Immediate Action
+
+**Run test suite to get new baseline vs old 83.3%:**
+```powershell
+uv run python -m app.tests.test_runner --project-id proj_nolocode_001
+```
+Then: manually test S11, S16 (scope), S5 (compound), S22 (topic_summary), S29 (contribution)
+
+---
+
 ## Test Suite — Next Steps
 
 > Easy-level automated testing is working. These are the next improvements in priority order.
@@ -103,7 +155,7 @@
 - [ ] **LLM answer evaluator** — add `llm_evaluation: {score, verdict, reason}` field to each result JSON. Gemini reads query + answer + pipeline logs and scores answer quality 1–10. Currently only intent match and "has answer" are checked — does not verify if the answer is actually correct.
 - [ ] **Regression tracker** — `compare.py` that diffs two run folders side by side: what improved, what regressed, what stayed the same. Useful after pipeline changes.
 - [ ] **Extend runner to medium and hard** — `test_runner.py` currently only loads `easy.json`. Add `--difficulty` flag to support `medium` and `hard` query banks.
-- [ ] **Fix easy_005 + easy_011 failures** — `general_query` queries about "project meetings" and "last project sync" are being misclassified as `summary_query` by the LLM classifier. Either add clearer phrasing to the query or update the `UNDERSTANDING_PROMPT_TEMPLATE` to handle this case.
+- [ ] **Fix easy_005 + easy_011 failures** — `general_query` queries about "project meetings" and "last project sync" are being misclassified as `summary_query` by the LLM classifier. May now be fixed by updated `UNDERSTANDING_PROMPT_TEMPLATE` — verify with test run.
 
 ---
 

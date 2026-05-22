@@ -9,6 +9,7 @@ Called by test_runner.py immediately after each pipeline run.
 
 import json
 import logging
+import time
 
 from google import genai
 
@@ -16,7 +17,14 @@ from app.config import Config
 
 logger = logging.getLogger(__name__)
 
-_EVAL_MODEL = "gemini-2.5-flash-lite"
+_EVAL_MODEL    = "gemini-2.5-flash-lite"
+_MAX_RETRIES   = 3
+_RETRY_DELAYS  = [2, 5, 10]
+
+
+def _is_retryable(exc: Exception) -> bool:
+    msg = str(exc).lower()
+    return "503" in msg or "429" in msg or "unavailable" in msg or "rate limit" in msg
 
 _EVAL_PROMPT = """\
 You are a strict evaluator checking whether an AI assistant's answer meets quality criteria.
@@ -111,37 +119,51 @@ def evaluate_answer(
         "eval_error":   None,
     }
 
-    try:
-        client   = genai.Client(api_key=Config.GEMINI_API_KEY)
-        response = client.models.generate_content(
-            model=_EVAL_MODEL,
-            contents=prompt,
-        )
-        raw = response.text.strip()
+    client = genai.Client(api_key=Config.GEMINI_API_KEY)
+    last_exc: Exception | None = None
 
-        # Strip markdown code fences Gemini sometimes adds
-        if raw.startswith("```"):
-            parts = raw.split("```")
-            raw = parts[1] if len(parts) > 1 else raw
-            if raw.lower().startswith("json"):
-                raw = raw[4:]
-            raw = raw.strip()
+    for attempt in range(_MAX_RETRIES):
+        try:
+            response = client.models.generate_content(
+                model=_EVAL_MODEL,
+                contents=prompt,
+            )
+            raw = response.text.strip()
 
-        parsed = json.loads(raw)
-        return {
-            "score":         int(parsed.get("score", 0)),
-            "checks_passed": parsed.get("checks_passed", []),
-            "checks_failed": parsed.get("checks_failed", []),
-            "violations":    parsed.get("violations", []),
-            "sources_cited": bool(parsed.get("sources_cited", False)),
-            "reasoning":     parsed.get("reasoning", ""),
-            "eval_error":    None,
-        }
+            # Strip markdown code fences Gemini sometimes adds
+            if raw.startswith("```"):
+                parts = raw.split("```")
+                raw = parts[1] if len(parts) > 1 else raw
+                if raw.lower().startswith("json"):
+                    raw = raw[4:]
+                raw = raw.strip()
 
-    except Exception as exc:
-        logger.warning("Answer evaluation failed for query '%s': %s", query[:60], exc)
-        fallback["eval_error"] = str(exc)
-        return fallback
+            parsed = json.loads(raw)
+            return {
+                "score":         int(parsed.get("score", 0)),
+                "checks_passed": parsed.get("checks_passed", []),
+                "checks_failed": parsed.get("checks_failed", []),
+                "violations":    parsed.get("violations", []),
+                "sources_cited": bool(parsed.get("sources_cited", False)),
+                "reasoning":     parsed.get("reasoning", ""),
+                "eval_error":    None,
+            }
+
+        except Exception as exc:
+            last_exc = exc
+            if _is_retryable(exc) and attempt < _MAX_RETRIES - 1:
+                delay = _RETRY_DELAYS[attempt]
+                logger.warning(
+                    "Evaluator API transient error (attempt %d/%d) — retrying in %ds: %s",
+                    attempt + 1, _MAX_RETRIES, delay, exc,
+                )
+                time.sleep(delay)
+            else:
+                break
+
+    logger.warning("Answer evaluation failed for query '%s': %s", query[:60], last_exc)
+    fallback["eval_error"] = str(last_exc)
+    return fallback
 
 
 def compute_confidence_score(

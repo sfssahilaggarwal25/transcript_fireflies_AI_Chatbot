@@ -8336,6 +8336,8 @@ CONSTANT_TRANSCRIPT = {
             },
             {
               "id": "01KPZQM8QJV019CTG2YBHBNKJB",
+              "title": "Nolocode-M2-formula-discussion",
+
               "dateString": "2026-04-24T12:32:25.000Z",
               "sentences": [
                 {
@@ -14313,6 +14315,7 @@ CONSTANT_TRANSCRIPT = {
             },
             {
               "id": "01KR18Q6AJM5GZX7Q66VHZXZP3",
+              "title": "Nolocode-meeting",
               "dateString": "2026-05-07T13:06:03.000Z",
               "sentences": [
                 {
@@ -18670,6 +18673,7 @@ CONSTANT_TRANSCRIPT = {
             },
             {
               "id": "01KQVP85XVSYDGBXDMCPD4BB6A",
+              "title": "Nolocode-meeting",
               "dateString": "2026-05-05T09:07:05.000Z",
               "sentences": [
                 {
@@ -19907,6 +19911,7 @@ CONSTANT_TRANSCRIPT = {
             },
             {
               "id": "01KPSSB8Z5D7C70WJ11YFFFY2Z",
+              "title": "Nolocode-AI-meeting",
               "dateString": "2026-04-22T05:07:01.000Z",
               "sentences": [
                 {
@@ -21564,6 +21569,7 @@ CONSTANT_TRANSCRIPT = {
             },
             {
               "id": "01KPN0G7JN7B3SR8HXR0PVFPSZ",
+              "title": "Nolocode-catchup",
               "dateString": "2026-04-20T08:35:52.000Z",
               "sentences": [
                 {
@@ -25723,6 +25729,7 @@ CONSTANT_TRANSCRIPT = {
             },
             {
               "id": "01KP8S4ZFHR6CGHJVK62931CC6",
+               "title": "Nolocode-M2-and-M4",
               "dateString": "2026-04-15T14:36:30.000Z",
               "sentences": [
                 {
@@ -31562,6 +31569,7 @@ CONSTANT_TRANSCRIPT = {
             },
             {
               "id": "01KP5V2WV2YFKWZSA1E4Y3SE18",
+              "title": "Nolocode-M1",
               "dateString": "2026-04-14T11:12:35.000Z",
               "sentences": [
                 {
@@ -35139,6 +35147,7 @@ CONSTANT_TRANSCRIPT = {
             },
             {
               "id": "01KP5NPHRKEK81SCWMBH64172Q",
+              "title": "Nolocode-AWS-deployment",
               "dateString": "2026-04-14T09:38:28.000Z",
               "sentences": [
                 {

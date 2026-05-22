@@ -1,5 +1,6 @@
 import json
 import logging
+import unicodedata
 from typing import Optional
 
 from google import genai
@@ -18,14 +19,16 @@ def rerank_documents(
     documents: list[Document],
     intent_hint: str = "",
     topic_hint: str = "",
+    speaker_hint: str = "",
     top_n: Optional[int] = None,
 ) -> list[Document]:
     """
     Re-rank retrieved documents by true relevance to query intent.
 
-    Uses a single Gemini Flash Lite call to score each chunk.
-    Distinguishes causal origin ("who raised X") from topic density
-    ("who discussed X most") — pure vector search cannot do this.
+    Uses a single Gemini Flash Lite call to score each chunk, then applies
+    a post-score speaker boost (+1.5) when speaker_hint is set — this ensures
+    the named speaker's chunks surface even if they scored slightly lower than
+    context chunks from other speakers.
 
     Falls back to original order on any error so the pipeline never breaks.
     """
@@ -53,11 +56,18 @@ def rerank_documents(
         f"it scores 0-3.\n\n"
     ) if topic_hint else ""
 
+    speaker_line = (
+        f"Target speaker: \"{speaker_hint}\"\n"
+        f"The query is specifically about what this speaker said. "
+        f"Prioritize chunks where this speaker is the one speaking.\n\n"
+    ) if speaker_hint else ""
+
     prompt = (
         f"You are a relevance scorer for a meeting transcript search system.\n\n"
         f"Query: \"{query}\"\n"
         f"Query intent: {intent_hint}\n"
         f"{topic_line}"
+        f"{speaker_line}"
         f"Below are {len(documents)} transcript chunks. Score each one 0-10 based on "
         f"how directly it answers the query.\n\n"
         f"Scoring rules:\n"
@@ -93,6 +103,17 @@ def rerank_documents(
         scores_list = json.loads(raw)
         score_map = {item["index"]: item["score"] for item in scores_list}
 
+        # Post-score speaker boost: chunks from the named speaker get +1.5
+        # Applied AFTER LLM scoring so LLM still scores on content quality alone.
+        if speaker_hint:
+            def _norm(s: str) -> str:
+                return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode().lower()
+            target = _norm(speaker_hint)
+            for i, doc in enumerate(documents):
+                chunk_speaker = _norm(doc.metadata.get("speaker_name", ""))
+                if chunk_speaker == target:
+                    score_map[i] = score_map.get(i, 0) + 1.5
+
         logger.info(
             "  rerank     : raw scores %s",
             {i: score_map.get(i, 0) for i in range(len(documents))},
@@ -108,7 +129,7 @@ def rerank_documents(
             m = doc.metadata
             moved = f"moved {orig_idx + 1}->{rank}" if orig_idx + 1 != rank else f"stayed #{rank}"
             logger.info(
-                "  rerank[%d]  : score=%d | %s | %s | \"%s...\"",
+                "  rerank[%d]  : score=%.1f | %s | %s | \"%s...\"",
                 rank,
                 score,
                 moved,

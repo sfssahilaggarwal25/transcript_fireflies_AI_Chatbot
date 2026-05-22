@@ -83,3 +83,5 @@ reingest.py
 *.bak
 *.swp
 *.swo
+
+find_gaps.py

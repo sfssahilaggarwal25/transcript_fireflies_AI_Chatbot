@@ -2,18 +2,20 @@
 
 CLASSIFIER_SYSTEM_PROMPT = """\
 You are a query classifier for an AI meeting intelligence system used by Project Managers.
-Classify the user's question into exactly one of these 7 intent types:
+Classify the user's question into exactly one of these 8 intent types:
 
-- decision_query   : asks about decisions made, finalized, approved, agreed upon, locked in
-- commitment_query : asks about action items, who will do what, follow-ups, next steps, deliverables
-- summary_query    : asks for a summary, overview, recap, or high-level view of the project or meetings
-- speaker_query    : asks what a specific person (by name) said, mentioned, or thinks
-- question_query   : asks which explicit questions were asked during a meeting (e.g. "What questions did X raise?", "What was asked about Y?")
-- timeline_query   : asks how something changed over time, across meetings, or compares two time periods
-- general_query    : any other question — including "who raised confusion/an issue/a concern about X", "who first mentioned X", "who was confused about X"
+- decision_query    : asks about decisions made, finalized, approved, agreed upon, locked in
+- commitment_query  : asks about action items, who will do what, follow-ups, next steps, deliverables
+- summary_query     : asks for a summary, overview, recap, or high-level view of the project or meetings
+- speaker_query     : asks what a specific person (by name) said, mentioned, or thinks
+- question_query    : asks which explicit questions were asked during a meeting (e.g. "What questions did X raise?", "What was asked about Y?")
+- timeline_query    : asks how something changed over time, across meetings, or compares two time periods
+- attribution_query : asks which topic or issue came up FIRST, who first raised or introduced something
+- general_query     : any other question — including "who raised confusion/an issue/a concern about X", "who first mentioned X", "who was confused about X"
 
 Rules:
-- "Who raised confusion/concern/disagreement about X?" → general_query (this asks about causal origin, NOT a list of questions)
+- "Who raised confusion/concern/disagreement about X?" → general_query (causal origin, NOT a question list)
+- "Which came first — X or Y?" or "Who first mentioned X?" → attribution_query
 - question_query is ONLY for explicit requests to list or retrieve the questions asked during a meeting
 - If a name is mentioned AND the query is about what that person said/thinks/believes → speaker_query
 - If asking about change across meetings (even without date keywords) → timeline_query
@@ -23,39 +25,184 @@ Return ONLY valid JSON with no markdown, no code fences, nothing else:
 {"intent": "<intent_value>", "confidence": "<high|medium|low>", "reason": "<one sentence>"}"""
 
 
-# ── Query understanding prompt ────────────────────────────────────────────────
+# ── Query understanding prompts — one per scope type ─────────────────────────
+#
+# Scope is detected by Python BEFORE calling the LLM, so we use a different
+# prompt depending on whether the query targets a specific meeting or the
+# entire project. This reduces LLM confusion — each prompt only lists the
+# intent types and fields that are actually valid for that scope.
+#
+# MEETING-LEVEL: query references "previous meeting", "first meeting", etc.
+#   → 6 intent types, no temporal_focus, no is_cross_meeting
+# PROJECT-LEVEL: no specific meeting referenced — entire project scope
+#   → all 8 intent types, temporal_focus + is_cross_meeting valid
 
-UNDERSTANDING_PROMPT_TEMPLATE = """\
+
+UNDERSTANDING_PROMPT_MEETING_LEVEL = """\
 You are a query analyzer for an AI meeting transcript search system used by Project Managers.
-Extract structured understanding from the query below.
+
+The user's query is scoped to a SPECIFIC meeting (already resolved — do not guess which meeting).
+Your only job: understand WHAT the user wants from that meeting.
 
 Known speakers in this project: {speaker_list}
 
 Return ONLY valid JSON, no markdown, no code fences:
 {{
   "topic": "<main subject or topic, 1-10 words>",
-  "intent_type": "<one of: decision_query | commitment_query | summary_query | speaker_query | question_query | timeline_query | general_query>",
-  "named_speaker": "<full exact speaker name if a person is explicitly named in the query, else null>",
-  "needs_summary": <true if asking for a project/meeting summary or overview, else false>,
-  "temporal_focus": "<'cross_meeting' if comparing across meetings or how something changed over time, else null>"
+  "intent_type": "<one of: summary_query | speaker_query | decision_query | commitment_query | question_query | general_query>",
+  "named_speaker": "<full exact speaker name if explicitly named in the query, else null>",
+  "needs_summary": <true if asking for meeting overview/agenda/what was discussed/what happened, else false>,
+  "signal_filter": "<'question' | 'commitment' | 'decision' | 'open_issue' | 'document_share' | null>",
+  "dimensions": {{
+    "has_topic": <true if query names a specific topic, concept, or subject-action word, else false>,
+    "needs_traces": <true if user explicitly asks for citations ('with traces', 'with sources', 'cite')>,
+    "is_contribution": false
+  }}
 }}
 
-Intent type guide:
-- decision_query   : decisions made, finalized, approved, agreed upon
-- commitment_query : action items, who will do what, follow-ups, deliverables
-- summary_query    : summary, overview, recap, high-level view (set needs_summary=true)
-- speaker_query    : what a specific named person said, mentioned, or thinks
-- question_query   : which explicit questions were asked during a meeting (e.g. "What questions did X raise?")
-- timeline_query   : how something changed across meetings (set temporal_focus='cross_meeting')
-- general_query    : anything else — including "who raised confusion/concern/issue about X", "who first mentioned X", "who was confused about X"
+Intent guide — pick exactly one:
+- summary_query    : what was discussed, agenda, overview, what happened, what was covered, main points
+                     → ALWAYS set needs_summary=true
+- decision_query   : decisions made, agreed, finalized, approved → signal_filter="decision"
+- commitment_query : action items, who will do what, follow-ups, deliverables → signal_filter="commitment"
+- speaker_query    : what a specific NAMED person said, mentioned, or thinks → set named_speaker
+- question_query   : questions asked during the meeting → signal_filter="question"
+- general_query    : everything else (who raised X, what happened with Y, did Z occur)
 
-Rules for named_speaker:
+DO NOT use: timeline_query, attribution_query, contribution_query
+  — these require comparing across multiple meetings and do not apply here.
+
+Signal filter rules (MUST match intent_type):
+- decision_query   → signal_filter MUST be "decision"
+- commitment_query → signal_filter MUST be "commitment"
+- question_query   → signal_filter MUST be "question"
+- "open_issue"     : unresolved problems, bugs, blockers, concerns raised
+- "document_share" : files, documents, or links shared during meeting
+- null             : when none of the above apply
+
+has_topic rules:
+- true  : named concepts ("AI architecture", "M2 formulas", "hybrid search") AND subject-action words
+          ("feedback", "clarification", "confusion", "concern", "highlight", "update", "commitment",
+           "explanation", "opinion", "position", "response", "reaction", "input", "suggestion")
+- false : "topics / agenda / points / items / issues" used as a QUESTION WORD asking for a list
+    "What topics were discussed?"      → false  (asking for the list itself)
+    "What was discussed about AI?"     → true   (AI is the specific topic)
+    "What issues came up?"             → false  (asking for the list)
+    "What was the confusion about AI?" → true   (confusion about AI is the topic)
+
+needs_summary rules:
+- true  : "what was discussed", "what happened", "agenda", "overview", "recap",
+          "what was covered", "main points", "summary", "what topics were discussed"
+- false : query names a specific person → use speaker_query instead
+          "Give me a summary of what Karan discussed" → intent=speaker_query, needs_summary=false
+
+named_speaker rules:
 - Only set when a person's name appears in the query
-- Use the known speakers list to canonicalize: "Karan" → "Karan Middha"
-- If the name doesn't match any known speaker, set null"""
+- Canonicalize using known speakers: "Karan" → "Karan Middha"
+- If name doesn't match any known speaker, set null"""
+
+
+UNDERSTANDING_PROMPT_PROJECT_LEVEL = """\
+You are a query analyzer for an AI meeting transcript search system used by Project Managers.
+
+The user's query is about the ENTIRE PROJECT — no specific meeting is referenced.
+Your job: understand what cross-meeting analysis, pattern, or retrieval the user needs.
+
+Known speakers in this project: {speaker_list}
+
+Return ONLY valid JSON, no markdown, no code fences:
+{{
+  "topic": "<main subject or topic, 1-10 words>",
+  "intent_type": "<one of: decision_query | commitment_query | summary_query | speaker_query | question_query | timeline_query | attribution_query | general_query>",
+  "named_speaker": "<full exact speaker name if explicitly named in the query, else null>",
+  "needs_summary": <true if asking for a project/meeting summary or overview, else false>,
+  "temporal_focus": "<'cross_meeting' ONLY if asking how something CHANGED or EVOLVED across meetings, else null>",
+  "signal_filter": "<'question' | 'commitment' | 'decision' | 'open_issue' | 'document_share' | null>",
+  "dimensions": {{
+    "has_topic": <true if query names a specific topic, concept, or subject-action word, else false>,
+    "is_cross_meeting": <true if the query needs synthesis or comparison ACROSS multiple meetings>,
+    "needs_traces": <true if user explicitly asks for citations ('with traces', 'with sources', 'cite')>,
+    "is_contribution": <true if asking who spoke most or whose contribution was largest>
+  }}
+}}
+
+Intent guide — pick exactly one:
+- decision_query    : decisions made, finalized, approved, agreed upon → signal_filter="decision"
+- commitment_query  : action items, who will do what, follow-ups, deliverables → signal_filter="commitment"
+- summary_query     : summary, overview, recap, high-level view of project or meetings → needs_summary=true
+- speaker_query     : what a specific named person said, mentioned, or thinks across meetings
+- question_query    : questions raised across meetings → signal_filter="question"
+- timeline_query    : how something CHANGED or EVOLVED across meetings → temporal_focus="cross_meeting"
+- attribution_query : which topic/issue came up FIRST, who first raised something
+- general_query     : anything else — "who raised confusion/concern about X", broad analysis
+
+temporal_focus rules:
+- "cross_meeting" ONLY when asking about change, evolution, or comparison across meetings:
+    "How did the AI approach evolve?" → "cross_meeting"
+    "What changed between meetings?" → "cross_meeting"
+- null for all other cases — including broad project queries without explicit evolution focus:
+    "What decisions were made?" → null (no evolution asked)
+    "What did Harsh commit to?" → null (no evolution asked)
+
+Signal filter rules (MUST match intent_type):
+- decision_query   → signal_filter MUST be "decision"
+- commitment_query → signal_filter MUST be "commitment"
+- question_query   → signal_filter MUST be "question"
+- "open_issue"     : unresolved problems, bugs, blockers, concerns raised
+- "document_share" : files, documents, or links shared
+- null             : when none of the above apply
+
+has_topic rules:
+- true  : named concepts ("AI architecture", "ONCA numbers", "hybrid search") AND subject-action words
+          ("feedback", "clarification", "confusion", "concern", "highlight", "update", "commitment",
+           "explanation", "opinion", "position", "response", "reaction", "input", "suggestion")
+- false : "topics / agenda / points / items / issues" as QUESTION WORD asking for a list
+    "What topics were discussed?"      → false
+    "What was discussed about AI?"     → true
+
+needs_summary rules:
+- true  : "summary", "overview", "recap", "project progress", "give me an overview"
+- false : query names a specific person ("summary of what Bhavneet discussed" → speaker_query)
+- false : query asks about a specific named topic in depth → has_topic=true instead
+
+named_speaker rules:
+- Only set when a person's name appears in the query
+- Canonicalize using known speakers: "Karan" → "Karan Middha", "Bhavneet" → "Bhavneet Mhajan"
+- If name doesn't match any known speaker, set null
+
+is_cross_meeting rules:
+- true  : "across all meetings", "throughout the project", "compare meetings", "how did X evolve"
+- false : single-topic or single-speaker queries even if project-wide"""
+
+
+# Keep the old template as an alias — not used in production code,
+# retained only so any external scripts that import it don't break.
+UNDERSTANDING_PROMPT_TEMPLATE = UNDERSTANDING_PROMPT_PROJECT_LEVEL
 
 
 # ── Answer generation prompt templates (keyed by QueryIntent.value string) ────
+
+_TIMESTAMP_RULE = (
+    "- Each context chunk may include a timestamp like [at 05:23]. When citing a specific chunk, "
+    "format it as a headed block:\n"
+    "    **[MM:SS] Brief topic label (2–6 words describing what's being discussed)**\n"
+    "    - Bullet: who said what, what was raised, decided, or explained\n"
+    "    - Bullet: any follow-up, reaction, or connected point from the same chunk\n"
+    "  Use only what is present in the chunk — do not invent details.\n"
+    "  If no timestamp is present for a chunk, omit the [MM:SS] part but still use the heading+bullets format.\n"
+    "  Not every sentence needs its own block — only use this format for key moments you are directly citing.\n"
+    "- NEVER copy chunk labels like '[CONTEXT — just before]' or '[CONTEXT — just after]' into your answer. "
+    "Use the content from those chunks naturally in your writing.\n"
+)
+
+_CITATION_RULE = (
+    "- Cite sources inline: each context chunk is labelled [1], [2], [3], etc. "
+    "When you state a specific fact drawn from a chunk, append its number at the end of that sentence — "
+    "e.g. 'The budget was confirmed at $50k. [2]' or 'Ngũmi raised a discrepancy in the formula. [1]'\n"
+    "- Place the citation AFTER punctuation, at the very end of the sentence: '...confirmed. [3]'\n"
+    "- Only cite chunks you directly used. Do not cite every sentence — only traceable claims.\n"
+    "- Do NOT cite neighbor chunks labelled [CONTEXT — just before/after]; cite the anchor chunk instead.\n"
+)
 
 ANSWER_PROMPT_TEMPLATES = {
     "decision_query": (
@@ -64,6 +211,8 @@ ANSWER_PROMPT_TEMPLATES = {
         "Rules:\n"
         "- Only state decisions that are explicitly confirmed in the transcripts\n"
         "- Include the meeting title and speaker for each decision\n"
+        + _TIMESTAMP_RULE
+        + _CITATION_RULE +
         "- If no clear decision was made, say so directly\n\n"
         "Context from meeting transcripts:\n{context}\n\n"
         "Question: {query}\n\nAnswer:"
@@ -74,28 +223,44 @@ ANSWER_PROMPT_TEMPLATES = {
         "Rules:\n"
         "- For each commitment, state: who committed, what they will do, and deadline if mentioned\n"
         "- Only include explicit commitments, not vague intentions\n"
+        + _TIMESTAMP_RULE
+        + _CITATION_RULE +
         "- If no commitments are found, say so directly\n\n"
         "Context from meeting transcripts:\n{context}\n\n"
         "Question: {query}\n\nAnswer:"
     ),
     "summary_query": (
-        "You are an AI assistant summarizing project progress for a project manager.\n"
-        "Synthesize the following meeting summaries into a cohesive project overview.\n\n"
+        "You are an AI assistant answering questions about meetings for a project manager.\n"
+        "Use the meeting content below to answer the question directly.\n\n"
         "Rules:\n"
-        "- Cover: key decisions made, current status, open issues, and next steps\n"
-        "- Present information chronologically (earliest meeting first)\n"
+        "- Answer the specific question asked — let the question define the scope\n"
+        "- Cover what matters: key decisions, status updates, open issues, action items\n"
+        "- When multiple meetings are provided, present information chronologically\n"
         "- Be concise — focus on what a PM needs to know\n\n"
-        "Meeting summaries (in chronological order):\n{context}\n\n"
+        "Meeting content:\n{context}\n\n"
         "Question: {query}\n\nAnswer:"
     ),
     "speaker_query": (
         "You are an AI assistant analyzing meeting transcripts for a project manager.\n"
-        "Answer the question based on what a specific speaker said across meetings.\n\n"
+        "Answer the question by analysing what a specific speaker was trying to achieve, "
+        "not just listing what they said.\n\n"
         "Rules:\n"
-        "- Attribute statements to the correct speaker by name\n"
-        "- Note if their position changed across different meetings\n"
-        "- Include meeting title and date for key statements\n\n"
-        "Context from meeting transcripts:\n{context}\n\n"
+        "- Explain the speaker's INTENT and ROLE in the discussion — what were they trying to "
+        "communicate or accomplish overall?\n"
+        "- For each key moment, explain: (1) what prompted their statement "
+        "(use chunks labelled [CONTEXT — just before] to understand what another speaker said that "
+        "triggered it — write this naturally, e.g. 'After Neha explained...', NOT by copying the label), "
+        "(2) what the speaker said and what they meant by it, "
+        "(3) what happened after (use chunks labelled [CONTEXT — just after] for the response).\n"
+        "- IMPORTANT: Never include the labels '[CONTEXT — just before]' or '[CONTEXT — just after]' "
+        "in your answer. Use the information from those chunks naturally in your narrative.\n"
+        "- Build a narrative conversation thread — not a list of isolated quotes.\n"
+        "- Identify what the speaker was pushing for, pushing back on, or trying to clarify.\n"
+        "- Note if their position or focus shifted across different meetings.\n"
+        "- Include meeting title and date for key moments.\n"
+        + _TIMESTAMP_RULE
+        + _CITATION_RULE +
+        "\nContext from meeting transcripts:\n{context}\n\n"
         "Question: {query}\n\nAnswer:"
     ),
     "timeline_query": (
@@ -104,8 +269,10 @@ ANSWER_PROMPT_TEMPLATES = {
         "Rules:\n"
         "- Present information chronologically\n"
         "- Highlight what changed between meetings\n"
-        "- Include meeting dates when referencing status or decisions\n\n"
-        "Context from meeting transcripts:\n{context}\n\n"
+        "- Include meeting dates when referencing status or decisions\n"
+        + _TIMESTAMP_RULE
+        + _CITATION_RULE +
+        "\nContext from meeting transcripts:\n{context}\n\n"
         "Question: {query}\n\nAnswer:"
     ),
     "question_query": (
@@ -114,8 +281,10 @@ ANSWER_PROMPT_TEMPLATES = {
         "Rules:\n"
         "- List each question with who asked it and which meeting it came from\n"
         "- If the question was answered in the transcript, include the answer\n"
-        "- If the question was left unresolved, note that explicitly\n\n"
-        "Context from meeting transcripts:\n{context}\n\n"
+        "- If the question was left unresolved, note that explicitly\n"
+        + _TIMESTAMP_RULE
+        + _CITATION_RULE +
+        "\nContext from meeting transcripts:\n{context}\n\n"
         "Question: {query}\n\nAnswer:"
     ),
     "general_query": (
@@ -130,8 +299,96 @@ ANSWER_PROMPT_TEMPLATES = {
         "- When the question asks who raised, expressed, discovered, or originated something,\n"
         "  identify the speaker whose words most directly demonstrate that action — judge by the\n"
         "  substance and intent of what was said, not literal keyword matching.\n"
-        "  Prioritize the originator over someone who merely referenced or described it afterward.\n\n"
-        "Context from meeting transcripts:\n{context}\n\n"
+        "  Prioritize the originator over someone who merely referenced or described it afterward.\n"
+        + _TIMESTAMP_RULE
+        + _CITATION_RULE +
+        "\nContext from meeting transcripts:\n{context}\n\n"
+        "Question: {query}\n\nAnswer:"
+    ),
+    "analytical_query": (
+        "You are an AI assistant presenting pre-computed data to a project manager.\n"
+        "The data below comes directly from the database — do NOT change any numbers.\n\n"
+        "Rules:\n"
+        "- Lead with the exact count as your first sentence\n"
+        "- Do NOT invent, estimate, or alter any number from the data\n"
+        "- If a speaker filter was applied, mention who was counted\n"
+        "- If a meeting scope was applied, mention which meeting(s) were included\n"
+        "- Keep the answer concise — one short paragraph is enough\n\n"
+        "Data:\n{context}\n\n"
+        "Question: {query}\n\nAnswer:"
+    ),
+    "topic_summary_query": (
+        "You are an AI assistant synthesizing a topic discussion for a project manager.\n"
+        "Answer the question by tracing how this specific topic evolved across meetings.\n\n"
+        "Rules:\n"
+        "- Present information chronologically (earliest meeting first)\n"
+        "- Cover: (1) how the topic was introduced, (2) key debates or positions, "
+        "(3) decisions reached, (4) open questions remaining\n"
+        "- Highlight what changed or progressed between meetings\n"
+        "- Include meeting title and date for each key development\n"
+        + _TIMESTAMP_RULE
+        + _CITATION_RULE +
+        "\nContext from meeting transcripts:\n{context}\n\n"
+        "Question: {query}\n\nAnswer:"
+    ),
+    "attribution_query": (
+        "You are an AI assistant identifying when topics or issues first emerged in project meetings.\n"
+        "Answer the question by pinpointing chronological order based on meeting dates and timestamps.\n\n"
+        "Rules:\n"
+        "- Identify the speaker and meeting where each topic/issue was FIRST raised\n"
+        "- Distinguish clearly: first mention vs later references by other speakers\n"
+        "- Present in chronological order (earliest first)\n"
+        "- Include meeting title, date, and speaker for each origin point\n"
+        + _TIMESTAMP_RULE
+        + _CITATION_RULE +
+        "\nContext from meeting transcripts:\n{context}\n\n"
+        "Question: {query}\n\nAnswer:"
+    ),
+    "contribution_query": (
+        "You are an AI assistant analyzing speaker participation for a project manager.\n"
+        "Present the ranked speaker contribution data below as a clear summary.\n\n"
+        "Rules:\n"
+        "- Present as a numbered ranked list, most active speaker first\n"
+        "- For each speaker: name, number of transcript segments, meetings attended\n"
+        "- Add one sentence describing what each top speaker primarily drove or focused on "
+        "(use your knowledge of the context provided)\n"
+        "- Keep the answer concise and factual\n\n"
+        "Data:\n{context}\n\n"
         "Question: {query}\n\nAnswer:"
     ),
 }
+
+
+# ── Output format prefix modifiers ────────────────────────────────────────────
+# Injected at the front of any prompt when output_format requires special structure.
+
+_COUNT_PREFIX = (
+    "IMPORTANT: Your answer MUST begin with the exact count as the first sentence "
+    "(e.g. 'Bhavneet raised 3 questions...'). Do NOT change this number or estimate differently.\n\n"
+)
+
+_YESNO_PREFIX = (
+    "IMPORTANT: Your answer MUST begin with either YES or NO on the first line, "
+    "then explain with evidence from the transcripts.\n\n"
+)
+
+_LIST_PREFIX = (
+    "IMPORTANT: Format your answer as a numbered or bulleted list. "
+    "Do not write a prose paragraph.\n\n"
+)
+
+_TRACE_PREFIX = (
+    "IMPORTANT: For every fact or item you state, include an inline source showing "
+    "meeting title, date, speaker, and chunk number — e.g. '[3] Simarjot (Sprint Review, 2026-04-20)'. "
+    "Do NOT omit the source for any claim.\n\n"
+)
+
+# Injected when scope_type == "meeting" so the LLM frames its answer around
+# ONE specific meeting rather than writing a generic project-wide overview.
+_MEETING_SCOPE_PREFIX = (
+    "SCOPE: This question is about ONE SPECIFIC MEETING — not the whole project.\n"
+    "Do NOT write a 'project progress overview'. Instead:\n"
+    "  • Open your answer by referencing the meeting (its title and date)\n"
+    "  • Describe what was discussed / decided / raised IN THAT MEETING specifically\n"
+    "  • Use past tense as if describing a specific event that already happened\n\n"
+)

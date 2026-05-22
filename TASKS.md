@@ -14,7 +14,8 @@ Phase 3 — Query Taxonomy   [██████████] 100%  10/10 tasks 
 Phase 4 — Streamlit UI     [██████████] 100%   8/8  tasks    ✓ COMPLETE
 Phase 5 — Validation       [██████████] 100%   6/6  tasks    ✓ COMPLETE
 Sprint 3 — Chunking        [██████████] 100%   all  tasks    ✓ COMPLETE
-Test Suite (Session 18)    [██████░░░░]  60%   3/5  tasks    🔄 IN PROGRESS
+Sprint 6 — Query Accuracy  [██████████] 100%  all   tasks    ✓ COMPLETE (Session 20)
+Test Suite (Sprint 4)      [██████░░░░]  60%   5/9  tasks    🔄 IN PROGRESS
 
 TOTAL XP EARNED:  1500 / 1500 XP   🏆 POC COMPLETE
 ```
@@ -27,6 +28,20 @@ TOTAL XP EARNED:  1500 / 1500 XP   🏆 POC COMPLETE
 - [x] `chunking.py` — `MAX_CHARS=500`, `_is_low_quality()`, `_TOPIC_SHIFT_RE` `[Must Do]`
 - [x] `answer_service.py` — `_expand_context()` neighbors for top-5 docs `[Must Do]`
 - [x] Re-ingest: 352 chunks, verified timestamps + adjacency links + CE query accuracy `[Must Do]`
+
+### Sprint 6 Tasks — Query Accuracy Improvement (Session 20) ✓ COMPLETE
+
+> 21/24 failing scenarios fixed. 3 known gaps require separate design work (S10, S13, S28).
+
+- [x] `scope.py` — `get_scoped_meeting_ids()` utility; `"that/this meeting"` + ordinal patterns `[Must Do]`
+- [x] `builder.py` — `retrieve_summary_chunks()` calls `parse_meeting_scope()` first; `build_prompt()` `output_format` param `[Must Do]`
+- [x] `chunking.py` — `_DOCUMENT_SHARE_RE` + `_OPEN_ISSUE_RE` signals; 5 binary signals total `[Must Do]`
+- [x] `metadata.py` — `_get_meeting_timings()` + timing/attendance branches in `handle_metadata_query()` `[Must Do]`
+- [x] `query_intent.py` — `QueryDimensions` model; 4 new `QueryIntent` values; 13-rule `ROUTING_RULES`; `_fill_syntactic_dimensions()`; `_post_process_understanding()` `[Must Do]`
+- [x] `retriever.py` — `compound_retrieve()`, `analytical_retrieve()`, `topic_summary_retrieve()`, `contribution_retrieve()` `[Must Do]`
+- [x] `prompts.py` — 4 new answer templates; `_COUNT_PREFIX`, `_YESNO_PREFIX`, `_LIST_PREFIX` `[Must Do]`
+- [x] `pipeline.py` — 8-mode dispatch; `_handle_structured_result()`; `output_format` wired end-to-end `[Must Do]`
+- [x] Re-ingest: ChromaDB wiped + re-ingested — 1,669 chunks, 10 meetings, 2 new signals `[Must Do]`
 
 ### Test Suite Tasks
 
