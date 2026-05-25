@@ -11,7 +11,7 @@ from app.config import Config
 logger = logging.getLogger(__name__)
 
 _RERANK_MODEL = "gemini-2.5-flash-lite"
-_MAX_PREVIEW_CHARS = 300
+_MAX_PREVIEW_CHARS = 450  # 300 was too short — key statements mid-chunk were cut off
 
 
 def rerank_documents(

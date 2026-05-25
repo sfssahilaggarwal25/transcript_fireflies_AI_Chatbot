@@ -3,6 +3,7 @@
 > All 5 phases of the query accuracy improvement plan implemented in Session 20 (2026-05-22).
 > 21 of 24 previously-failing scenarios now fixed. ChromaDB re-ingested: 1,669 chunks, 10 meetings.
 > Easy test suite: **12/12 PASS, avg 8.8/10** (verified 2026-05-22 after retry logic added).
+> Session 23 (2026-05-24): Prompt quality fixes + mode-check test runner. Medium suite: **20/20 PASS, avg 8.8/10**.
 
 ```
 ╔══════════════════════════════════════════════════════╗
@@ -199,64 +200,72 @@ validates and re-applies it on every tool execution.
 
 > Automated testing pipeline so any pipeline change can be verified quickly.
 > New developers and testers can run the full suite in 3 commands.
-> Started Session 18 (2026-05-20).
+> Started Session 18 (2026-05-20). Latest run (Session 23): **21/21 easy PASS, 20/20 medium PASS**.
 
 ```
 ╔══════════════════════════════════════════════════════╗
 ║     SPRINT 4 — AUTOMATED TEST SUITE                 ║
 ║     "Verify pipeline quality after every change"    ║
 ╠══════════════════════════════════════════════════════╣
-║  Query bank (easy/medium/hard)  ✓ COMPLETE          ║
+║  Query bank (easy)              ✓ 21 queries        ║
+║  Query bank (medium)            ✓ 20 queries        ║
+║  Query bank (hard)              [ ] Not written     ║
 ║  query_generator.py             ✓ COMPLETE          ║
-║  test_runner.py                 ✓ COMPLETE          ║
+║  test_runner.py + flags         ✓ --difficulty      ║
+║                                   --ids --tags      ║
+║                                   mode-check        ║
 ║  report_generator.py            ✓ COMPLETE          ║
 ║  TESTING_GUIDE.md               ✓ COMPLETE          ║
+║  test_retrieval.py (no-LLM)     ✓ 46/46 PASS        ║
+║  Easy suite: 21/21 PASS         ✓ avg 9.0/10        ║
+║  Medium suite: 20/20 PASS       ✓ avg 8.8/10        ║
 ║  run_tests.py (master runner)   [ ] Not started     ║
-║  LLM answer evaluator           [ ] Not started     ║
 ║  Regression tracker             [ ] Not started     ║
-║  First run: 10/12 passed (83.3%)                    ║
-║  Re-run needed: Sprint 6 changed routing + prompts  ║
 ╚══════════════════════════════════════════════════════╝
 ```
 
-### What was built (Session 18)
+### What was built
 
-- `app/tests/query_bank/easy.json` — 12 queries, all 5 easy intents, schema: `expected_intent`, `expected_strategy`, `tags`, `notes`, `evaluation_hints`
-- `app/tests/query_bank/medium.json` — 7 queries needing LLM classifier (paraphrased, date-filtered, speaker names)
-- `app/tests/query_bank/hard.json` — 7 edge-case queries (contradiction, relative dates, negative-space reasoning)
+- `app/tests/query_bank/easy.json` — 21 queries, 7 easy intents, schema: `expected_intent`, `expected_mode`, `tags`, `notes`, `evaluation_hints`
+- `app/tests/query_bank/medium.json` — 20 meeting-scoped queries testing 7 routing rules (compound, scoped_count, named_speaker_count, scoped_topic_summary, meeting_summary, hybrid+yesno) — Session 22
 - `app/tests/query_generator.py` — Gemini-powered query generation grounded in real ChromaDB summary chunks; `--project-id`, `--count`, `--dry-run` flags
-- `app/tests/test_runner.py` — calls real `answer_question()` directly; `_LogCapture` attached to each pipeline logger (bypasses `propagate=False`); live progress table; per-query JSON results + `run_metadata.json`
-- `app/tests/report_generator.py` — `summary.md` with ASCII progress bar, results table, intent breakdown, failed query traces, sources coverage
-- `app/tests/TESTING_GUIDE.md` — Mermaid flowchart, 3-command quick start, full script reference, manual query schema
+- `app/tests/test_runner.py` — calls real `answer_question()` directly; `_LogCapture` per logger; live progress table; per-query JSON results + `run_metadata.json`; `--ids`, `--tags`, `--difficulty` flags; mode-check support (`expected_mode` / `actual_mode`) — Session 23
+- `app/tests/report_generator.py` — `summary.md` with ASCII progress bar, results table, intent breakdown, failed query traces
+- `app/tests/TESTING_GUIDE.md` — Mermaid flowchart, 3-command quick start, full script reference
+- `app/tests/test_retrieval.py` — 46-assertion no-LLM retrieval test (BM25 tokenizer, adaptive k, hybrid, compound, analytical, topic_summary) — Session 21
+
+### Also done this sprint (Session 22) — QueryIntent decoupled from routing
+
+- `query_intent.py` — `is_attribution` dim + `_ATTRIBUTION_RE` regex; attribution routing uses dimension not intent
+- `prompts.py` — `select_template_key()` — single source of truth for template selection
+- `builder.py` — `build_prompt(template_key: str)` — no longer depends on `QueryIntent`
+- `pipeline.py` — uses `select_template_key()`; removed manual topic_summary intent override; speaker fallback scoped to `signal_filter == "question"`
 
 ### What's remaining in Sprint 4
 
 - [ ] `run_tests.py` — one command: query_generator → test_runner → report_generator → open summary.md
-- [ ] LLM answer evaluator — score answer quality 1–10 (currently only checks intent match + has_answer)
 - [ ] Regression tracker — diff two run folders to detect improvements/regressions
-- [ ] Extend runner to medium + hard difficulty levels
-
-### Known failure (to fix)
-
-- `easy_005` + `easy_011` — `general_query` misclassified as `summary_query` by LLM classifier
-- Root cause: "project meetings" and "last project sync" phrasing triggers summary intent even without explicit keywords
-- Fix: either rephrase the queries or tighten `UNDERSTANDING_PROMPT_TEMPLATE` for general intent
+- [ ] `hard.json` — write 10-15 hard queries (cross-meeting synthesis, contradiction, negative-space)
 
 ---
 
 ## Sprint 4 Progress
 
 ```
-Query bank                        [██████████] 100%  ✓ COMPLETE
+Query bank (easy)                 [██████████] 100%  ✓ 21 queries
+Query bank (medium)               [██████████] 100%  ✓ 20 queries
+Query bank (hard)                 [          ]   0%  Not written
 query_generator.py                [██████████] 100%  ✓ COMPLETE
-test_runner.py                    [██████████] 100%  ✓ COMPLETE
+test_runner.py + flags            [██████████] 100%  ✓ --difficulty --ids --tags + mode-check
 report_generator.py               [██████████] 100%  ✓ COMPLETE
 TESTING_GUIDE.md                  [██████████] 100%  ✓ COMPLETE
+test_retrieval.py (no-LLM)        [██████████] 100%  ✓ 46/46 PASS
+Easy suite green                  [██████████] 100%  ✓ 21/21 PASS avg 9.0/10
+Medium suite green                [██████████] 100%  ✓ 20/20 PASS avg 8.8/10
 run_tests.py                      [          ]   0%  Not started
-LLM evaluator                     [          ]   0%  Not started
 Regression tracker                [          ]   0%  Not started
 
-OVERALL                           [██████░░░░]  60%
+OVERALL                           [████████░░]  80%
 ```
 
 ---

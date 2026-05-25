@@ -1,11 +1,10 @@
 import json
 import logging
 import re
-from dataclasses import dataclass
 from enum import Enum
-from typing import Callable, Optional
+from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from app.services.prompts import (
     UNDERSTANDING_PROMPT_MEETING_LEVEL,
@@ -15,26 +14,72 @@ from app.services.prompts import (
 logger = logging.getLogger(__name__)
 
 
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  SECTION 1 — Query intent enum                                              ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
 class QueryIntent(str, Enum):
-    GENERAL      = "general_query"
-    DECISION     = "decision_query"
-    COMMITMENT   = "commitment_query"
-    QUESTION     = "question_query"
-    SUMMARY      = "summary_query"
-    SPEAKER      = "speaker_query"
-    TIMELINE     = "timeline_query"
-    METADATA     = "metadata_query"
-    # New intents for Phase 2–4 routing
-    ANALYTICAL   = "analytical_query"
+    GENERAL       = "general_query"
+    DECISION      = "decision_query"
+    COMMITMENT    = "commitment_query"
+    QUESTION      = "question_query"
+    SUMMARY       = "summary_query"
+    SPEAKER       = "speaker_query"
+    TIMELINE      = "timeline_query"
+    METADATA      = "metadata_query"
+    ANALYTICAL    = "analytical_query"
     TOPIC_SUMMARY = "topic_summary_query"
-    ATTRIBUTION  = "attribution_query"
-    CONTRIBUTION = "contribution_query"
+    ATTRIBUTION   = "attribution_query"
+    CONTRIBUTION  = "contribution_query"
 
 
-# ── Regex fallback ────────────────────────────────────────────────────────────
-# Used when the LLM call fails or returns invalid JSON.
-# Intentionally narrow — the LLM handles the hard cases.
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  SECTION 2 — Regex patterns                                                 ║
+# ║                                                                              ║
+# ║  Rule: regex only for things Python can detect structurally.                ║
+# ║  Semantic meaning (topic, speaker name, signal type) → LLM handles.        ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
 
+# ── Metadata short-circuit — structural queries needing zero vector search ────
+_METADATA_RE = re.compile(
+    r"\bhow many meetings?\b"
+    r"|\blist (?:all )?(?:the )?meetings?\b"
+    r"|\blist (?:all )?(?:the )?speakers?\b"
+    r"|\bshow (?:all )?(?:the )?meetings?\b"
+    r"|\bshow (?:all )?(?:the )?speakers?\b"
+    r"|\bwho are (?:all )?(?:the )?speakers?\b"
+    r"|\bwhat meetings?\b.{0,20}\bproject\b"
+    r"|\bwhen was.{0,15}(?:last|latest|first|recent) meeting\b"
+    r"|\ball (?:the )?meetings? in this project\b"
+    r"|\btimings? of (?:the )?meetings?\b"
+    r"|\bwhat (?:are|were) (?:the )?(?:meeting )?timings?\b"
+    r"|\bwhen did (?:the )?meetings? (?:start|take place|happen|occur)\b"
+    r"|\bwhat time (?:did|were|was|do) (?:the )?meetings?\b"
+    r"|\bhow long (?:was|were|did) (?:the )?meetings?\b"
+    r"|\bduration of (?:the )?meetings?\b"
+    r"|\bhow many (?:people|persons?|participants?|attendees?)\b"
+    r"|\bhow many speakers?\b"
+    r"|\bwho (?:was|were|attended|participated) in (?:the )?(?:previous|last|this|that|first) meeting\b"
+    r"|\bwho (?:attended|participated in|joined|was present in) (?:the )?\w+ meeting\b",
+    re.IGNORECASE,
+)
+
+# ── Contribution — speaker volume ranking ─────────────────────────────────────
+_CONTRIBUTION_RE = re.compile(
+    r"\bspoke\s+(?:the\s+)?most\b|\bspoken\s+(?:the\s+)?most\b"
+    r"|\bmost\s+active\b|\bcontribut",
+    re.IGNORECASE,
+)
+
+# ── Meeting content request safety net ───────────────────────────────────────
+# Fires when LLM misclassifies "what happened in X meeting" as general
+_CONTENT_RE = re.compile(
+    r"\bwhat\b.{0,25}\b(discussed|covered|happened|talked\s+about|went\s+over|gone\s+over|was\s+done)\b"
+    r"|\bwhat\b.{0,15}\b(agenda|topics?|points?|items?|things?|matters?)\b",
+    re.IGNORECASE,
+)
+
+# ── Regex fallback — only when LLM call fails entirely ───────────────────────
 _DECISION_RE = re.compile(
     r"\b(decision|decisions|decided|agreed|finalized|approved|confirmed|"
     r"what was decided|what did we decide|final decision)\b",
@@ -72,45 +117,536 @@ _TIMELINE_RE = re.compile(
     re.IGNORECASE,
 )
 
+# ── Stopwords for has_topic Python verification ───────────────────────────────
+# Rule: a word should be here if it describes HOW to ask, not WHAT is being asked about.
+# Temporal/ordinal words ("first", "last") are position references, not topics.
+# Generic content words ("topics", "agenda") name the question type, not the subject.
+_TOPIC_STOPWORDS = {
+    # Question / auxiliary words
+    "what", "was", "were", "is", "the", "a", "an", "in", "at", "of", "to",
+    "did", "do", "does", "how", "why", "when", "who", "which", "that", "this",
+    "be", "been", "has", "have", "had", "by", "me", "us", "we", "they", "our",
+    "any", "all", "from", "with", "for", "on", "tell", "related", "about",
+    # Action verbs — describe what was done, not what was talked about
+    "discuss", "discussed", "discussion",
+    "happen", "happened", "happening",
+    "cover", "covered", "covering",
+    "mention", "mentioned",
+    "talk", "talked", "talking",
+    "raise", "raised",
+    "said", "say",
+    "done", "went",
+    # Meeting / scope words
+    "meeting", "meetings",
+    # Summary intent words
+    "summary", "summarize", "overview", "recap",
+    # Temporal / positional words — these are scope references, never topics
+    "previous", "last", "recent", "latest", "next", "upcoming",
+    "first", "second", "third", "fourth", "fifth",
+    "earliest", "oldest", "newest",
+    # Generic content-request words — name the question type, not the subject
+    # "What topics were discussed?" → topic="topics" should NOT trigger has_topic
+    "topics", "topic", "points", "point", "items", "item", "agenda",
+    "things", "thing", "matters", "matter",
+}
 
-_METADATA_RE = re.compile(
-    r"\bhow many meetings?\b"
-    r"|\blist (?:all )?(?:the )?meetings?\b"
-    r"|\blist (?:all )?(?:the )?speakers?\b"
-    r"|\bshow (?:all )?(?:the )?meetings?\b"
-    r"|\bshow (?:all )?(?:the )?speakers?\b"
-    r"|\bwho are (?:all )?(?:the )?speakers?\b"
-    r"|\bwhat meetings?\b.{0,20}\bproject\b"
-    r"|\bwhen was.{0,15}(?:last|latest|first|recent) meeting\b"
-    r"|\ball (?:the )?meetings? in this project\b"
-    # timing queries
-    r"|\btimings? of (?:the )?meetings?\b"
-    r"|\bwhat (?:are|were) (?:the )?(?:meeting )?timings?\b"
-    r"|\bwhen did (?:the )?meetings? (?:start|take place|happen|occur)\b"
-    r"|\bwhat time (?:did|were|was|do) (?:the )?meetings?\b"
-    r"|\bhow long (?:was|were|did) (?:the )?meetings?\b"
-    r"|\bduration of (?:the )?meetings?\b"
-    # attendance queries
-    r"|\bhow many (?:people|persons?|participants?|attendees?)\b"
-    r"|\bhow many speakers?\b"
-    r"|\bwho (?:was|were|attended|participated) in (?:the )?(?:previous|last|this|that|first) meeting\b"
-    r"|\bwho (?:attended|participated in|joined|was present in) (?:the )?\w+ meeting\b",
-    re.IGNORECASE,
-)
 
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  SECTION 3 — Data models                                                    ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+class QueryDimensions(BaseModel):
+    # ── LLM fills these (semantic — Python cannot reliably detect) ────────────
+    has_topic:        bool = False   # named concept: "AI architecture", "budget"
+    is_cross_meeting: bool = False   # needs synthesis across multiple meetings
+    needs_traces:     bool = False   # user wants citations / attribution
+    is_contribution:  bool = False   # "who spoke most" — speaker volume
+
+    # ── Python fills these (structural regex — deterministic) ─────────────────
+    is_count:         bool = False   # "how many", "total X", "number of"
+    is_yesno:         bool = False   # first word is auxiliary verb
+    is_ranking:       bool = False   # "which came first/last/most"
+    is_list_request:  bool = False   # "what topics/items were discussed?"
+    has_temporal:     bool = False   # scope detection found a meeting reference
+    is_attribution:   bool = False   # "which came first", "who first raised/mentioned X"
+
+
+class QueryUnderstanding(BaseModel):
+    topic:             str = ""              # main subject, 1-10 words (LLM); empty when no specific topic
+
+    @field_validator("topic", mode="before")
+    @classmethod
+    def _coerce_topic(cls, v: object) -> str:
+        """Accept null/None from LLM (broad queries have no specific topic)."""
+        return v if isinstance(v, str) else ""
+    intent_type:       QueryIntent           # drives prompt template selection, attribution routing, and speaker fallback detection
+    named_speaker:     Optional[str] = None  # canonicalized name (LLM)
+    needs_summary:     bool = False          # Python infers this — not LLM
+    temporal_focus:    Optional[str] = None  # "cross_meeting" (LLM, project-level only)
+    signal_filter:     Optional[str] = None  # commitment/decision/question (LLM)
+    # ── Routing outputs — set by _post_process_understanding() ────────────────
+    retrieval_mode:    str = "hybrid"
+    output_format:     str = "prose"
+    dimensions:        QueryDimensions = QueryDimensions()
+    # ── Scope — resolved ONCE in understand_query(), propagated everywhere ────
+    scope_meeting_ids: list[str] = []
+    scope_type:        str = "project"       # "meeting" | "project"
+
+
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  SECTION 4 — Public helpers                                                 ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
 
 def is_metadata_query(query: str) -> bool:
     """
-    Fast regex pre-check — runs before the LLM classifier.
-    Returns True for pure structural queries (list meetings, list speakers,
-    count meetings, last meeting date) that need zero semantic search.
-    Kept narrow intentionally: misses go to the full pipeline, not vice versa.
+    Fast regex pre-check — runs before LLM classifier.
+    Only for pure structural queries needing zero semantic search.
+    Narrow intentionally: misses go to the full pipeline, not vice versa.
     """
     return bool(_METADATA_RE.search(query.strip()))
 
 
+def classify_query_intent(query: str, project_id: str = "") -> QueryIntent:
+    """Backward-compat wrapper. Prefer understand_query() directly."""
+    if not query or not query.strip():
+        raise ValueError("Query cannot be empty.")
+    return understand_query(query.strip(), project_id).intent_type
+
+
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  SECTION 5 — Python dimension filling (Layer 2)                             ║
+# ║                                                                              ║
+# ║  These are STRUCTURAL detections — regex is more reliable than LLM here.   ║
+# ║  LLM fills semantic fields (topic, speaker, signal); Python fills shape.    ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+_PUNCT_STRIP_RE = re.compile(r"[^\w\s]")   # strips punctuation before stopword check
+
+
+def _python_verify_has_topic(u: QueryUnderstanding) -> bool:
+    """
+    LLM sometimes misses has_topic=True even when topic text is clearly present.
+    Strategy: if LLM said True  -> trust it.
+               if LLM said False -> check topic field for non-stopword content.
+
+    Rules applied before upgrading:
+      1. Strip punctuation ("meeting?" -> "meeting") — avoids punctuated stopwords
+         slipping through.
+      2. Skip words that match the already-detected named_speaker — speaker names
+         in the topic field don't make a query about a topic (e.g. "bhavneet
+         meeting" should not get has_topic=True; the speaker route handles it).
+
+    Example:
+        topic="AI architecture"  -> words={"AI","architecture"} -> True
+        topic="meeting summary"  -> words={"meeting","summary"} -> both stopwords -> False
+        topic="first meeting"    -> words={}                    -> False  (both stopwords)
+        topic="bhavneet meeting" -> words={}                    -> False  (speaker + stopword)
+    """
+    if u.dimensions.has_topic:
+        return True
+
+    # Strip punctuation, lowercase, split; drop pure numbers (e.g. "2" in "last 2 meetings")
+    cleaned = _PUNCT_STRIP_RE.sub("", u.topic.lower())
+    raw_words = set(cleaned.split())
+
+    # Remove stopwords and pure numeric tokens
+    candidate_words = {w for w in raw_words - _TOPIC_STOPWORDS if not w.isdigit()}
+
+    # Remove the named_speaker's tokens — speaker names are not topics
+    if u.named_speaker and candidate_words:
+        speaker_tokens = set(_PUNCT_STRIP_RE.sub("", u.named_speaker.lower()).split())
+        candidate_words -= speaker_tokens
+
+    if candidate_words:
+        logger.info(
+            "  [dims]  has_topic UPGRADED True by Python "
+            "(LLM=False, meaningful words found: %s)", candidate_words,
+        )
+        return True
+    return False
+
+
+def _python_infer_needs_summary(u: QueryUnderstanding, query: str) -> bool:
+    """
+    Python decides needs_summary — more reliable than LLM for this field.
+
+    needs_summary=True means: fetch pre-written summary chunks, skip vector search.
+    This is only correct when the user wants a GENERAL meeting overview with no
+    specific topic or speaker in mind.
+
+    Rules:
+      - has_topic    -> False  (topic_summary mode will handle it)
+      - named_speaker -> False  (compound mode will handle it)
+      - Query must contain a summary-intent word
+    """
+    if u.dimensions.has_topic:
+        return False
+    if u.named_speaker:
+        return False
+
+    return bool(re.search(
+        r"\b(summary|summarize|overview|recap|what happened|"
+        r"what was discussed|what was covered|what did we talk|"
+        r"bring me up to speed|catch me up)\b",
+        query.lower(),
+    ))
+
+
+def _fill_syntactic_dimensions(
+    u: QueryUnderstanding, query: str, project_id: str
+) -> "dict | None":
+    """
+    Fill all Python-computable fields on u.dimensions.
+    Returns scope_where dict only on the regex-fallback path (when scope_meeting_ids
+    is not yet populated). Normal path: scope already in u.scope_meeting_ids.
+    """
+    q = query.lower().strip()
+    first_word = q.split()[0] if q else ""
+
+    # ── Attribution shape dim ─────────────────────────────────────────────────
+    _ATTRIBUTION_RE = re.compile(
+        r"\bwhich\b.{0,40}\b(came\s+first|mentioned\s+first|raised\s+first|appeared\s+first)\b"
+        r"|\bwho\s+first\s+(raised|mentioned|introduced|brought\s+up)\b"
+        r"|\bwhen\s+did.{0,30}\bfirst\b"
+        r"|\b(first|initial)\s+(mention|occurrence|time|instance)\b",
+        re.IGNORECASE,
+    )
+    u.dimensions.is_attribution = bool(_ATTRIBUTION_RE.search(query))
+
+    # ── Structural shape dims ─────────────────────────────────────────────────
+    u.dimensions.is_yesno = first_word in {
+        "is", "are", "was", "were", "did", "has", "have",
+        "can", "could", "would", "should", "will", "may", "might", "shall",
+        "do", "does", "any",
+    }
+    u.dimensions.is_count = bool(re.search(
+        r"\bhow\s+many\b|\btotal\s+\w+\b|\bnumber\s+of\b|\bcount\b",
+        q,
+    ))
+    u.dimensions.is_ranking = bool(re.search(
+        r"\bwhich\b.*\b(most|first|last|latest|earliest|oldest|newest)\b"
+        r"|\btop\s+\d+\b|\brank\b",
+        q,
+    ))
+    u.dimensions.is_list_request = bool(re.search(
+        r"\bwhat\s+(?:are|were|is|was|\'s)?\s*(?:the|a|some|all)?\s*"
+        r"(topics?|items?|things?|points?|issues?|matters?|agenda)\b"
+        r"|\blist\s+(?:the|all|of)\b",
+        q,
+    ))
+
+    # ── Semantic dim upgrades (Python verifies LLM output) ────────────────────
+    u.dimensions.has_topic = _python_verify_has_topic(u)
+    u.needs_summary        = _python_infer_needs_summary(u, query)
+
+    # ── Auto needs_traces for scoped topic discussion queries ─────────────────
+    if not u.dimensions.needs_traces and u.dimensions.has_temporal and u.dimensions.has_topic:
+        u.dimensions.needs_traces = bool(re.search(
+            r"\bwhat\b.{0,40}\b(discussion|discussions)\b"
+            r"|\bwhat\b.{0,20}\b(?:was|were|have|had|did)\b.{0,25}"
+            r"\b(?:discuss(?:ed)?|said|raised|mentioned|talked|covered)\b"
+            r"|\bwhat\b.{0,20}\b(?:happened?|came\s+up|went\s+on)\b",
+            q,
+        ))
+        if u.dimensions.needs_traces:
+            logger.info(
+                "  [dims]  needs_traces AUTO-SET True "
+                "(discussion pattern + has_topic + has_temporal)",
+            )
+
+    # ── Scope / has_temporal ──────────────────────────────────────────────────
+    if u.scope_meeting_ids:
+        # Normal path — scope already resolved in understand_query()
+        u.dimensions.has_temporal = True
+        scope_where = None
+    else:
+        # Regex-fallback path — detect scope now
+        from app.services.answer.scope import parse_meeting_scope
+        scope_where = parse_meeting_scope(query, project_id)
+        u.dimensions.has_temporal = scope_where is not None
+
+    logger.info(
+        "  [dims]  is_count=%-5s | is_yesno=%-5s | is_ranking=%-5s"
+        " | is_list=%-5s | has_temporal=%-5s | has_topic=%-5s | needs_traces=%-5s",
+        u.dimensions.is_count, u.dimensions.is_yesno, u.dimensions.is_ranking,
+        u.dimensions.is_list_request, u.dimensions.has_temporal,
+        u.dimensions.has_topic, u.dimensions.needs_traces,
+    )
+    return scope_where
+
+
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  SECTION 6 — Routing (Layer 3)                                              ║
+# ║                                                                              ║
+# ║  Three sub-functions, called in priority order via `or` short-circuit.      ║
+# ║                                                                              ║
+# ║  _structural_route  — no vector search needed (metadata, contribution)      ║
+# ║  _shape_route       — answer shape dominates (count, ranking)               ║
+# ║  _content_route     — what content to fetch (speaker, topic, summary, etc.) ║
+# ║                                                                              ║
+# ║  IMPORTANT: intent_type is NOT used in routing. Routing depends only on     ║
+# ║  Python-computed dimensions + LLM semantic fields (topic, speaker, signal). ║
+# ║  This makes routing deterministic and LLM-classification-error resistant.   ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+def _structural_route(u: QueryUnderstanding, q: str) -> "tuple[str,str] | None":
+    """
+    Layer 1 — Structural short-circuits.
+    These queries need zero vector search — pure metadata aggregation.
+    Must be checked first so they never fall into semantic retrieval.
+    """
+    # Metadata: "how many meetings", "list speakers", "meeting timings"
+    if _METADATA_RE.search(q):
+        return "metadata", "structural_metadata"
+
+    # Contribution: "who spoke most", "most active speaker"
+    # Both LLM dim and regex checked — belt-and-suspenders
+    if u.dimensions.is_contribution or _CONTRIBUTION_RE.search(q):
+        return "contribution", "contribution_volume"
+
+    return None
+
+
+def _shape_route(u: QueryUnderstanding, q: str) -> "tuple[str,str] | None":
+    """
+    Layer 2 — Answer shape routing.
+    The SHAPE of the answer (a number, a ranked list) overrides content decisions.
+    Count queries always go here regardless of topic/speaker/scope.
+
+    Count priority inside (most-specific first):
+      scoped_count        -> has_temporal + is_count  (meeting-level count)
+      signal_count        -> signal_filter + is_count  (count a specific signal type)
+      named_speaker_count -> speaker + is_count
+      semantic_count      -> topic + is_count  (needs text search, not just flags)
+      any_count_fallback  -> catch-all for remaining counts
+
+    Why attribution here as timeline? It's a "which came first" shape question.
+    """
+    # Attribution — "which came first?", "who first raised X?" — deterministic regex, no LLM needed
+    if u.dimensions.is_attribution:
+        return "timeline", "attribution_origin"
+
+    if u.dimensions.is_count:
+        # Most-specific scoped count first
+        if u.dimensions.has_temporal:
+            return "analytical", "scoped_count"
+        if u.signal_filter and not u.dimensions.has_topic:
+            return "analytical", "signal_count"
+        if u.named_speaker:
+            return "analytical", "named_speaker_count"
+        if u.dimensions.has_topic:
+            # Topic count needs semantic search — topic_summary gives better results
+            # than raw metadata count for "how many times was AI mentioned"
+            return "topic_summary", "semantic_count"
+        return "analytical", "any_count_fallback"
+
+    # Ranking — "which topic was most discussed?" — needs diverse hybrid chunks
+    # NOT summary chunks (pre-written summaries lose granular ranking signal)
+    if u.dimensions.is_ranking and not u.named_speaker:
+        return "hybrid", "scoped_ranking"
+
+    return None
+
+
+def _content_route(u: QueryUnderstanding, q: str) -> tuple[str, str]:
+    """
+    Layer 3 — Content routing. Always returns a value (never None).
+    Last line is the guaranteed hybrid fallback.
+
+    Decision tree:
+      speaker present  -> compound (2-pass speaker-first retrieval)
+      topic present
+        + signal_filter -> hybrid  (metadata flag hard_filter must be applied)
+        + temporal      -> topic_summary (scoped to specific meeting(s))
+        + cross_meeting -> topic_summary (project-wide per-meeting search)
+        alone           -> topic_summary (project-wide)
+      needs_summary    -> summary (pre-written summary chunks)
+      list_request     -> summary (topic list comes from summary chunks)
+      cross_meeting    -> timeline (per-meeting retrieval + chronological merge)
+      temporal + content words -> summary (safety net for LLM misclassification)
+      default          -> hybrid (BM25 + dense, best general-purpose mode)
+    """
+    # ── Speaker queries ───────────────────────────────────────────────────────
+    if u.named_speaker:
+        # signal_fetch: speaker + signal + exhaustive-list intent
+        # "Did Bhavneet ask any questions?" needs ALL matching chunks, not top-N.
+        # Hybrid search misses valid signal hits that score low on the query text.
+        # Direct DB fetch (signal_fetch_retrieve) guarantees completeness.
+        if u.signal_filter and (u.dimensions.is_yesno or u.dimensions.is_list_request):
+            return "signal_fetch", "speaker_signal_exhaustive"
+
+        # compound handles speaker+topic, speaker+signal, speaker+scope
+        # all those combinations are resolved inside compound_retrieve()
+        return "compound", "compound_any_speaker"
+
+    # ── Topic queries ─────────────────────────────────────────────────────────
+    if u.dimensions.has_topic:
+        # Signal queries (commitment/question/decision) use metadata flags like
+        # contains_question, contains_commitment as ChromaDB hard_filters.
+        # topic_summary mode NEVER applies these flags — it only does text search.
+        # Always route to hybrid when signal_filter is set so the flag is enforced.
+        if u.signal_filter:
+            return "hybrid", "signal_with_topic"
+
+        if u.dimensions.has_temporal:
+            # "AI in previous meeting" — search only scoped meeting(s) for topic
+            # scope_meeting_ids already populated -> topic_summary_retrieve() uses it
+            return "topic_summary", "scoped_topic_summary"
+
+        if u.dimensions.is_cross_meeting:
+            # "how has AI discussion evolved across meetings?"
+            return "topic_summary", "cross_meeting_topic_summary"
+
+        # Project-wide topic deep-dive — no scope restriction
+        return "topic_summary", "topic_only_summary"
+
+    # ── Summary / list queries ────────────────────────────────────────────────
+    if u.needs_summary:
+        return "summary", "meeting_summary"
+
+    if u.dimensions.is_list_request:
+        # "what topics were discussed?" -> summary chunks have the best topic list
+        return "summary", "list_request_summary"
+
+    # ── Timeline / cross-meeting ──────────────────────────────────────────────
+    if u.temporal_focus == "cross_meeting" or u.dimensions.is_cross_meeting:
+        return "timeline", "cross_meeting_timeline"
+
+    # ── Safety net — LLM returned general_query but query clearly wants meeting content
+    # Python regex catches "what was discussed/happened/covered in [meeting]"
+    if u.dimensions.has_temporal and _CONTENT_RE.search(q):
+        return "summary", "meeting_content_request"
+
+    # ── Default fallback ──────────────────────────────────────────────────────
+    return "hybrid", "hybrid_default"
+
+
+def _apply_routing(u: QueryUnderstanding, query: str) -> tuple[str, str]:
+    """
+    Entry point for routing. Calls three layers via `or` short-circuit:
+      - _structural_route first (no search needed)
+      - _shape_route second  (answer shape dominates)
+      - _content_route last  (always returns, never None)
+
+    `or` short-circuits: first non-None result wins, others not evaluated.
+    _content_route is guaranteed to return -> this function never returns None.
+    """
+    return (
+        _structural_route(u, query)
+        or _shape_route(u, query)
+        or _content_route(u, query)
+    )
+
+
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  SECTION 7 — Output format derivation                                       ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+def _derive_output_format(u: QueryUnderstanding) -> str:
+    """
+    Determines how the LLM should structure its final answer.
+    Checked in priority order — first match wins.
+    """
+    if u.dimensions.is_count:        return "count"
+    if u.dimensions.is_yesno:        return "yesno"
+    if u.dimensions.is_ranking:      return "list"
+    if u.dimensions.is_contribution: return "table"
+    if u.dimensions.is_list_request: return "list"
+    if u.dimensions.needs_traces:    return "prose_with_traces"
+    return "prose"
+
+
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  SECTION 8 — Post-processing (glues everything together)                    ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
+def _python_detect_speaker(query: str, project_id: str) -> "str | None":
+    """
+    Python fallback for speaker detection — runs when LLM misses named_speaker.
+    Uses the same 2-level match that's fast enough to call here (DB lookup once).
+
+    Level 1: full name contained in query (most reliable)
+    Level 2: first name (>2 chars) contained in query
+
+    The 4-level extended matching (last-name, abbreviation) lives in
+    pipeline.py detect_speaker_name() and runs at retrieval time.
+    """
+    try:
+        from app.services.storage.project_store import get_speaker_names
+        names = get_speaker_names(project_id)
+    except Exception:
+        return None
+
+    q = _PUNCT_STRIP_RE.sub("", query.lower())
+
+    # Level 1: full name
+    for name in names:
+        if _PUNCT_STRIP_RE.sub("", name.lower()) in q:
+            return name
+
+    # Level 2: first name (>2 chars, prevents "Al", "Li" false matches)
+    for name in names:
+        parts = name.split()
+        if parts:
+            first = _PUNCT_STRIP_RE.sub("", parts[0].lower())
+            if len(first) > 2 and first in q:
+                return name
+
+    return None
+
+
+def _post_process_understanding(
+    u: QueryUnderstanding, query: str, project_id: str
+) -> QueryUnderstanding:
+    """
+    Runs after LLM parse. Steps in order:
+
+    1. Fill syntactic dims (Python regex).
+       Also returns scope_where on regex-fallback path.
+    2. Resolve scope_where -> concrete meeting IDs (regex-fallback path only).
+       Normal path: scope already in u.scope_meeting_ids from understand_query().
+    3. Python speaker fallback — if LLM missed named_speaker, detect from query.
+       Must run BEFORE routing so compound mode fires correctly.
+    4. Apply routing + derive output format.
+    """
+    scope_where = _fill_syntactic_dimensions(u, query, project_id)
+
+    # Resolve scope only on regex-fallback path (normal path already has IDs)
+    if scope_where:
+        from app.services.answer.scope import get_scoped_meeting_ids
+        ids = list(get_scoped_meeting_ids(scope_where, project_id))
+        if ids:
+            u.scope_meeting_ids = ids
+            u.scope_type = "meeting"
+
+    # Speaker fallback — catches cases where LLM returned topic/general intent
+    # but the query clearly mentions a known speaker name (e.g. "What did Bhavneet say?")
+    if not u.named_speaker:
+        detected = _python_detect_speaker(query, project_id)
+        if detected:
+            u.named_speaker = detected
+            logger.info(
+                "  [dims]  named_speaker DETECTED by Python (LLM missed it): %s",
+                detected,
+            )
+
+    mode, label = _apply_routing(u, query)
+    u.retrieval_mode = mode
+    u.output_format  = _derive_output_format(u)
+
+    logger.info(
+        "  routing    : mode=%-15s | rule=%-30s | output=%-18s | scope=%s (%d meeting(s))",
+        mode, label, u.output_format, u.scope_type, len(u.scope_meeting_ids),
+    )
+    return u
+
+
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  SECTION 9 — Regex fallback (LLM failure recovery)                         ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
+
 def _regex_fallback(query: str) -> QueryIntent:
-    """Regex classifier — only runs when the LLM call fails."""
+    """Regex intent classifier — only runs when LLM call fails entirely."""
     if _DECISION_RE.search(query):   return QueryIntent.DECISION
     if _COMMITMENT_RE.search(query): return QueryIntent.COMMITMENT
     if _SUMMARY_RE.search(query):    return QueryIntent.SUMMARY
@@ -120,346 +656,49 @@ def _regex_fallback(query: str) -> QueryIntent:
     return QueryIntent.GENERAL
 
 
-# ── Public interface ──────────────────────────────────────────────────────────
-
-def classify_query_intent(query: str, project_id: str = "") -> QueryIntent:
-    """
-    Return the `intent_type` from a full `understand_query()` call.
-
-    This is a thin wrapper kept for backward compatibility (used in trace_query.py
-    and legacy callers). All routing and dimensional enrichment is handled inside
-    `understand_query()` — do NOT add new logic here.
-
-    For production code use `understand_query(query, project_id)` directly so you
-    get the full `QueryUnderstanding` object with `retrieval_mode`, `output_format`,
-    `named_speaker`, `signal_filter`, and `dimensions`.
-    """
-    if not query or not query.strip():
-        raise ValueError("Query cannot be empty.")
-
-    understanding = understand_query(query.strip(), project_id)
-    return understanding.intent_type
-
-
-# ── Query dimensions — semantic (LLM) + syntactic (Python regex) ─────────────
-
-class QueryDimensions(BaseModel):
-    # LLM fills these (semantic understanding)
-    has_topic:        bool = False  # named concept in query ("AI architecture", "feedback")
-    is_cross_meeting: bool = False  # needs synthesis across multiple meetings
-    needs_traces:     bool = False  # user wants citations ("with traces", "with sources")
-    is_contribution:  bool = False  # "who spoke most" — speaker volume analysis
-
-    # Python fills these (deterministic regex — never sent to LLM)
-    is_count:         bool = False  # "how many", "total X", "number of"
-    is_yesno:         bool = False  # first word is auxiliary verb ("Did", "Was", "Any")
-    is_ranking:       bool = False  # "which came first/last/most"
-    is_list_request:  bool = False  # "what topics/items/issues were discussed?"
-    has_temporal:     bool = False  # parse_meeting_scope() found a time reference
-
-
-# ── Flexible query understanding (Step 1 — production pipeline) ───────────────
-
-class QueryUnderstanding(BaseModel):
-    topic:           str                  # main subject, 1-10 words
-    intent_type:     QueryIntent          # for prompt template selection
-    named_speaker:   Optional[str] = None # canonicalized speaker name if any
-    needs_summary:   bool = False         # True → fetch summary chunks, skip vector search
-    temporal_focus:  Optional[str] = None # "cross_meeting" → per-meeting timeline retrieval
-    signal_filter:   Optional[str] = None # "question"|"commitment"|"decision"|"open_issue"|"document_share"
-    # Routing outputs — set by _post_process_understanding(), not the LLM
-    retrieval_mode:  str = "hybrid"       # which retrieval function to call
-    output_format:   str = "prose"        # how the LLM should structure its answer
-    dimensions:      QueryDimensions = QueryDimensions()
-    # Scope — resolved once here, propagated to all retrieval functions
-    # Empty list = project-level (search all meetings); non-empty = locked to these meeting IDs
-    scope_meeting_ids: list[str] = []
-    scope_type:        str = "project"   # "meeting" | "project"
-
-
 def _build_understanding_from_regex(query: str) -> QueryUnderstanding:
     intent = _regex_fallback(query)
     return QueryUnderstanding(
-        topic=query[:80],
-        intent_type=intent,
-        needs_summary=(intent == QueryIntent.SUMMARY),
-        temporal_focus="cross_meeting" if intent == QueryIntent.TIMELINE else None,
+        topic         = query[:80],
+        intent_type   = intent,
+        needs_summary = (intent == QueryIntent.SUMMARY),
+        temporal_focus = "cross_meeting" if intent == QueryIntent.TIMELINE else None,
     )
 
 
-# ── Layer 2 — Python syntactic dimension filling ─────────────────────────────
-
-def _fill_syntactic_dimensions(
-    u: QueryUnderstanding, query: str, project_id: str
-) -> "dict | None":
-    """
-    Fill deterministic regex-based fields.
-
-    Scope (has_temporal / scope_meeting_ids) is handled differently depending
-    on the call path:
-    - Normal path (understand_query): scope already pre-detected and stored in
-      u.scope_meeting_ids before this runs — we just set has_temporal from it,
-      no DB call needed.
-    - Regex fallback path: scope not yet detected — call parse_meeting_scope()
-      and return the raw where-clause for _post_process_understanding() to resolve.
-    """
-    q = query.lower().strip()
-    first_word = q.split()[0] if q else ""
-
-    u.dimensions.is_yesno = first_word in {
-        "is", "are", "was", "were", "did", "has", "have",
-        "can", "could", "would", "should", "will", "may", "might", "shall",
-        "do", "does", "any",
-    }
-    u.dimensions.is_count = bool(re.search(
-        r'\bhow\s+many\b|\btotal\s+\w+\b|\bnumber\s+of\b|\bcount\b',
-        q,
-    ))
-    u.dimensions.is_ranking = bool(re.search(
-        r'\bwhich\b.*\b(most|first|last|latest|earliest|oldest|newest)\b'
-        r'|\btop\s+\d+\b|\brank\b',
-        q,
-    ))
-    u.dimensions.is_list_request = bool(re.search(
-        r'\bwhat\s+(?:are|were|is|was|\'s)?\s*(?:the|a|some|all)?\s*'
-        r'(topics?|items?|things?|points?|issues?|matters?|agenda)\b'
-        r'|\blist\s+(?:the|all|of)\b',
-        q,
-    ))
-
-    # Scope: if already pre-detected (normal path) use it directly — no DB call
-    if u.scope_meeting_ids:
-        u.dimensions.has_temporal = True
-        return None  # scope already stored, no scope_where needed
-
-    # Regex fallback path: detect scope now
-    from app.services.answer.scope import parse_meeting_scope
-    scope_where = parse_meeting_scope(query, project_id)
-    u.dimensions.has_temporal = scope_where is not None
-    return scope_where
-
-
-# ── Layer 3a — 16-rule priority routing matrix ────────────────────────────────
-
-@dataclass(frozen=True)
-class RoutingRule:
-    condition: Callable[["QueryUnderstanding", str], bool]
-    mode:      str
-    label:     str
-
-
-ROUTING_RULES: list[RoutingRule] = [
-    RoutingRule(
-        condition=lambda u, q: bool(re.search(
-            r'\btimings?\b|when.*meeting.*start'
-            r'|\bhow\s+many\s+(meetings?|persons?|people|speakers?|participants?|attendees?)\b',
-            q.lower(),
-        )),
-        mode="metadata",
-        label="structural_metadata",
-    ),
-    RoutingRule(
-        condition=lambda u, q: u.dimensions.is_contribution or bool(re.search(
-            r'\bspoke\s+(?:the\s+)?most\b|\bspoken\s+(?:the\s+)?most\b'
-            r'|\bmost\s+active\b|\bcontribut',
-            q.lower(),
-        )),
-        mode="contribution",
-        label="contribution_volume",
-    ),
-    RoutingRule(
-        condition=lambda u, q: u.intent_type == QueryIntent.ATTRIBUTION,
-        mode="timeline",
-        label="attribution_origin",
-    ),
-    RoutingRule(
-        condition=lambda u, q: u.dimensions.is_count and u.dimensions.has_temporal,
-        mode="analytical",
-        label="scoped_count",
-    ),
-    RoutingRule(
-        condition=lambda u, q: (
-            u.dimensions.is_count
-            and bool(u.signal_filter)
-            and not u.dimensions.has_topic
-        ),
-        mode="analytical",
-        label="signal_count",
-    ),
-    RoutingRule(
-        condition=lambda u, q: u.dimensions.is_count and bool(u.named_speaker),
-        mode="analytical",
-        label="named_speaker_count",
-    ),
-    RoutingRule(
-        condition=lambda u, q: u.dimensions.is_count and u.dimensions.has_topic,
-        mode="topic_summary",
-        label="semantic_count",
-    ),
-    RoutingRule(
-        condition=lambda u, q: u.dimensions.is_count,
-        mode="analytical",
-        label="any_count_fallback",
-    ),
-    RoutingRule(
-        condition=lambda u, q: bool(u.named_speaker) and not u.dimensions.is_count,
-        mode="compound",
-        label="compound_any_speaker",
-    ),
-    # Ranking queries need 25 diverse chunks from hybrid search — NOT 1-2 pre-written summary chunks.
-    # "Which topic is most important in previous meeting?" → hybrid (temporal scope applied downstream)
-    # "Which came up first — X or Y?" → handled earlier by attribution_origin (Rule 3)
-    # Guards: no speaker (compound handles those), no count (analytical handles those).
-    RoutingRule(
-        condition=lambda u, q: (
-            u.dimensions.is_ranking
-            and not bool(u.named_speaker)
-            and not u.dimensions.is_count
-        ),
-        mode="hybrid",
-        label="scoped_ranking",
-    ),
-    RoutingRule(
-        # Topic deep-dive: "Summarize the AI architecture discussion"
-        # NOT for list-of-topics requests ("What topics were discussed?") — those need summary mode.
-        # NOT for ranking requests ("Which topic is most important?") — those need hybrid mode.
-        # is_list_request guard prevents "What are the topics?" from being treated as a topic deep-dive.
-        condition=lambda u, q: (
-            (u.intent_type == QueryIntent.SUMMARY
-             or bool(re.search(
-                 r'\b(overall|full|entire)\s+(conversation|discussion|dialogue)\s+(about|on|regarding)\b',
-                 q.lower(),
-             )))
-            and u.dimensions.has_topic
-            and not u.dimensions.is_list_request
-            and not u.dimensions.is_ranking
-            and not re.search(r'\b(project|all\s+meetings?|overall\s+project)\b', q.lower())
-        ),
-        mode="topic_summary",
-        label="topic_summary",
-    ),
-    RoutingRule(
-        condition=lambda u, q: u.needs_summary and not u.dimensions.is_ranking,
-        mode="summary",
-        label="meeting_summary",
-    ),
-    RoutingRule(
-        condition=lambda u, q: (
-            u.temporal_focus == "cross_meeting" or u.dimensions.is_cross_meeting
-        ),
-        mode="timeline",
-        label="cross_meeting_timeline",
-    ),
-    # Safety net: "What was discussed / what happened / what topics in [meeting]?"
-    # Fires when LLM misclassifies as general_query instead of summary_query.
-    # Python-computed fields only — not affected by LLM mistakes.
-    # Guards: no speaker (compound handles those), no count (analytical handles those).
-    RoutingRule(
-        condition=lambda u, q: (
-            u.dimensions.has_temporal
-            and not bool(u.named_speaker)
-            and not u.dimensions.is_count
-            and bool(re.search(
-                r'\bwhat\b.{0,25}\b(discussed|covered|happened|talked\s+about|went\s+over|gone\s+over|was\s+done)\b'
-                r'|\bwhat\b.{0,15}\b(agenda|topics?|points?|items?|things?|matters?)\b',
-                q.lower(),
-            ))
-        ),
-        mode="summary",
-        label="meeting_content_request",
-    ),
-    # Safety net: "What are the topics / list the agenda?" without temporal scope
-    # Catches is_list_request=True when LLM doesn't set needs_summary
-    RoutingRule(
-        condition=lambda u, q: (
-            u.dimensions.is_list_request
-            and not bool(u.named_speaker)
-            and not u.dimensions.is_count
-        ),
-        mode="summary",
-        label="list_request_summary",
-    ),
-    RoutingRule(
-        condition=lambda u, q: True,
-        mode="hybrid",
-        label="hybrid_default",
-    ),
-]
-
-
-def _apply_routing(u: QueryUnderstanding, query: str) -> tuple[str, str]:
-    """Walk the priority table and return (mode, rule_label)."""
-    for rule in ROUTING_RULES:
-        if rule.condition(u, query):
-            return rule.mode, rule.label
-    return "hybrid", "hybrid_default"
-
-
-# ── Layer 3b — output format derivation ──────────────────────────────────────
-
-def _derive_output_format(u: QueryUnderstanding) -> str:
-    if u.dimensions.is_count:          return "count"
-    if u.dimensions.is_yesno:          return "yesno"
-    if u.dimensions.is_ranking:        return "list"
-    if u.dimensions.is_contribution:   return "table"
-    if u.dimensions.is_list_request:   return "list"
-    if u.dimensions.needs_traces:      return "prose_with_traces"
-    return "prose"
-
-
-# ── Public post-processing entry point ───────────────────────────────────────
-
-def _post_process_understanding(
-    u: QueryUnderstanding, query: str, project_id: str
-) -> QueryUnderstanding:
-    """
-    Runs after LLM parse — three steps in order:
-
-    1. Fill syntactic dims (Python regex) + get scope_where back in one call.
-    2. Resolve scope_where → concrete meeting IDs stored in u.scope_meeting_ids.
-       This is the single point where scope is detected. Pipeline and all retrieval
-       functions read from u.scope_meeting_ids — they never call parse_meeting_scope().
-    3. Apply routing matrix + derive output format.
-    """
-    scope_where = _fill_syntactic_dimensions(u, query, project_id)
-
-    # Resolve meeting IDs — done ONCE here, propagated everywhere downstream
-    if scope_where:
-        from app.services.answer.scope import get_scoped_meeting_ids
-        ids = list(get_scoped_meeting_ids(scope_where, project_id))
-        if ids:
-            u.scope_meeting_ids = ids
-            u.scope_type = "meeting"
-
-    mode, label = _apply_routing(u, query)
-    u.retrieval_mode = mode
-    u.output_format  = _derive_output_format(u)
-    logger.info(
-        "  routing    : mode=%s | rule=%s | output_format=%s | scope=%s (%d meeting(s))",
-        mode, label, u.output_format, u.scope_type, len(u.scope_meeting_ids),
-    )
-    return u
-
+# ╔══════════════════════════════════════════════════════════════════════════════╗
+# ║  SECTION 10 — Main entry point                                              ║
+# ╚══════════════════════════════════════════════════════════════════════════════╝
 
 def understand_query(query: str, project_id: str) -> QueryUnderstanding:
     """
-    Structured query understanding — scope detected FIRST, then LLM called.
+    Full query understanding pipeline.
 
-    Flow:
-      1. Python detects scope (meeting-level vs project-level) — no LLM needed.
-      2. Choose the right understanding prompt based on scope.
-         Meeting-level: 6 intents, no temporal_focus, no is_cross_meeting.
-         Project-level: all 8 intents, full field set.
-      3. Call LLM with scope-aware prompt — better classification, fewer mistakes.
-      4. Build QueryUnderstanding with pre-resolved scope already stored.
-      5. _post_process_understanding() fills syntactic dims + routing (scope reused).
+    Flow (scope detected BEFORE LLM to improve classification accuracy):
+
+      Step 1 — Python detects scope (meeting vs project) via parse_meeting_scope().
+               Result stored in scope_meeting_ids — no second DB call ever needed.
+
+      Step 2 — Choose prompt based on scope.
+               Meeting-level prompt: simpler, no cross-meeting fields.
+               Project-level prompt: full field set including temporal_focus.
+
+      Step 3 — LLM extracts semantic fields:
+               topic, named_speaker, signal_filter, has_topic, is_cross_meeting,
+               needs_traces, is_contribution.
+               LLM does NOT make routing decisions — it only extracts meaning.
+
+      Step 4 — Build QueryUnderstanding with pre-resolved scope.
+
+      Step 5 — _post_process_understanding():
+               Python fills structural dims, verifies LLM fields, applies routing.
     """
     if not query or not query.strip():
         raise ValueError("Query cannot be empty.")
 
     cleaned = query.strip()
 
-    # ── Step 1: Detect scope BEFORE LLM call ────────────────────────────────
+    # ── Step 1: Detect scope BEFORE LLM call ─────────────────────────────────
     from app.services.answer.scope import parse_meeting_scope, get_scoped_meeting_ids
 
     scope_meeting_ids: list[str] = []
@@ -472,28 +711,33 @@ def understand_query(query: str, project_id: str) -> QueryUnderstanding:
                 scope_meeting_ids = ids
                 scope_type = "meeting"
     except Exception:
-        pass  # scope detection failure is non-fatal — fall through to project-level
+        pass  # non-fatal — falls through to project-level
 
     logger.info(
-        "  scope      : %s (%d meeting(s)) — detected before LLM call",
+        "  [scope] pre-LLM : scope_type=%-8s | %d meeting(s) -> [%s]",
         scope_type, len(scope_meeting_ids),
+        ", ".join(scope_meeting_ids) if scope_meeting_ids else "all",
     )
 
-    # ── Step 2: Choose prompt based on scope ────────────────────────────────
+    # ── Step 2: Choose prompt based on scope ──────────────────────────────────
     try:
         from app.services.storage.project_store import get_speaker_names
         speaker_list = ", ".join(get_speaker_names(project_id)) or "none"
     except Exception:
         speaker_list = "none"
 
-    if scope_type == "meeting":
-        prompt_template = UNDERSTANDING_PROMPT_MEETING_LEVEL
-    else:
-        prompt_template = UNDERSTANDING_PROMPT_PROJECT_LEVEL
-
+    from app.services.prompts import (
+        UNDERSTANDING_PROMPT_MEETING_LEVEL,
+        UNDERSTANDING_PROMPT_PROJECT_LEVEL,
+    )
+    prompt_template = (
+        UNDERSTANDING_PROMPT_MEETING_LEVEL
+        if scope_type == "meeting"
+        else UNDERSTANDING_PROMPT_PROJECT_LEVEL
+    )
     prompt = prompt_template.format(speaker_list=speaker_list)
 
-    # ── Step 3: Call LLM ────────────────────────────────────────────────────
+    # ── Step 3 + 4: Call LLM, build QueryUnderstanding ───────────────────────
     try:
         from app.clients.gemini_client import call_gemini_raw
 
@@ -501,32 +745,28 @@ def understand_query(query: str, project_id: str) -> QueryUnderstanding:
         if raw.startswith("```"):
             raw = re.sub(r"^```[a-z]*\n?", "", raw).rstrip("`").strip()
 
-        logger.info("In understand_query raw content: %s", raw)
+        logger.info("  [llm]   raw response: %s", raw)
         data = json.loads(raw)
 
-        # Validate intent — fall back to GENERAL if unknown
-        raw_intent = data.get("intent_type", "general_query")
+        # Validate intent — fall back to GENERAL if LLM returns unknown value
         try:
-            intent = QueryIntent(raw_intent)
+            intent = QueryIntent(data.get("intent_type", "general_query"))
         except ValueError:
             intent = QueryIntent.GENERAL
 
-        # Meeting-level prompt doesn't return temporal_focus / is_cross_meeting
-        # — those fields are meaningless for single-meeting scope.
         raw_dims = data.get("dimensions", {})
         dims = QueryDimensions(
             has_topic        = bool(raw_dims.get("has_topic", False)),
-            is_cross_meeting = bool(raw_dims.get("is_cross_meeting", False)),  # always False for meeting-level
+            is_cross_meeting = bool(raw_dims.get("is_cross_meeting", False)),
             needs_traces     = bool(raw_dims.get("needs_traces", False)),
             is_contribution  = bool(raw_dims.get("is_contribution", False)),
         )
 
-        # ── Step 4: Build understanding with pre-resolved scope ──────────────
         understanding = QueryUnderstanding(
             topic             = data.get("topic", cleaned[:80]),
-            intent_type       = intent,
+            intent_type       = intent,            # stored but NOT used in routing
             named_speaker     = data.get("named_speaker") or None,
-            needs_summary     = bool(data.get("needs_summary", False)),
+            needs_summary     = False,             # Python will infer in Step 5
             temporal_focus    = data.get("temporal_focus") or None,
             signal_filter     = data.get("signal_filter") or None,
             dimensions        = dims,
@@ -535,28 +775,27 @@ def understand_query(query: str, project_id: str) -> QueryUnderstanding:
         )
 
         logger.info(
-            "  understand : topic=\"%s\" | intent=%s | speaker=%s | summary=%s"
-            " | temporal=%s | signal=%s | prompt=%s",
+            "  [llm]   topic=\"%s\" | intent=%s | speaker=%s"
+            " | signal=%s | has_topic(llm)=%s | cross_meeting=%s",
             understanding.topic,
             understanding.intent_type.value,
             understanding.named_speaker or "none",
-            understanding.needs_summary,
-            understanding.temporal_focus or "none",
             understanding.signal_filter or "none",
-            scope_type,  # which prompt was used
+            understanding.dimensions.has_topic,
+            understanding.dimensions.is_cross_meeting,
         )
 
-        # ── Step 5: fill syntactic dims + routing (scope already in understanding)
+        # ── Step 5: Python fills dims + routing ───────────────────────────────
         return _post_process_understanding(understanding, cleaned, project_id)
 
     except Exception as e:
         logger.warning("LLM understanding failed — falling back to regex: %s", e)
         fallback = _build_understanding_from_regex(cleaned)
-        # Carry pre-detected scope into the regex fallback as well
+        # Carry pre-detected scope into fallback
         fallback.scope_meeting_ids = scope_meeting_ids
-        fallback.scope_type = scope_type
+        fallback.scope_type        = scope_type
         logger.info(
-            "  understand : topic=\"%s\" | intent=%s | speaker=none | source=regex_fallback",
+            "  [regex] topic=\"%s\" | intent=%s",
             fallback.topic, fallback.intent_type.value,
         )
         return _post_process_understanding(fallback, cleaned, project_id)

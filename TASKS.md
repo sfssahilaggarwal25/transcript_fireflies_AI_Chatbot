@@ -45,15 +45,17 @@ TOTAL XP EARNED:  1500 / 1500 XP   🏆 POC COMPLETE
 
 ### Test Suite Tasks
 
-- [x] Query banks defined (`easy.json` 12 queries, `medium.json` 7, `hard.json` 7) `[Must Do]`
+- [x] Query banks: `easy.json` (21 queries), `medium.json` (20 queries), `hard.json` not yet written `[Must Do]`
 - [x] `query_generator.py` — generates grounded queries via Gemini + ChromaDB summaries `[Must Do]`
-- [x] `test_runner.py` — runs easy queries, captures pipeline logs, saves results `[Must Do]`
+- [x] `test_runner.py` — `--difficulty easy|medium|hard`, `--ids`, `--tags` filter flags `[Must Do]`
+- [x] `test_retrieval.py` — 46/46 no-LLM retrieval test suite `[Must Do]`
 - [x] `report_generator.py` — generates `summary.md` from results `[Must Do]`
 - [x] `TESTING_GUIDE.md` — Mermaid flowchart + command reference for new developers `[Must Do]`
+- [x] `query_intent.py` + `prompts.py` + `builder.py` + `pipeline.py` — `QueryIntent` decoupled from routing: `is_attribution` dim + regex, `select_template_key()`, `build_prompt(template_key: str)` `[Must Do]`
 - [ ] `run_tests.py` — one-command master runner chaining all 3 scripts `[Must Do]`
 - [ ] LLM answer evaluator — score answer quality 1–10, not just intent match `[Nice to Have]`
 - [ ] Regression tracker — compare two runs, detect improvements/regressions `[Nice to Have]`
-- [ ] Extend runner to medium + hard difficulty levels `[Nice to Have]`
+- [ ] `hard.json` query bank — 10-15 hard queries (cross-meeting synthesis, contradiction, negative-space) `[Nice to Have]`
 
 > **POC VALIDATED (2026-05-14):**
 > Accuracy 30/30 (100%) | Scope isolation PASS | Multi-meeting synthesis PASS | Speed avg 3.4s (target <10s)

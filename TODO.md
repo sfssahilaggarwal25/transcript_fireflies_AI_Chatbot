@@ -137,13 +137,11 @@
 
 ---
 
-## ⚡ Next Immediate Action
+## ⚡ Current Baseline (Session 23)
 
-**Run test suite to get new baseline vs old 83.3%:**
-```powershell
-uv run python -m app.tests.test_runner --project-id proj_nolocode_001
-```
-Then: manually test S11, S16 (scope), S5 (compound), S22 (topic_summary), S29 (contribution)
+- **Retrieval tests**: 46/46 PASS (`uv run python app/tests/test_retrieval.py`)
+- **Easy query suite**: 21/21 PASS, avg 9.0/10 (`uv run python -m app.tests.test_runner --project-id proj_nolocode_001`)
+- **Medium query suite**: 20/20 PASS, avg 8.8/10 (`uv run python -m app.tests.test_runner --project-id proj_nolocode_001 --difficulty medium`)
 
 ---
 
@@ -152,10 +150,8 @@ Then: manually test S11, S16 (scope), S5 (compound), S22 (topic_summary), S29 (c
 > Easy-level automated testing is working. These are the next improvements in priority order.
 
 - [ ] **`run_tests.py`** — one master command that chains: query_generator → test_runner → report_generator. Accepts `--project-id` and `--count`. Opens `summary.md` automatically on finish.
-- [ ] **LLM answer evaluator** — add `llm_evaluation: {score, verdict, reason}` field to each result JSON. Gemini reads query + answer + pipeline logs and scores answer quality 1–10. Currently only intent match and "has answer" are checked — does not verify if the answer is actually correct.
 - [ ] **Regression tracker** — `compare.py` that diffs two run folders side by side: what improved, what regressed, what stayed the same. Useful after pipeline changes.
-- [ ] **Extend runner to medium and hard** — `test_runner.py` currently only loads `easy.json`. Add `--difficulty` flag to support `medium` and `hard` query banks.
-- [ ] **Fix easy_005 + easy_011 failures** — `general_query` queries about "project meetings" and "last project sync" are being misclassified as `summary_query` by the LLM classifier. May now be fixed by updated `UNDERSTANDING_PROMPT_TEMPLATE` — verify with test run.
+- [x] ~~**Extend runner to medium and hard**~~ — `--difficulty` flag added; `medium.json` (20 queries) complete; `hard.json` not yet written.
 
 ---
 

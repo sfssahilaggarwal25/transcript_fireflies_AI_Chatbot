@@ -1,0 +1,66 @@
+{
+  "query_id": "mm_001",
+  "difficulty": "medium",
+  "query": "What did Bhavneet bring up in the first meeting?",
+  "project_id": "proj_nolocode_001",
+  "timestamp": "2026-05-24T23:15:36.594834",
+  "response_time_ms": 12925,
+  "expected_intent": "speaker_query",
+  "expected_mode": "compound",
+  "actual_intent": "speaker_query",
+  "actual_mode": "compound",
+  "intent_match": true,
+  "mode_match": true,
+  "answer": "In the Nolocode meeting with Ashpreet on March 19, 2026, Bhavneet Mhajan, acting as the client, was focused on ensuring the financial reports accurately reflected the expected data and were derived from the correct sources. Bhavneet was trying to clarify discrepancies and confirm the intended structure of the financial outputs, pushing back against what he perceived as deviations from the agreed-upon specifications.\n\nEarly in the meeting, Bhavneet questioned the presence of \"accumulated depreciation\" as a line item in the user interface. He explained that this item was not part of Ashpreet's original code and had not been calculated in previous outputs. Bhavneet's intent was to remove this as a direct UI element, stating, \"We should not have accumulated depreciation.\" This was prompted by a discussion about amortization and depreciation codes.\n\n**[21:04] Accumulated Depreciation Presence**\n- Rhythm jalhotra asked if the \"depth code,\" which includes amortization and depreciation, should be used for accumulated depreciation, noting its presence in a financial sheet.\n- Bhavneet Mhajan then directed attention back to the UI, specifically the balance sheet. He asserted that accumulated depreciation should not be a line item in that context. He further clarified that this specific row was not in Ashpreet's code and therefore should not be present or calculated in the output.\n- Bhavneet reiterated this point later, stating, \"The answer to that, this accumulated depreciation should not be there.\" [3]\n\nLater, Bhavneet addressed discrepancies in the \"change in earnings\" calculation. He expressed concern that items like \"change in earnings not attributed to retained income\" were appearing in the current data, which he stated were not present in the version provided by Ashpreet. Bhavneet's intent here was to understand if code had been merged, leading to these unexpected additions, and to confirm the source of the data being processed.\n\n**[30:40] Formula and Data Source Concerns**\n- Karan Middha raised concerns about needing clarification on formulas and the data sources required for calculations, specifically mentioning \"change in earning.\"\n- Bhavneet Mhajan responded by explaining that financing activities are composed of five balances and that the presence of these items indicated a change. He explicitly stated, \"Either you've merged the code because these items are not there in what Ashpreet had given. This change in earnings not attributed to retained income was never there.\" [5]\n\nFinally, Bhavneet emphasized the importance of following the provided Excel documentation for cash flow calculations. He wanted to ensure that the developers were correctly interpreting and applying the formulas and data links from the Excel sheet, which he believed contained all the necessary instructions for generating accurate cash flow statements.\n\n**[37:57] Cash Flow Calculation Guidance**\n- Bhavneet Mhajan pointed to an indirect cash flow Excel sheet, explaining that it contained all the necessary formulas for calculating cash flow. He stressed that the team just needed to follow these formulas and the linked numbers.\n- He elaborated that the Excel sheet links through different tabs, showing which numbers and accounts are being picked up. Bhavneet's instruction was for the team to follow this process for one month to understand it, and then apply it. This was in the context of addressing forecasting queries. [8]",
+  "sources": [
+    {
+      "meeting_title": "Nolocode meeting with Ashpreet",
+      "meeting_date": "2026-03-19",
+      "speaker_name": "Bhavneet Mhajan",
+      "timestamp": "21:30",
+      "content_preview": "Go back to the ui because we shouldn't. If you go, where are we looking? It's balance sheet, right? So we shouldn't have accumulated depreciation as a line item here to begin with. So this accumulated",
+      "is_summary": false
+    }
+  ],
+  "notice": null,
+  "has_answer": true,
+  "answer_score": 10,
+  "answer_evaluation": {
+    "checks_passed": [
+      "Bhavneet",
+      "cash flow or revenue or ONCA or formula or financial"
+    ],
+    "checks_failed": [],
+    "violations": [],
+    "sources_cited": true,
+    "reasoning": "The answer fully addresses the question by detailing what Bhavneet brought up in the meeting, covering financial reports, specific line items like accumulated depreciation, change in earnings calculations, and guidance on cash flow formulas. All 'must contain' criteria are met, and there are no 'must not contain' violations.",
+    "eval_error": null
+  },
+  "confidence_score": 1.0,
+  "status": "passed",
+  "failure_reason": null,
+  "error": null,
+  "pipeline_logs": [
+    "INFO      app.services.query_intent    [scope] pre-LLM : scope_type=meeting  | 1 meeting(s) -> [01KM2DD6MXGSZ4F1QW0BNJE16N]",
+    "INFO      app.services.query_intent    [llm]   raw response: {\n  \"topic\": \"Bhavneet's contributions\",\n  \"intent_type\": \"speaker_query\",\n  \"named_speaker\": \"Bhavneet Mhajan\",\n  \"needs_summary\": false,\n  \"signal_filter\": null,\n  \"dimensions\": {\n    \"has_topic\": true,\n    \"needs_traces\": false,\n    \"is_contribution\": false\n  }\n}",
+    "INFO      app.services.query_intent    [llm]   topic=\"Bhavneet's contributions\" | intent=speaker_query | speaker=Bhavneet Mhajan | signal=none | has_topic(llm)=True | cross_meeting=False",
+    "INFO      app.services.query_intent    [dims]  is_count=False | is_yesno=False | is_ranking=False | is_list=False | has_temporal=True  | has_topic=True  | needs_traces=False",
+    "INFO      app.services.query_intent    routing    : mode=compound        | rule=compound_any_speaker           | output=prose              | scope=meeting (1 meeting(s))",
+    "INFO      app.services.retrieval.reranker    rerank     : raw scores {0: 8.5, 1: 4.5, 2: 4.5, 3: 7.5, 4: 1.5, 5: 1.5, 6: 1.5, 7: 4.5, 8: 1.5, 9: 1.5, 10: 10.5, 11: 1.5, 12: 1.5, 13: 4.5, 14: 1.5}",
+    "INFO      app.services.retrieval.reranker    rerank[1]  : score=10.5 | moved 11->1 | Bhavneet Mhajan | \"Go back to the ui because we shouldn't. If you go, where are...\"",
+    "INFO      app.services.retrieval.reranker    rerank[2]  : score=8.5 | moved 1->2 | Bhavneet Mhajan | \"Okay so I think Ashprit has just sent me a message. He just ...\"",
+    "INFO      app.services.retrieval.reranker    rerank[3]  : score=7.5 | moved 4->3 | Bhavneet Mhajan | \"And it links through the different tabs of what numbers it's...\"",
+    "INFO      app.services.retrieval.reranker    rerank[4]  : score=4.5 | moved 2->4 | Bhavneet Mhajan | \"So what I'm saying is your financing activities make up of t...\"",
+    "INFO      app.services.retrieval.reranker    rerank[5]  : score=4.5 | moved 3->5 | Bhavneet Mhajan | \"Okay, yeah, just bring it up. Let's see if there's anything ...\"",
+    "INFO      app.services.retrieval.reranker    rerank[6]  : score=4.5 | moved 8->6 | Bhavneet Mhajan | \"No, no, no, what I'm saying is from your. You have sub line ...\"",
+    "INFO      app.services.retrieval.reranker    rerank[7]  : score=4.5 | moved 14->7 | Bhavneet Mhajan | \"You're calculating the cash flow. So you are asking you. You...\"",
+    "INFO      app.services.retrieval.reranker    rerank[8]  : score=1.5 | moved 5->8 | Bhavneet Mhajan | \"The document that Ashpreet sent with the fee. Any concerns y...\"",
+    "INFO      app.services.retrieval.reranker    rerank[9]  : score=1.5 | moved 6->9 | Bhavneet Mhajan | \"No, it's the same one. I'll check with Ashpreet....\"",
+    "INFO      app.services.retrieval.reranker    rerank[10]  : score=1.5 | moved 7->10 | Bhavneet Mhajan | \"And was there anything on the AI plan that you wanted to dis...\"",
+    "INFO      app.services.retrieval.reranker    rerank[11]  : score=1.5 | moved 9->11 | Bhavneet Mhajan | \"Yes, we gave the balance and then Akash had put in some, som...\"",
+    "INFO      app.services.retrieval.reranker    rerank[12]  : score=1.5 | moved 10->12 | Bhavneet Mhajan | \"them they are aware about....\"",
+    "INFO      app.services.retrieval.reranker    rerank[13]  : score=1.5 | moved 12->13 | Bhavneet Mhajan | \"So now given these queries, what's the latest timeline? Simr...\"",
+    "INFO      app.services.retrieval.reranker    rerank[14]  : score=1.5 | moved 13->14 | Bhavneet Mhajan | \"So what's the one pending question that we have?...\"",
+    "INFO      app.services.retrieval.reranker    rerank[15]  : score=1.5 | stayed #15 | Bhavneet Mhajan | \"Can you just write these all down so it's clear to us as wel...\""
+  ]
+}

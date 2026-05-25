@@ -7,6 +7,8 @@ Each query gets its own JSON result file. A run_metadata.json summarises the run
 Usage:
     python -m app.tests.test_runner --project-id proj_nolocode_001
     python -m app.tests.test_runner --project-id proj_nolocode_001 --dry-run
+    python -m app.tests.test_runner --project-id proj_nolocode_001 --ids ml_005,ml_015,ml_019
+    python -m app.tests.test_runner --project-id proj_nolocode_001 --tags decision,commitment
 """
 
 import argparse
@@ -25,8 +27,12 @@ from app.tests.answer_evaluator import compute_confidence_score, evaluate_answer
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 
-_TESTS_DIR   = Path(__file__).parent
-_EASY_FILE   = _TESTS_DIR / "query_bank" / "easy.json"
+_TESTS_DIR = Path(__file__).parent
+_QUERY_BANK = {
+    "easy":   _TESTS_DIR / "query_bank" / "easy.json",
+    "medium": _TESTS_DIR / "query_bank" / "medium.json",
+    "hard":   _TESTS_DIR / "query_bank" / "hard.json",
+}
 _RESULTS_DIR = _TESTS_DIR / "test_results"
 
 # ── Log capture ───────────────────────────────────────────────────────────────
@@ -96,14 +102,15 @@ def load_queries(filepath: Path) -> list[dict]:
 
 # ── Step 2: Create output folder ──────────────────────────────────────────────
 
-def create_run_folder() -> Path:
+def create_run_folder(difficulty: str = "easy") -> Path:
     """
     Create a timestamped folder for this test run.
     Example: test_results/2026-05-20_14-30/easy/
-    Returns the path to the 'easy' subfolder.
+             test_results/2026-05-20_14-30/medium/
+    Returns the path to the difficulty subfolder.
     """
     timestamp  = datetime.now().strftime("%Y-%m-%d_%H-%M")
-    run_folder = _RESULTS_DIR / timestamp / "easy"
+    run_folder = _RESULTS_DIR / timestamp / difficulty
     run_folder.mkdir(parents=True, exist_ok=True)
     print(f"[INFO] Results folder: {run_folder}\n")
     return run_folder
@@ -120,7 +127,7 @@ def _is_empty_answer(answer: str) -> bool:
 _ANSWER_PASS_THRESHOLD = 5  # minimum answer_score to count as passed
 
 
-def run_single_query(query_obj: dict, project_id: str) -> dict:
+def run_single_query(query_obj: dict, project_id: str, difficulty: str = "easy") -> dict:
     """
     Call answer_question() for one query, evaluate answer quality, and return
     a structured result dict.
@@ -149,14 +156,17 @@ def run_single_query(query_obj: dict, project_id: str) -> dict:
 
     result = {
         "query_id":          query_obj["id"],
-        "difficulty":        "easy",
+        "difficulty":        difficulty,
         "query":             query_obj["query"],
         "project_id":        project_id,
         "timestamp":         datetime.now().isoformat(),
         "response_time_ms":  None,
         "expected_intent":   query_obj["expected_intent"],
+        "expected_mode":     query_obj.get("expected_mode"),        # optional routing mode check
         "actual_intent":     None,
+        "actual_mode":       None,                                   # retrieval_mode from pipeline
         "intent_match":      None,
+        "mode_match":        None,                                   # None when expected_mode not set
         "answer":            None,
         "sources":           [],
         "notice":            None,
@@ -182,6 +192,7 @@ def run_single_query(query_obj: dict, project_id: str) -> dict:
 
         result["response_time_ms"] = round((time.time() - t_start) * 1000)
         result["actual_intent"]    = response.get("intent")
+        result["actual_mode"]      = response.get("retrieval_mode")
         result["answer"]           = response.get("answer", "")
         result["sources"]          = response.get("sources", [])
         result["notice"]           = response.get("notice")
@@ -189,6 +200,12 @@ def run_single_query(query_obj: dict, project_id: str) -> dict:
         result["intent_match"] = (
             result["actual_intent"] == result["expected_intent"]
         )
+        # Mode match: checked only when expected_mode is explicitly set in the query bank.
+        # When present, mode_match overrides intent_match for pass/fail — routing correctness
+        # is more meaningful than LLM intent label after the QueryIntent / routing decoupling.
+        if result["expected_mode"] is not None:
+            result["mode_match"] = (result["actual_mode"] == result["expected_mode"])
+
         result["has_answer"] = not _is_empty_answer(result["answer"])
 
         # ── Answer quality evaluation ─────────────────────────────────────────
@@ -210,21 +227,32 @@ def run_single_query(query_obj: dict, project_id: str) -> dict:
         }
 
         # ── Confidence score ──────────────────────────────────────────────────
+        # Use mode_match when available (more precise after QueryIntent/routing decoupling)
+        routing_ok = (
+            result["mode_match"]
+            if result["mode_match"] is not None
+            else result["intent_match"]
+        )
         result["confidence_score"] = compute_confidence_score(
-            intent_match=result["intent_match"],
+            intent_match=routing_ok,
             answer_score=result["answer_score"],
             has_sources=bool(result["sources"]),
         )
 
         # ── Pass / fail logic ─────────────────────────────────────────────────
+        # routing_ok = mode_match when expected_mode is set, else intent_match.
+        # This means queries with expected_mode pass/fail on routing accuracy, not
+        # on the raw LLM intent label (which may differ from routing mode after decoupling).
         answer_pass = result["answer_score"] >= _ANSWER_PASS_THRESHOLD
 
-        if result["intent_match"] and result["has_answer"] and answer_pass:
+        if routing_ok and result["has_answer"] and answer_pass:
             result["status"] = "passed"
         else:
             result["status"] = "failed"
-            if not result["intent_match"]:
-                result["failure_reason"] = "intent"
+            if not routing_ok:
+                result["failure_reason"] = (
+                    "mode"   if result["mode_match"] is not None else "intent"
+                )
             elif not result["has_answer"]:
                 result["failure_reason"] = "answer"
             else:
@@ -277,13 +305,17 @@ def print_progress(result: dict, index: int, total: int) -> None:
     score_str = f"  score={score}/10" if score is not None else ""
     conf_str  = f"  conf={confidence:.2f}" if confidence is not None else ""
 
-    intent_note = ""
-    if result["intent_match"] is False:
-        intent_note = f"  [expected={result['expected_intent']}]"
+    routing_note = ""
+    if result.get("mode_match") is not None:
+        # expected_mode was set — show mode mismatch info
+        if result["mode_match"] is False:
+            routing_note = f"  [mode: expected={result['expected_mode']} got={result['actual_mode']}]"
+    elif result["intent_match"] is False:
+        routing_note = f"  [expected={result['expected_intent']}]"
 
     eval_note = "  [eval_api_err]" if eval_err else ""
 
-    print(f"  [{index:02d}/{total}] {icon}  {ms:>5}ms  {query}  intent={intent}{intent_note}{score_str}{conf_str}{eval_note}")
+    print(f"  [{index:02d}/{total}] {icon}  {ms:>5}ms  {query}  intent={intent}{routing_note}{score_str}{conf_str}{eval_note}")
 
 
 # ── Step 6: Save run metadata ─────────────────────────────────────────────────
@@ -293,9 +325,10 @@ def save_run_metadata(
     run_folder: Path,
     project_id: str,
     total_ms: int,
+    difficulty: str = "easy",
 ) -> None:
     """
-    Write run_metadata.json one level above the 'easy' folder.
+    Write run_metadata.json one level above the difficulty folder.
     This gives report_generator.py a single file to read for the summary.
     """
     passed  = sum(1 for r in results if r["status"] == "passed")
@@ -336,7 +369,7 @@ def save_run_metadata(
     metadata = {
         "run_timestamp":       datetime.now().isoformat(),
         "project_id":          project_id,
-        "difficulty":          "easy",
+        "difficulty":          difficulty,
         "total_queries":       total,
         "passed":              passed,
         "failed":              failed,
@@ -360,7 +393,7 @@ def save_run_metadata(
 
 # ── Step 7: Print final summary ───────────────────────────────────────────────
 
-def print_summary(results: list[dict], total_ms: int) -> None:
+def print_summary(results: list[dict], total_ms: int, difficulty: str = "easy") -> None:
     passed = sum(1 for r in results if r["status"] == "passed")
     failed = sum(1 for r in results if r["status"] == "failed")
     errors = sum(1 for r in results if r["status"] == "error")
@@ -374,7 +407,7 @@ def print_summary(results: list[dict], total_ms: int) -> None:
     ) if total else "n/a"
 
     print(f"\n{'='*60}")
-    print(f"  RESULTS — Easy Level")
+    print(f"  RESULTS — {difficulty.capitalize()} Level")
     print(f"{'='*60}")
     print(f"  Total         : {total}")
     print((f"  Passed        : {passed}  ({round(passed/total*100)}%)") if total else "  Passed  : 0")
@@ -392,27 +425,53 @@ def print_summary(results: list[dict], total_ms: int) -> None:
             reason    = r.get("failure_reason", "")
             eval_err  = (r.get("answer_evaluation") or {}).get("eval_error")
             if r["status"] == "error":
-                print(f"    {r['query_id']}  PIPELINE_ERR → {r['error']}")
+                print(f"    {r['query_id']}  PIPELINE_ERR -> {r['error']}")
             elif eval_err:
                 # Evaluator itself failed — score=0 is not a real score
-                print(f"    {r['query_id']}  EVAL_ERR     → evaluator API failed: {eval_err[:60]}")
+                print(f"    {r['query_id']}  EVAL_ERR     -> evaluator API failed: {eval_err[:60]}")
+            elif reason == "mode":
+                print(f"    {r['query_id']}  MODE         -> expected={r['expected_mode']}  got={r['actual_mode']}")
             elif reason == "intent":
-                print(f"    {r['query_id']}  INTENT       → expected={r['expected_intent']}  got={r['actual_intent']}")
+                print(f"    {r['query_id']}  INTENT       -> expected={r['expected_intent']}  got={r['actual_intent']}")
             elif reason == "answer":
-                print(f"    {r['query_id']}  NO ANSWER    → pipeline returned not-found response")
+                print(f"    {r['query_id']}  NO ANSWER    -> pipeline returned not-found response")
             elif reason == "low_score":
                 score     = r.get("answer_score", "?")
                 reasoning = (r.get("answer_evaluation") or {}).get("reasoning", "")
-                print(f"    {r['query_id']}  LOW SCORE    → score={score}/10  {reasoning[:80]}")
+                print(f"    {r['query_id']}  LOW SCORE    -> score={score}/10  {reasoning[:80]}")
     else:
         print("\n  All queries passed.")
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
+def _apply_filters(queries: list[dict], ids: str | None, tags: str | None) -> list[dict]:
+    """
+    Filter queries by --ids and/or --tags.
+
+    --ids  ml_005,ml_019      → run only those query IDs (comma-separated)
+    --tags decision,commitment → run only queries whose tags list contains ANY of the given tags
+    Both filters can be combined — a query must match BOTH to be included.
+    """
+    result = queries
+
+    if ids:
+        id_set = {x.strip() for x in ids.split(",") if x.strip()}
+        result = [q for q in result if q["id"] in id_set]
+        missing = id_set - {q["id"] for q in result}
+        if missing:
+            print(f"[WARN] --ids: no queries found for: {', '.join(sorted(missing))}")
+
+    if tags:
+        tag_set = {x.strip().lower() for x in tags.split(",") if x.strip()}
+        result = [q for q in result if tag_set & {t.lower() for t in q.get("tags", [])}]
+
+    return result
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Run easy-level test queries against the RAG pipeline"
+        description="Run test queries against the RAG pipeline"
     )
     parser.add_argument(
         "--project-id",
@@ -421,19 +480,54 @@ def main() -> None:
         help="Project ID to query (e.g. proj_nolocode_001)",
     )
     parser.add_argument(
+        "--difficulty",
+        type=str,
+        default="easy",
+        choices=["easy", "medium", "hard"],
+        help="Query difficulty level to run (default: easy)",
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="List queries that would run without calling the pipeline",
     )
+    parser.add_argument(
+        "--ids",
+        type=str,
+        default=None,
+        help="Comma-separated query IDs to run (e.g. --ids mm_001,mm_005)",
+    )
+    parser.add_argument(
+        "--tags",
+        type=str,
+        default=None,
+        help="Comma-separated tags to filter by (e.g. --tags compound,analytical). "
+             "Queries matching ANY listed tag are included.",
+    )
     args = parser.parse_args()
 
+    difficulty = args.difficulty
+
     print(f"\n{'='*55}")
-    print(f"  Test Runner — Easy Level")
+    print(f"  Test Runner — {difficulty.capitalize()} Level")
     print(f"  Project: {args.project_id}")
+    if args.ids:
+        print(f"  Filter (ids) : {args.ids}")
+    if args.tags:
+        print(f"  Filter (tags): {args.tags}")
     print(f"{'='*55}\n")
 
-    # Step 1: Load queries from easy.json
-    queries = load_queries(_EASY_FILE)
+    # Step 1: Load queries from the chosen difficulty bank
+    query_file = _QUERY_BANK[difficulty]
+    queries = load_queries(query_file)
+
+    # Apply --ids / --tags filters
+    queries = _apply_filters(queries, args.ids, args.tags)
+    if not queries:
+        print("[ERROR] No queries matched the filter. Check --ids or --tags.")
+        sys.exit(1)
+    if args.ids or args.tags:
+        print(f"[INFO] Running {len(queries)} query/queries after filter\n")
 
     # Dry run — just list the queries and exit
     if args.dry_run:
@@ -444,7 +538,7 @@ def main() -> None:
         return
 
     # Step 2: Create output folder
-    run_folder = create_run_folder()
+    run_folder = create_run_folder(difficulty)
 
     # Step 3–5: Run each query, save result, print progress
     results   = []
@@ -454,7 +548,7 @@ def main() -> None:
     print(f"  {'-'*5}  {'-'*6}  {'-'*7}  {'-'*50}  {'-'*20}")
 
     for i, query_obj in enumerate(queries, 1):
-        result = run_single_query(query_obj, args.project_id)
+        result = run_single_query(query_obj, args.project_id, difficulty)
         results.append(result)
 
         # Step 4: Save individual result file
@@ -466,10 +560,10 @@ def main() -> None:
     total_ms = round((time.time() - t_run_start) * 1000)
 
     # Step 6: Save run_metadata.json
-    save_run_metadata(results, run_folder, args.project_id, total_ms)
+    save_run_metadata(results, run_folder, args.project_id, total_ms, difficulty)
 
     # Step 7: Print final summary
-    print_summary(results, total_ms)
+    print_summary(results, total_ms, difficulty)
 
 
 if __name__ == "__main__":

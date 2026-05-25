@@ -18,7 +18,21 @@ A project-scoped AI chatbot for Project Managers. PM selects a project → asks 
 
 **Phase:** POC COMPLETE ✓ (all 5 phases done, Type 3 deferred by design)
 
-**Last session covered (2026-05-22):**
+**Last session covered (2026-05-24):**
+- Medium query bank: 20 queries in `medium.json` testing 7 routing rules (compound, scoped_count, named_speaker_count, scoped_topic_summary, meeting_summary, hybrid+yesno) — all 20 route correctly
+- Extended `test_runner.py` with `--difficulty` flag (`easy`/`medium`/`hard`) and `--ids`/`--tags` filter flags
+- `test_retrieval.py` sys.path fix + wrong assertion fix (scoped k ≤ full k) → 46/46 PASS
+- Fixed Pydantic crash (`topic: null`) with `@field_validator` coercing `None → ""`
+- **Architecture refactor — decoupled `QueryIntent` from all routing decisions:**
+  - Added `is_attribution: bool` to `QueryDimensions` (Python `_ATTRIBUTION_RE` regex — no LLM)
+  - Attribution routing now uses `u.dimensions.is_attribution` (deterministic), not LLM-classified intent
+  - Added `select_template_key(understanding) -> str` to `prompts.py` — maps `retrieval_mode + signal_filter + is_attribution` → correct template key; single source of truth
+  - `build_prompt()` and `build_not_found_message()` in `builder.py` now take `template_key: str` (removed `QueryIntent` import from builder)
+  - `pipeline.py` uses `select_template_key()` for prompt selection; removed manual `topic_summary` intent override; replaced intent-based speaker fallback with `signal_filter == "question"` check
+  - `intent` variable kept in pipeline ONLY for: logging, API response field, reranker hint
+- Fixed stale comment on `intent_type` field (was "NOT used in routing" — attribution routing used it)
+
+**Previous session (2026-05-22):**
 - Investigated Q3/Q4/Q11 test failures — root cause was Gemini API 503 overload during test run, not pipeline bugs
 - Added exponential-backoff retry logic (3 attempts, 2/5/10s delays) to `call_gemini()`, `call_gemini_raw()`, and `evaluate_answer()`
 - `understand_query()` now uses `call_gemini_raw` (has retry) instead of raw `genai.Client` call
@@ -109,6 +123,49 @@ A project-scoped AI chatbot for Project Managers. PM selects a project → asks 
 ---
 
 ## Discussion Log
+
+### Session 23 (2026-05-24) — Prompt Quality Fixes + Mode-Check Test Runner
+
+**Topics covered:**
+
+**1. Gemini fallback summary quality — runaway output fixed**
+- Meeting 7 (Nolocode-catchup) had a 283,504-char Gemini summary — runaway output with no token cap
+- Added `_SUMMARY_MAX_OUTPUT_TOKENS = 1024` to `gemini_client.py` + passed it as `config` to `generate_content()`
+- Re-generated meeting 7 summary → 3,169 chars, proper 3-section format
+- ChromaDB re-ingested (1,669 chunks, 10 meetings — same count, 9 meetings with Gemini fallback summaries)
+
+**2. Topic-absent-from-meeting fix**
+- Query "What discussion about AI in the previous meeting?" (2026-05-07 meeting has no AI content) returned irrelevant formula chunks
+- Fix: for single-meeting `topic_summary` mode, inject the meeting's summary chunk at position [1] so LLM has authoritative ground truth about what the meeting covered
+- Added to `pipeline.py` in the `topic_summary` branch — summary chunk prepended before topic chunks
+- `topic_summary_query` template updated with explicit "check if topic is present" rule: if NO → state it clearly and describe what the meeting DID cover (no timestamp blocks)
+
+**3. Prompt formatting improvements**
+- `_MEETING_SCOPE_PREFIX` rewritten: now instructs LLM to open with `**[Meeting Title] — [YYYY-MM-DD]**` on its own line before the answer (prevents meeting title becoming outer bullet)
+- `summary_query` template improved: added routing rules for "What topics?" → numbered list with **Topic** / who raised it / key outcome; speaker attribution comes from Action Items/Overview text in the content (not from the chunk label "Meeting Summary (unknown)")
+- `_LIST_PREFIX` clarified: do NOT nest list under meeting header, start directly with item 1
+- `topic_summary_query` template: when topic IS absent, do not add timestamp blocks or quotes — stop after describing what the meeting covered
+
+**4. Test runner + pipeline — mode-based routing verification**
+- `pipeline.py`: added `retrieval_mode` to the response dict (alongside `intent`, `sources`, `answer`)
+- `test_runner.py`: added `expected_mode` / `actual_mode` / `mode_match` fields; when `expected_mode` is set in the query bank, mode_match overrides intent_match for pass/fail
+- Medium queries mm_011–mm_015 (topic_summary) now PASS — they route correctly to `topic_summary` mode even though the LLM labels them `general_query` or `summary_query`
+
+**Results:**
+- Medium test suite: **20/20 PASS**, avg 8.8/10, avg confidence 0.9 ✓
+- Depreciation query verified: correct topic_summary routing, all 3 speakers cited, conversation traced chronologically
+
+**Decisions made:**
+- Token cap (1024) is permanent — prevents runaway output on any future long-meeting Gemini summary
+- `expected_mode` check takes precedence over `expected_intent` when both are set in query bank — routing mode is more meaningful than LLM intent label after decoupling
+- Summary chunk injection for single-meeting topic_summary scope: always prepend so LLM can report topic absence accurately
+
+**What's next:**
+- `run_tests.py` master runner (one command for full suite)
+- Regression tracker (diff two run folders)
+- `hard.json` query bank (10-15 hard queries)
+
+---
 
 ### Session 20 (2026-05-22) — Query Accuracy Improvement Plan: All 5 Phases Implemented
 

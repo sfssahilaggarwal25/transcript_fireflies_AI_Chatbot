@@ -12,13 +12,15 @@ from app.services.query_intent import (
     understand_query,
     is_metadata_query,
 )
-from app.services.retrieval.retriever import (
+from app.services.retrieval import (
     hybrid_retrieve,
     retrieve_timeline_documents,
     compound_retrieve,
     analytical_retrieve,
     topic_summary_retrieve,
     contribution_retrieve,
+    signal_fetch_retrieve,
+    get_retrieval_config,
 )
 from app.services.retrieval.reranker import rerank_documents
 from app.services.storage.project_store import get_speaker_names
@@ -32,6 +34,7 @@ from app.services.answer.builder import (
     build_not_found_message,
 )
 from app.services.answer.metadata import handle_metadata_query
+from app.services.prompts import select_template_key
 from app.clients.gemini_client import call_gemini
 
 logger = logging.getLogger(__name__)
@@ -137,7 +140,7 @@ def _retrieve_for_understanding(
     All other modes return list[Document].
     """
     mode = understanding.retrieval_mode
-
+    logger.info("  retrieval_mode : %s", mode)
     # Scope already resolved in understand_query() — one DB call total, no re-detection.
     date_where = _build_scope_filter(understanding)
     if date_where:
@@ -146,7 +149,21 @@ def _retrieve_for_understanding(
             understanding.scope_type, len(understanding.scope_meeting_ids),
         )
 
+    # Adaptive k — scope size + mode determine how many chunks to fetch.
+    # analytical / contribution / summary / metadata skip this (no k needed).
+    cfg = get_retrieval_config(
+        mode=mode,
+        scope_meeting_ids=understanding.scope_meeting_ids or [],
+        signal_filter=understanding.signal_filter,
+    )
+    if mode not in ("analytical", "contribution", "summary", "metadata", "signal_fetch"):
+       logger.info(
+        "  adaptive_k : k_dense=%d k_bm25=%d k_final=%d k_per_meeting=%d",
+        cfg.k_dense, cfg.k_bm25, cfg.k_final, cfg.k_per_meeting,
+       )
+
     if mode == "summary":
+        logger.info("PIPELINE SHORT-CIRCUIT: summary mode — using summary chunks directly function retrieve_summary_chunks")
         return retrieve_summary_chunks(
             project_id, query,
             scope_meeting_ids=understanding.scope_meeting_ids or None,
@@ -155,19 +172,41 @@ def _retrieve_for_understanding(
     if mode == "timeline":
         return retrieve_timeline_documents(
             query, project_id,
-            k_per_meeting=6,
+            k_per_meeting=cfg.k_per_meeting,
+            scope_meeting_ids=understanding.scope_meeting_ids or None,
+        ), None
+
+    if mode == "signal_fetch":
+        # Exhaustive metadata fetch — returns ALL speaker+signal chunks, not top-N.
+        # Used when: named_speaker + signal_filter + (is_yesno OR is_list_request).
+        # Hybrid search misses valid signal hits that score low on the query text.
+        # Direct DB fetch guarantees no question/commitment/decision is dropped.
+        named_speaker = understanding.named_speaker or detect_speaker_name(query, project_id)
+        if not named_speaker:
+            # No speaker resolved — fall through to compound as safety net
+            return compound_retrieve(
+                query, project_id,
+                signal_filter=understanding.signal_filter,
+                date_where=date_where,
+                k_final=cfg.k_final,
+            ), None
+        return signal_fetch_retrieve(
+            project_id,
+            named_speaker=named_speaker,
+            signal_filter=understanding.signal_filter,
             scope_meeting_ids=understanding.scope_meeting_ids or None,
         ), None
 
     if mode == "compound":
         named_speaker = understanding.named_speaker or detect_speaker_name(query, project_id)
         if not named_speaker:
-            return hybrid_retrieve(query, project_id, date_where=date_where, k=25), None
+            return hybrid_retrieve(query, project_id, date_where=date_where, k=cfg.k_final), None
         return compound_retrieve(
             query, project_id,
             named_speaker=named_speaker,
             signal_filter=understanding.signal_filter,
             date_where=date_where,
+            k_final=cfg.k_final,
         ), None
 
     if mode == "analytical":
@@ -184,20 +223,37 @@ def _retrieve_for_understanding(
         return result, None  # dict — handled by _handle_structured_result()
 
     if mode == "topic_summary":
-      topic = subject_topic_hint(understanding.topic)
-      return topic_summary_retrieve(
-        topic, project_id,
-        scope_meeting_ids=understanding.scope_meeting_ids or None,  # ← yeh pass ho raha hai?
-      ), None
+        topic = subject_topic_hint(understanding.topic)
+        docs = topic_summary_retrieve(
+            topic, project_id,
+            scope_meeting_ids=understanding.scope_meeting_ids or None,
+            k_per_meeting=cfg.k_per_meeting,
+        )
+        # Single-meeting scope: inject the meeting summary chunk so the LLM
+        # has ground truth about what the meeting covered.
+        # Without this, if the requested topic doesn't exist in the meeting,
+        # the LLM receives only loosely-related chunks and hallucinates.
+        # With the summary the LLM can correctly say "this meeting was about
+        # X, Y, Z — the topic you asked about was not discussed here."
+        if understanding.scope_meeting_ids and len(understanding.scope_meeting_ids) == 1:
+            summary_docs, _ = retrieve_summary_chunks(
+                project_id, "",
+                scope_meeting_ids=understanding.scope_meeting_ids,
+            )
+            if summary_docs:
+                docs = summary_docs + docs  # summary first — survives top-10 trim
+                logger.info(
+                    "  topic_sum  : injected summary chunk for single-meeting scope"
+                )
+        return docs, None
 
     if mode == "metadata":
         return [], None
 
     # Default: hybrid
     named_speaker = understanding.named_speaker
-    if not named_speaker and understanding.intent_type in (
-        QueryIntent.SPEAKER, QueryIntent.QUESTION
-    ):
+    # Safety net: if LLM set signal_filter="question" but missed the speaker name, try regex
+    if not named_speaker and understanding.signal_filter == "question":
         named_speaker = detect_speaker_name(query, project_id)
 
     hard_filters: dict = {}
@@ -210,7 +266,7 @@ def _retrieve_for_understanding(
         query, project_id,
         hard_filters=hard_filters or None,
         date_where=date_where,
-        k=25,
+        k=cfg.k_final,
     ), None
 
 
@@ -251,14 +307,15 @@ def _handle_structured_result(
         context = f"Total speakers: {result['total_speakers']}\n" + "\n".join(lines)
         intent  = QueryIntent.CONTRIBUTION
 
-    prompt = build_prompt(query, context, intent, understanding.output_format)
+    prompt = build_prompt(query, context, select_template_key(understanding), understanding.output_format)
     answer = call_gemini(prompt)
 
     return {
-        "answer":  answer,
-        "sources": [],
-        "intent":  intent.value,
-        "notice":  None,
+        "answer":         answer,
+        "sources":        [],
+        "intent":         intent.value,   # kept for API response (analytical/contribution label)
+        "retrieval_mode": understanding.retrieval_mode,
+        "notice":         None,
     }
 
 
@@ -304,8 +361,10 @@ def answer_question(query: str, project_id: str) -> dict:
         # ── STEP 1: understand query ─────────────────────────────────────
         logger.info("[1/5] UNDERSTAND QUERY")
         understanding = understand_query(query, project_id)
-        logger.info("  intent     : %s", understanding.intent_type.value)
-        intent = understanding.intent_type
+        intent = understanding.intent_type          # kept for logging, API response, reranker hint
+        template_key = select_template_key(understanding)   # drives prompt — always matches retrieval
+        logger.info("  intent     : %s", intent.value)
+        logger.info("  template   : %s", template_key)
 
         # ── STEP 2: retrieve documents ───────────────────────────────────
         logger.info("[2/5] RETRIEVE  (mode=%s)", understanding.retrieval_mode)
@@ -319,15 +378,10 @@ def answer_question(query: str, project_id: str) -> dict:
 
         documents: list[Document] = raw_result
 
-        # Use the dedicated template when topic_summary retrieval was used.
-        # The LLM returns "summary_query" (not in its options list), so we override here.
-        if understanding.retrieval_mode == "topic_summary":
-            intent = QueryIntent.TOPIC_SUMMARY
-
         if not documents:
             logger.info("  result     : no documents found — returning not-found message")
             logger.info(_SEP)
-            not_found_msg = build_not_found_message(intent, query, project_id)
+            not_found_msg = build_not_found_message(template_key, query, project_id)
             return {
                 "answer": not_found_msg,
                 "sources": [],
@@ -336,7 +390,10 @@ def answer_question(query: str, project_id: str) -> dict:
             }
 
         # ── STEP 3: re-rank documents ─────────────────────────────────────
-        skip_rerank = understanding.retrieval_mode in ("summary", "topic_summary")
+        # signal_fetch returns ALL matching chunks in chronological order — reranking
+        # by relevance would drop valid signal hits that score low on the query text.
+        # summary / topic_summary skip rerank for the same reason (order matters).
+        skip_rerank = understanding.retrieval_mode in ("summary", "topic_summary", "signal_fetch")
         if not skip_rerank:
             logger.info("[3/5] RERANK   (%d candidates)", len(documents))
             documents = rerank_documents(
@@ -365,7 +422,7 @@ def answer_question(query: str, project_id: str) -> dict:
         # conversation to read in time order so the LLM can build a narrative.
         chrono_modes = (QueryIntent.SPEAKER, QueryIntent.TIMELINE,
                         QueryIntent.TOPIC_SUMMARY, QueryIntent.ATTRIBUTION)
-        if intent in chrono_modes or understanding.retrieval_mode in ("compound", "topic_summary", "timeline"):
+        if intent in chrono_modes or understanding.retrieval_mode in ("compound", "topic_summary", "timeline", "signal_fetch"):
             documents.sort(key=lambda d: (
                 d.metadata.get("meeting_date", ""),
                 d.metadata.get("start_time") or 0,
@@ -373,20 +430,29 @@ def answer_question(query: str, project_id: str) -> dict:
             logger.info("  sorted     : chronological order for mode=%s", understanding.retrieval_mode)
 
         # ── STEP 4: build context + prompt ───────────────────────────────
-        # Trim to top 10 after expansion. We retrieve 25 candidates so the
-        # re-ranker has options; the LLM gets only the most relevant ones.
-        _CONTEXT_TOP_N = 10
+        # topic_summary gets 15 slots — no reranker so all chunks are already the most
+        # relevant; more is better for "full conversation" queries.
+        # signal_fetch gets 25 slots — exhaustive fetch returns ALL speaker+signal chunks;
+        # trimming too aggressively would omit valid questions/commitments/decisions.
+        # All other modes: 10 (reranker already picked the best ones).
+        if understanding.retrieval_mode == "topic_summary":
+            _CONTEXT_TOP_N = 15
+        elif understanding.retrieval_mode == "signal_fetch":
+            _CONTEXT_TOP_N = 25
+        else:
+            _CONTEXT_TOP_N = 10
         if len(documents) > _CONTEXT_TOP_N:
             documents = documents[:_CONTEXT_TOP_N]
             logger.info("  trimmed    : context limited to top %d", _CONTEXT_TOP_N)
 
         logger.info("[4/5] BUILD PROMPT")
+        logger.info("  building context from %d documents and %s", len(documents), documents)
         context = build_context(documents)
-        prompt = build_prompt(query, context, intent, understanding.output_format,
+        prompt = build_prompt(query, context, template_key, understanding.output_format,
                               scope_type=understanding.scope_type)
         logger.info("  docs used  : %d", len(documents))
         logger.info("  context    : %d chars", len(context))
-        logger.info("  prompt     : \"%s...\"", prompt[:120].replace("\n", " "))
+        logger.info("  prompt     : \"%s...\"", prompt.replace("\n", " "))
 
         # ── STEP 5: call LLM ─────────────────────────────────────────────
         logger.info("[5/5] LLM CALL  (model: gemini-2.5-flash-lite)")
@@ -409,10 +475,11 @@ def answer_question(query: str, project_id: str) -> dict:
         logger.info(_SEP)
 
         return {
-            "answer": answer,
-            "sources": sources,
-            "intent": intent.value,
-            "notice": notice,
+            "answer":         answer,
+            "sources":        sources,
+            "intent":         intent.value,
+            "retrieval_mode": understanding.retrieval_mode,
+            "notice":         notice,
         }
 
     except Exception as e:

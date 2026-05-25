@@ -5,12 +5,15 @@ Answers the question: "which meetings should we search for this query?"
 All time-related query phrases (previous meeting, last 7 days, May 9th, etc.)
 flow through parse_meeting_scope() and come out as a single ChromaDB where-clause.
 """
+import logging
 import re
 from datetime import date, timedelta
 
 from app.services.storage.db import get_raw_collection
 
-# ── Month name → number ───────────────────────────────────────────────────────
+logger = logging.getLogger(__name__)
+
+# ── Month name -> number ───────────────────────────────────────────────────────
 
 _MONTH_MAP = {
     "january": 1, "february": 2, "march": 3, "april": 4,
@@ -45,13 +48,13 @@ _FIRST_MEETING_RE = re.compile(
     r"\b(?:first|earliest|oldest)\s+meeting\b",
     re.IGNORECASE,
 )
-# "that meeting" / "this meeting" → most recent meeting (user refers to a specific one
+# "that meeting" / "this meeting" -> most recent meeting (user refers to a specific one
 # they have in mind, default to latest in the absence of other context)
 _THAT_MEETING_RE = re.compile(
     r"\b(?:that|this)\s+meeting\b",
     re.IGNORECASE,
 )
-# "the second/third/fourth/fifth meeting" → Nth meeting chronologically
+# "the second/third/fourth/fifth meeting" -> Nth meeting chronologically
 _ORDINAL_MEETING_RE = re.compile(
     r"\bthe\s+(second|third|fourth|fifth|2nd|3rd|4th|5th)\s+meeting\b",
     re.IGNORECASE,
@@ -89,12 +92,24 @@ def get_project_meetings_sorted(project_id: str) -> list[tuple[str, str]]:
             include=["metadatas"],
         )
         seen: dict[str, str] = {}
+        seen_titles: dict[str, str] = {}
         for m in results.get("metadatas", []):
-            mid = m.get("meeting_id", "")
-            d   = m.get("meeting_date", "")
+            mid   = m.get("meeting_id", "")
+            d     = m.get("meeting_date", "")
+            title = m.get("meeting_title", "")
             if mid and d and mid not in seen:
-                seen[mid] = d
-        return sorted(seen.items(), key=lambda x: x[1], reverse=True)
+                seen[mid]        = d
+                seen_titles[mid] = title
+        sorted_meetings = sorted(seen.items(), key=lambda x: x[1], reverse=True)
+        logger.debug(
+            "  [scope] project meetings (newest->oldest): %s",
+            " | ".join(
+                f"{title!r} ({d}) [{mid[:12]}]"
+                for mid, d in sorted_meetings
+                for title in [seen_titles.get(mid, "?")]
+            ),
+        )
+        return sorted_meetings
     except Exception:
         return []
 
@@ -130,20 +145,51 @@ def get_scoped_meeting_ids(scope_where: dict, project_id: str) -> set[str]:
     return set()
 
 
+def _log_scope_result(pattern_label: str, clause: "dict | None", sorted_meetings: list) -> None:
+    """Log which pattern fired and which meeting(s) it resolved to."""
+    if clause is None:
+        logger.info("  [scope] pattern=%-22s -> NO MATCH (project-wide search)", pattern_label)
+        return
+    id_to_date = {mid: d for mid, d in sorted_meetings}
+    if "$eq" in clause.get("meeting_id", {}):
+        mid   = clause["meeting_id"]["$eq"]
+        d_str = id_to_date.get(mid, "?")
+        logger.info(
+            "  [scope] pattern=%-22s -> 1 meeting  : %s (%s)",
+            pattern_label, mid, d_str,
+        )
+    elif "$in" in clause.get("meeting_id", {}):
+        ids = clause["meeting_id"]["$in"]
+        names = [f"{m} ({id_to_date.get(m, '?')})" for m in ids]
+        logger.info(
+            "  [scope] pattern=%-22s -> %d meetings : %s",
+            pattern_label, len(ids), " | ".join(names),
+        )
+    elif "meeting_date" in clause:
+        logger.info(
+            "  [scope] pattern=%-22s -> date range : %s",
+            pattern_label, clause,
+        )
+    else:
+        logger.info("  [scope] pattern=%-22s -> %s", pattern_label, clause)
+
+
 def parse_meeting_scope(query: str, project_id: str) -> dict | None:
     """
     Single entry point for all temporal scope detection.
     Returns a ChromaDB where-clause dict, or None (search all meetings).
 
     Supported phrases:
-      "previous meeting" / "last meeting"          → latest meeting only
-      "last N meetings" / "previous N meetings"    → N most recent meetings
-      "that meeting" / "this meeting"              → latest meeting
-      "the second/third/fourth meeting"            → Nth chronologically
-      "first meeting" / "earliest meeting"         → oldest meeting only
-      "previous N days" / "last N weeks"           → meetings within date range
-      "9th of May" / "May 9th"                     → specific meeting by date (±1 day)
+      "previous meeting" / "last meeting"          -> latest meeting only
+      "last N meetings" / "previous N meetings"    -> N most recent meetings
+      "that meeting" / "this meeting"              -> latest meeting
+      "the second/third/fourth meeting"            -> Nth chronologically
+      "first meeting" / "earliest meeting"         -> oldest meeting only
+      "previous N days" / "last N weeks"           -> meetings within date range
+      "9th of May" / "May 9th"                     -> specific meeting by date (±1 day)
     """
+    logger.info("  [scope] checking query: %r", query)
+
     # Check "last N meetings" before "last meeting" — more specific pattern first
     m = _LAST_N_MEETINGS_RE.search(query)
     if m:
@@ -151,27 +197,35 @@ def parse_meeting_scope(query: str, project_id: str) -> dict | None:
         sorted_meetings = get_project_meetings_sorted(project_id)
         ids = [mid for mid, _ in sorted_meetings[:n]]
         if not ids:
+            logger.info("  [scope] pattern=last_N_meetings     -> matched N=%d but NO meetings in project", n)
             return None
-        if len(ids) == 1:
-            return {"meeting_id": {"$eq": ids[0]}}
-        return {"meeting_id": {"$in": ids}}
+        clause = {"meeting_id": {"$eq": ids[0]}} if len(ids) == 1 else {"meeting_id": {"$in": ids}}
+        _log_scope_result(f"last_{n}_meetings", clause, sorted_meetings)
+        return clause
 
     if _PREVIOUS_MEETING_RE.search(query):
         sorted_meetings = get_project_meetings_sorted(project_id)
         if sorted_meetings:
-            return {"meeting_id": {"$eq": sorted_meetings[0][0]}}
+            clause = {"meeting_id": {"$eq": sorted_meetings[0][0]}}
+            _log_scope_result("previous_meeting", clause, sorted_meetings)
+            return clause
+        logger.info("  [scope] pattern=previous_meeting      -> matched but NO meetings in project")
         return None
 
     if _THAT_MEETING_RE.search(query):
         sorted_meetings = get_project_meetings_sorted(project_id)
         if sorted_meetings:
-            return {"meeting_id": {"$eq": sorted_meetings[0][0]}}
+            clause = {"meeting_id": {"$eq": sorted_meetings[0][0]}}
+            _log_scope_result("that/this_meeting", clause, sorted_meetings)
+            return clause
         return None
 
     if _FIRST_MEETING_RE.search(query):
         sorted_meetings = get_project_meetings_sorted(project_id)
         if sorted_meetings:
-            return {"meeting_id": {"$eq": sorted_meetings[-1][0]}}
+            clause = {"meeting_id": {"$eq": sorted_meetings[-1][0]}}
+            _log_scope_result("first_meeting", clause, sorted_meetings)
+            return clause
         return None
 
     om = _ORDINAL_MEETING_RE.search(query)
@@ -182,7 +236,13 @@ def parse_meeting_scope(query: str, project_id: str) -> dict | None:
         # sorted descending: [-1]=oldest=1st, [-2]=2nd oldest, [-3]=3rd oldest…
         chron_idx = -(idx + 1)
         if len(sorted_meetings) >= idx + 1:
-            return {"meeting_id": {"$eq": sorted_meetings[chron_idx][0]}}
+            clause = {"meeting_id": {"$eq": sorted_meetings[chron_idx][0]}}
+            _log_scope_result(f"ordinal_{ordinal}", clause, sorted_meetings)
+            return clause
+        logger.info(
+            "  [scope] pattern=ordinal_%s             -> not enough meetings (need %d, have %d)",
+            ordinal, idx + 1, len(sorted_meetings),
+        )
         return None
 
     dm = _RELATIVE_DAYS_RE.search(query)
@@ -191,7 +251,12 @@ def parse_meeting_scope(query: str, project_id: str) -> dict | None:
         unit = dm.group(2).lower().rstrip("s")
         days = n if unit == "day" else n * 7
         cutoff = (date.today() - timedelta(days=days)).isoformat()
-        return {"meeting_date": {"$gte": cutoff}}
+        clause = {"meeting_date": {"$gte": cutoff}}
+        logger.info(
+            "  [scope] pattern=relative_days         -> last %d %s(s) -> cutoff=%s",
+            n, unit, cutoff,
+        )
+        return clause
 
     month_day = extract_month_day(query)
     if month_day:
@@ -207,6 +272,13 @@ def parse_meeting_scope(query: str, project_id: str) -> dict | None:
             except ValueError:
                 continue
         if best_id:
-            return {"meeting_id": {"$eq": best_id}}
+            clause = {"meeting_id": {"$eq": best_id}}
+            _log_scope_result(f"date_{target_month:02d}/{target_day:02d}", clause, sorted_meetings)
+            return clause
+        logger.info(
+            "  [scope] pattern=specific_date         -> %02d/%02d found no meeting within ±1 day",
+            target_month, target_day,
+        )
 
+    logger.info("  [scope] NO pattern matched -> project-wide search (all meetings)")
     return None

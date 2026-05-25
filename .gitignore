@@ -85,3 +85,5 @@ reingest.py
 *.swo
 
 find_gaps.py
+
+tests/test_results/*

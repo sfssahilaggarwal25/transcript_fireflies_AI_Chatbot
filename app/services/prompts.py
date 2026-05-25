@@ -183,16 +183,14 @@ UNDERSTANDING_PROMPT_TEMPLATE = UNDERSTANDING_PROMPT_PROJECT_LEVEL
 # ── Answer generation prompt templates (keyed by QueryIntent.value string) ────
 
 _TIMESTAMP_RULE = (
-    "- Each context chunk may include a timestamp like [at 05:23]. When citing a specific chunk, "
-    "format it as a headed block:\n"
-    "    **[MM:SS] Brief topic label (2–6 words describing what's being discussed)**\n"
-    "    - Bullet: who said what, what was raised, decided, or explained\n"
-    "    - Bullet: any follow-up, reaction, or connected point from the same chunk\n"
-    "  Use only what is present in the chunk — do not invent details.\n"
-    "  If no timestamp is present for a chunk, omit the [MM:SS] part but still use the heading+bullets format.\n"
-    "  Not every sentence needs its own block — only use this format for key moments you are directly citing.\n"
-    "- NEVER copy chunk labels like '[CONTEXT — just before]' or '[CONTEXT — just after]' into your answer. "
-    "Use the content from those chunks naturally in your writing.\n"
+    "TIMESTAMP RULE (mandatory): Every context chunk has a Speaker line like "
+    "\"Speaker: Rhythm jalhotra (developer) [02:51]\" — the [MM:SS] at the end is the meeting timestamp.\n"
+    "You MUST include that timestamp in parentheses every time you mention the speaker for that chunk. "
+    "CORRECT: '**Rhythm jalhotra** (02:51) confirmed that depreciation relates to capex.'\n"
+    "WRONG (no timestamp): '**Rhythm jalhotra** confirmed that depreciation relates to capex.'\n"
+    "- Use the exact [MM:SS] from the Speaker line. Do NOT invent or omit timestamps.\n"
+    "- If a chunk truly has no [MM:SS] on its Speaker line, then omit the parentheses.\n"
+    "- NEVER copy '[CONTEXT — just before]' or '[CONTEXT — just after]' labels into your answer.\n"
 )
 
 _CITATION_RULE = (
@@ -233,8 +231,13 @@ ANSWER_PROMPT_TEMPLATES = {
         "You are an AI assistant answering questions about meetings for a project manager.\n"
         "Use the meeting content below to answer the question directly.\n\n"
         "Rules:\n"
-        "- Answer the specific question asked — let the question define the scope\n"
-        "- Cover what matters: key decisions, status updates, open issues, action items\n"
+        "- Answer the specific question asked — let the question define the scope and format:\n"
+        "    • 'What topics were discussed?' / 'What was on the agenda?' → numbered list where each item has:\n"
+        "        - **Topic name** (bold, 3-6 words) — the subject that was discussed\n"
+        "        - Sub-bullet: who raised it or drove the discussion — extract names from the meeting content itself (Action Items and Overview text), NOT from the chunk label 'Meeting Summary'\n"
+        "        - Sub-bullet: key outcome, decision made, or why it mattered (1 sentence)\n"
+        "    • 'Give me a summary' / 'What happened?' → narrative: key decisions, blockers, outcomes\n"
+        "    • 'What was discussed about X?' → focus only on X — not the whole meeting\n"
         "- When multiple meetings are provided, present information chronologically\n"
         "- Be concise — focus on what a PM needs to know\n\n"
         "Meeting content:\n{context}\n\n"
@@ -318,14 +321,18 @@ ANSWER_PROMPT_TEMPLATES = {
         "Question: {query}\n\nAnswer:"
     ),
     "topic_summary_query": (
-        "You are an AI assistant synthesizing a topic discussion for a project manager.\n"
-        "Answer the question by tracing how this specific topic evolved across meetings.\n\n"
+        "You are an AI assistant synthesizing a topic discussion for a project manager.\n\n"
         "Rules:\n"
-        "- Present information chronologically (earliest meeting first)\n"
-        "- Cover: (1) how the topic was introduced, (2) key debates or positions, "
-        "(3) decisions reached, (4) open questions remaining\n"
-        "- Highlight what changed or progressed between meetings\n"
-        "- Include meeting title and date for each key development\n"
+        "- FIRST check: does the context actually contain the topic being asked about?\n"
+        "    • If YES — summarize how it was discussed: who raised it, key debates,\n"
+        "      decisions reached, open questions remaining\n"
+        "    • If NO — clearly state the topic was NOT discussed in this meeting, then\n"
+        "      briefly describe what the meeting DID cover (use the summary chunk [1])\n"
+        "      so the PM knows what to expect from that meeting instead.\n"
+        "      Do NOT add timestamped blocks or quotes from the transcript — stop after the summary.\n"
+        "- When multiple meetings are provided, present chronologically and highlight\n"
+        "  how the topic evolved or changed between meetings\n"
+        "- Include meeting title, date, and speaker for each key point\n"
         + _TIMESTAMP_RULE
         + _CITATION_RULE +
         "\nContext from meeting transcripts:\n{context}\n\n"
@@ -359,6 +366,49 @@ ANSWER_PROMPT_TEMPLATES = {
 }
 
 
+# ── Template selection — single source of truth ───────────────────────────────
+#
+# Maps retrieval_mode + signal_filter + is_attribution → prompt template key.
+# The prompt always matches what was actually retrieved — no LLM misclassification
+# can silently pick the wrong template.
+
+def select_template_key(understanding: "object") -> str:
+    """
+    Select the correct ANSWER_PROMPT_TEMPLATES key based on how documents were retrieved.
+
+    retrieval_mode drives the primary decision:
+      compound      → speaker narrative       (always a named-speaker query)
+      analytical    → pre-computed data       (counts from DB — LLM only formats)
+      contribution  → speaker ranking         (chunk-count table)
+      topic_summary → topic synthesis         (one topic traced across meetings)
+      summary       → meeting summaries       (general overview chunks)
+      timeline      → chronological evolution (or attribution origin if is_attribution)
+      hybrid        → signal_filter decides   (decisions / commitments / questions / general)
+    """
+    mode = understanding.retrieval_mode  # type: ignore[attr-defined]
+    if mode == "compound":      return "speaker_query"
+    if mode == "analytical":    return "analytical_query"
+    if mode == "contribution":  return "contribution_query"
+    if mode == "topic_summary": return "topic_summary_query"
+    if mode == "summary":       return "summary_query"
+    if mode == "timeline":
+        # Attribution needs origin-tracing instructions; timeline needs evolution instructions
+        return "attribution_query" if understanding.dimensions.is_attribution else "timeline_query"  # type: ignore[attr-defined]
+    if mode == "signal_fetch":
+        # All returned chunks match the signal — use signal-specific template
+        sf = understanding.signal_filter  # type: ignore[attr-defined]
+        if sf == "decision":    return "decision_query"
+        if sf == "commitment":  return "commitment_query"
+        if sf == "question":    return "question_query"
+        return "speaker_query"
+    # hybrid (and metadata — but metadata never reaches the prompt stage)
+    sf = understanding.signal_filter  # type: ignore[attr-defined]
+    if sf == "decision":    return "decision_query"
+    if sf == "commitment":  return "commitment_query"
+    if sf == "question":    return "question_query"
+    return "general_query"
+
+
 # ── Output format prefix modifiers ────────────────────────────────────────────
 # Injected at the front of any prompt when output_format requires special structure.
 
@@ -373,8 +423,9 @@ _YESNO_PREFIX = (
 )
 
 _LIST_PREFIX = (
-    "IMPORTANT: Format your answer as a numbered or bulleted list. "
-    "Do not write a prose paragraph.\n\n"
+    "IMPORTANT: Format your answer as a numbered list.\n"
+    "- Do NOT nest the entire list under a meeting title header — start directly with item 1\n"
+    "- Sub-bullets under each item are allowed when extra context adds value\n\n"
 )
 
 _TRACE_PREFIX = (
@@ -388,7 +439,9 @@ _TRACE_PREFIX = (
 _MEETING_SCOPE_PREFIX = (
     "SCOPE: This question is about ONE SPECIFIC MEETING — not the whole project.\n"
     "Do NOT write a 'project progress overview'. Instead:\n"
-    "  • Open your answer by referencing the meeting (its title and date)\n"
-    "  • Describe what was discussed / decided / raised IN THAT MEETING specifically\n"
+    "  • START your response with the meeting title and date on its own line, formatted as:\n"
+    "    **[Meeting Title] — [YYYY-MM-DD]**\n"
+    "  • Then answer the question below that line\n"
+    "  • Focus only on what was discussed / decided / raised IN THAT MEETING specifically\n"
     "  • Use past tense as if describing a specific event that already happened\n\n"
 )
