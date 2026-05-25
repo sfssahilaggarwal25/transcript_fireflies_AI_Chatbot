@@ -2,71 +2,22 @@ import re
 import unicodedata
 
 _DECISION_RE = re.compile(
-    r"\b("
-    r"we decided|"
-    r"we have decided|"
-    r"decision is|"
-    r"final decision|"
-    r"it's decided|"
-    r"we agreed|"
-    r"agreed to|"
-    r"approved|"
-    r"confirmed|"
-    r"we chose|"
-    r"settled on|"
-    r"the plan is|"
-    r"we concluded|"
-    r"we'll go with|"
-    r"let's go with|"
-    r"going with|"
-    r"move forward with|"
-    r"we will use|"
-    r"we will take|"
-    r"we'll use|"
-    r"we'll take|"
-    r"use this|"
-    r"stick with|"
-    r"same one|"
-    r"this is the approach|"
-    r"this is what we'll use"
-    r")\b",
-    re.IGNORECASE,
+    r"\b(decided|decision|agreed|approved|finalized|confirmed|going with|"
+    r"let'?s go with|move forward with|stick with|chosen|selected)\b",
+    re.IGNORECASE
 )
 
 
 _COMMITMENT_RE = re.compile(
-    r"\b("
-    r"i will|"
-    r"i'll|"
-    r"i can|"
-    r"i'll check|"
-    r"i'll confirm|"
-    r"i'll send|"
-    r"i'll share|"
-    r"i'll update|"
-    r"i'll get|"
-    r"i'll make sure|"
-    r"we will send|"
-    r"we will share|"
-    r"we will update|"
-    r"we will follow up|"
-    r"we will check|"
-    r"we will handle|"
-    r"we will deliver|"
-    r"action item|"
-    r"will be done|"
-    r"by monday|"
-    r"by tuesday|"
-    r"by wednesday|"
-    r"by thursday|"
-    r"by friday|"
-    r"tomorrow|"
-    r"next week|"
-    r"end of day|"
-    r"end of week|"
-    r"end of month"
-    r")\b",
-    re.IGNORECASE,
+    r"\b(i will|i'?ll|we will|we'?ll|going to|will make sure|committ?ed to|"
+    r"take ownership|my action item|action on me)\b",
+    re.IGNORECASE
+)
+# Keep _FALSE_COMMITMENT_RE but add more exclusions:
+_FALSE_COMMITMENT_RE = re.compile(
+    r"\b(i will say|i'?ll say|i will note|we will see|we'?ll see|"
+    r"that will|this will|it will|would be|will be able)\b",
+    re.IGNORECASE
 )
 
 
@@ -116,19 +67,6 @@ _OPEN_ISSUE_RE = re.compile(
     re.IGNORECASE,
 )
 
-
-_FALSE_COMMITMENT_RE = re.compile(
-    r"\b("
-    r"we will calculate|"
-    r"we will take|"
-    r"we will use|"
-    r"let's go to the next|"
-    r"wait a second|"
-    r"let's move on|"
-    r"we'll come back"
-    r")\b",
-    re.IGNORECASE,
-)
 
 
 # ── Tier 2b: Confirmation/agreement signal ───────────────────────────────────

@@ -5,22 +5,42 @@ and the exact commands to run. Read this before touching any test file.
 
 ---
 
-## Quick Start — 3 Commands
+## Quick Start — 1 Command
 
-If you just want to run the full test cycle immediately:
+Run the full test cycle with a single command:
 
 ```powershell
-# Step 1 — Run all easy queries against the real pipeline
+# Run easy level: test_runner → report_generator → open report
+python -m app.tests.run_tests --project-id proj_nolocode_001
+
+# Run medium level
+python -m app.tests.run_tests --project-id proj_nolocode_001 --difficulty medium
+
+# Run all levels (easy → medium → hard) in sequence
+python -m app.tests.run_tests --project-id proj_nolocode_001 --difficulty all
+
+# Run without auto-opening the report
+python -m app.tests.run_tests --project-id proj_nolocode_001 --no-open
+```
+
+`run_tests.py` chains `test_runner` → `report_generator` automatically,
+creates a timestamped folder, and opens the report when done.
+The report is written to `test_results/<run_id>/<difficulty>_summary.md`.
+
+**Or manually (3 steps):**
+
+```powershell
+# Step 1 — Run queries
 python -m app.tests.test_runner --project-id proj_nolocode_001
 
-# Step 2 — Generate the report from those results
+# Step 2 — Generate report
 python -m app.tests.report_generator
 
-# Step 3 — Open the report (VSCode)
+# Step 3 — Open report
 code app/tests/test_results/<latest-run-folder>/summary.md
 ```
 
-That's it. The rest of this guide explains what's happening under the hood.
+The rest of this guide explains what's happening under the hood.
 
 ---
 
@@ -90,22 +110,66 @@ app/tests/
 │   └── hard.json             ← edge cases, ambiguous intent, missing data
 │
 ├── test_results/             ← one folder per test run (auto-created)
-│   └── 2026-05-20_11-06/
-│       ├── run_metadata.json ← aggregate stats (pass rate, avg time, mismatches)
-│       ├── summary.md        ← human-readable report (open this)
-│       └── easy/
-│           ├── easy_001_result.json
-│           ├── easy_002_result.json
+│   └── 2026-05-25_14-30/
+│       ├── run_metadata.json        ← aggregate stats for the last completed level
+│       ├── easy_summary.md          ← easy level report  (open this)
+│       ├── medium_summary.md        ← medium level report (if --difficulty all)
+│       ├── hard_summary.md          ← hard level report   (if --difficulty all)
+│       ├── easy/
+│       │   ├── ml_001_result.json
+│       │   ├── ml_002_result.json
+│       │   └── ...
+│       └── medium/
+│           ├── mm_001_result.json
 │           └── ...
 │
 ├── query_generator.py        ← generates new queries using Gemini API
 ├── test_runner.py            ← runs queries against the real pipeline
-└── report_generator.py       ← reads results and writes summary.md
+├── report_generator.py       ← reads results and writes summary.md
+└── run_tests.py              ← master runner: chains all three + opens report
 ```
 
 ---
 
 ## Script Reference
+
+### `run_tests.py` — Master runner (start here)
+
+Chains `test_runner` → `report_generator` automatically.
+All runs for a single invocation share one timestamped folder.
+
+```powershell
+# Run easy suite (default) — auto-opens report when done
+python -m app.tests.run_tests --project-id proj_nolocode_001
+
+# Run medium suite
+python -m app.tests.run_tests --project-id proj_nolocode_001 --difficulty medium
+
+# Run all levels in sequence (easy → medium → hard)
+python -m app.tests.run_tests --project-id proj_nolocode_001 --difficulty all
+
+# Run a subset by query ID (useful for debugging specific failures)
+python -m app.tests.run_tests --project-id proj_nolocode_001 --ids ml_001,ml_005
+
+# Run a subset by tag
+python -m app.tests.run_tests --project-id proj_nolocode_001 --tags decision,commitment
+
+# Suppress auto-open (e.g. in CI)
+python -m app.tests.run_tests --project-id proj_nolocode_001 --no-open
+```
+
+**Outputs per run:**
+
+| File | Description |
+|---|---|
+| `test_results/<run_id>/easy_summary.md` | Easy level report |
+| `test_results/<run_id>/medium_summary.md` | Medium level report (if run) |
+| `test_results/<run_id>/run_metadata.json` | JSON stats for the last completed level |
+| `test_results/<run_id>/easy/*.json` | Per-query result files (easy) |
+
+**When to run:** After any change to the pipeline. The default (easy only) takes ~3 minutes.
+
+---
 
 ### `query_generator.py` — Add more queries
 
@@ -225,7 +289,8 @@ Open `test_results/<run-folder>/summary.md` in your IDE.
 | Medium | `medium.json` | Paraphrased queries, speaker names, date filters | LLM classifier |
 | Hard | `hard.json` | Edge cases, missing data, cross-meeting reasoning | LLM + inference |
 
-**Current status:** Only easy-level testing is active. Medium and hard are defined but the runner has not been extended to them yet.
+**Current status:** Easy (21 queries) and medium (20 queries) are fully active.
+Hard has 7 queries — expand to 10–15 with cross-meeting and contradiction scenarios.
 
 ---
 

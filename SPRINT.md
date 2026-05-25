@@ -219,7 +219,7 @@ validates and re-applies it on every tool execution.
 ║  test_retrieval.py (no-LLM)     ✓ 46/46 PASS        ║
 ║  Easy suite: 21/21 PASS         ✓ avg 9.0/10        ║
 ║  Medium suite: 20/20 PASS       ✓ avg 8.8/10        ║
-║  run_tests.py (master runner)   [ ] Not started     ║
+║  run_tests.py (master runner)   ✓ COMPLETE          ║
 ║  Regression tracker             [ ] Not started     ║
 ╚══════════════════════════════════════════════════════╝
 ```
@@ -262,10 +262,10 @@ TESTING_GUIDE.md                  [██████████] 100%  ✓ COM
 test_retrieval.py (no-LLM)        [██████████] 100%  ✓ 46/46 PASS
 Easy suite green                  [██████████] 100%  ✓ 21/21 PASS avg 9.0/10
 Medium suite green                [██████████] 100%  ✓ 20/20 PASS avg 8.8/10
-run_tests.py                      [          ]   0%  Not started
+run_tests.py                      [██████████] 100%  ✓ COMPLETE
 Regression tracker                [          ]   0%  Not started
 
-OVERALL                           [████████░░]  80%
+OVERALL                           [█████████░]  88%
 ```
 
 ---

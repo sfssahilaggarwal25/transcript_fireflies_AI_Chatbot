@@ -18,13 +18,17 @@ st.set_page_config(
 
 # ── Intent metadata ────────────────────────────────────────────────────────────
 INTENT_META = {
-    "decision_query":   {"label": "Decision",    "color": "#1E40AF", "bg": "#DBEAFE", "emoji": "🔵"},
-    "commitment_query": {"label": "Action Item",  "color": "#92400E", "bg": "#FEF3C7", "emoji": "🟠"},
-    "question_query":   {"label": "Questions",   "color": "#5B21B6", "bg": "#EDE9FE", "emoji": "🟣"},
-    "summary_query":    {"label": "Summary",     "color": "#065F46", "bg": "#D1FAE5", "emoji": "🟢"},
-    "speaker_query":    {"label": "Speaker",     "color": "#0E7490", "bg": "#CFFAFE", "emoji": "🔷"},
-    "timeline_query":   {"label": "Timeline",    "color": "#78350F", "bg": "#FEF9C3", "emoji": "🟡"},
-    "general_query":    {"label": "General",     "color": "#374151", "bg": "#F3F4F6", "emoji": "⚫"},
+    "decision_query":      {"label": "Decision",      "color": "#1E40AF", "bg": "#DBEAFE", "emoji": "🔵"},
+    "commitment_query":    {"label": "Action Item",   "color": "#92400E", "bg": "#FEF3C7", "emoji": "🟠"},
+    "question_query":      {"label": "Questions",     "color": "#5B21B6", "bg": "#EDE9FE", "emoji": "🟣"},
+    "summary_query":       {"label": "Summary",       "color": "#065F46", "bg": "#D1FAE5", "emoji": "🟢"},
+    "speaker_query":       {"label": "Speaker",       "color": "#0E7490", "bg": "#CFFAFE", "emoji": "🔷"},
+    "timeline_query":      {"label": "Timeline",      "color": "#78350F", "bg": "#FEF9C3", "emoji": "🟡"},
+    "analytical_query":    {"label": "Analytics",     "color": "#4D7C0F", "bg": "#ECFCCB", "emoji": "📊"},
+    "attribution_query":   {"label": "Attribution",   "color": "#6D28D9", "bg": "#EDE9FE", "emoji": "🔍"},
+    "contribution_query":  {"label": "Contribution",  "color": "#0369A1", "bg": "#E0F2FE", "emoji": "📈"},
+    "topic_summary_query": {"label": "Topic Summary", "color": "#065F46", "bg": "#CCFBF1", "emoji": "📝"},
+    "general_query":       {"label": "General",       "color": "#374151", "bg": "#F3F4F6", "emoji": "⚫"},
 }
 
 EXAMPLE_QUESTIONS = [
@@ -85,7 +89,14 @@ def intent_badge_html(intent: str) -> str:
 
 
 def _linkify_citations(text: str, num_sources: int) -> str:
-    """Convert inline [n] citation markers into anchor links pointing to source #n."""
+    """
+    Convert inline [n] citation markers into anchor links, then convert
+    markdown bullet lines (- item or * item) into HTML <ul><li> so they render
+    correctly when the whole block is passed to st.markdown(unsafe_allow_html=True).
+    Without this, mixing HTML <a> tags with markdown bullets breaks rendering.
+    Single newlines are converted to <br> so numbered list items and sub-bullets
+    never collapse into one run-on paragraph.
+    """
     def replacer(m):
         n = int(m.group(1))
         if 1 <= n <= num_sources:
@@ -96,7 +107,32 @@ def _linkify_citations(text: str, num_sources: int) -> str:
             )
         return m.group(0)
     # Match [n] (1–3 digits) that is NOT followed by a colon (timestamps are [16:39] style)
-    return re.sub(r'\[(\d{1,3})\](?!:)', replacer, text)
+    text = re.sub(r'\[(\d{1,3})\](?!:)', replacer, text)
+
+    # Convert markdown bullet lines (- or *) into HTML list so they survive unsafe_allow_html
+    lines = text.split('\n')
+    out, in_list = [], False
+    for line in lines:
+        stripped = line.lstrip()
+        if stripped.startswith('- ') or stripped.startswith('* '):
+            if not in_list:
+                out.append('<ul style="margin:0.4em 0 0.4em 1.2em;padding:0;">')
+                in_list = True
+            out.append(f'<li style="margin-bottom:0.3em;">{stripped[2:]}</li>')
+        else:
+            if in_list:
+                out.append('</ul>')
+                in_list = False
+            out.append(line)
+    if in_list:
+        out.append('</ul>')
+
+    # Convert all newlines to <br> so numbered items and sub-bullets never
+    # collapse into a single paragraph under unsafe_allow_html rendering.
+    result = '\n'.join(out)
+    result = re.sub(r'\n{2,}', '<br><br>', result)
+    result = result.replace('\n', '<br>')
+    return result
 
 
 def render_sources(sources: list[dict]):
@@ -104,21 +140,24 @@ def render_sources(sources: list[dict]):
         return
     with st.expander(f"📎 {len(sources)} source{'s' if len(sources) > 1 else ''}", expanded=True):
         for i, s in enumerate(sources):
-            # HTML anchor — clicking [n] in the answer scrolls here
-            st.markdown(f'<div id="src-{i + 1}"></div>', unsafe_allow_html=True)
+            # Use chunk_num so the anchor id matches the [n] citation the LLM wrote.
+            # e.g. LLM wrote [6] → anchor id="src-6" → clicking scrolls here.
+            anchor_id = s.get("chunk_num", i + 1)
+            display_n = s.get("chunk_num", i + 1)
+            st.markdown(f'<div id="src-{anchor_id}"></div>', unsafe_allow_html=True)
 
             ts_str = f" &nbsp;·&nbsp; ⏱ `{s['timestamp']}`" if s.get("timestamp") else ""
 
             if s.get("is_summary"):
                 st.markdown(
-                    f"**{i + 1}. 📋 Meeting Summary** &nbsp;·&nbsp; "
+                    f"**[{display_n}] 📋 Meeting Summary** &nbsp;·&nbsp; "
                     f"📅 {s['meeting_title']} &nbsp;·&nbsp; "
                     f"`{s['meeting_date']}`"
                     + ts_str
                 )
             else:
                 st.markdown(
-                    f"**{i + 1}. {s['speaker_name']}** &nbsp;·&nbsp; "
+                    f"**[{display_n}] {s['speaker_name']}** &nbsp;·&nbsp; "
                     f"📅 {s['meeting_title']} &nbsp;·&nbsp; "
                     f"`{s['meeting_date']}`"
                     + ts_str,
@@ -148,8 +187,10 @@ def render_chat_message(msg: dict):
         if any(answer.startswith(p) for p in _NOT_FOUND_PREFIXES):
             st.warning(answer, icon="⚠️")
         elif sources:
-            # Convert [n] citation markers to clickable anchor links
-            st.markdown(_linkify_citations(answer, len(sources)), unsafe_allow_html=True)
+            # Use total context chunk count as the ceiling so citations like [6], [8]
+            # are converted to links even when there are fewer deduplicated sources.
+            num_ctx = msg.get("num_context_chunks", len(sources))
+            st.markdown(_linkify_citations(answer, num_ctx), unsafe_allow_html=True)
         else:
             st.markdown(answer)
 
@@ -160,19 +201,21 @@ def ask_and_store(question: str, project_id: str):
     try:
         result = answer_question(question, project_id)
         st.session_state.messages.append({
-            "question": question,
-            "answer":   result["answer"],
-            "intent":   result["intent"],
-            "sources":  result["sources"],
-            "notice":   result.get("notice"),
+            "question":           question,
+            "answer":             result["answer"],
+            "intent":             result["intent"],
+            "sources":            result["sources"],
+            "notice":             result.get("notice"),
+            "num_context_chunks": result.get("num_context_chunks", len(result["sources"])),
         })
     except Exception as e:
         st.session_state.messages.append({
-            "question": question,
-            "answer":   f"Something went wrong: {str(e)}",
-            "intent":   "general_query",
-            "sources":  [],
-            "notice":   None,
+            "question":           question,
+            "answer":             f"Something went wrong: {str(e)}",
+            "intent":             "general_query",
+            "sources":            [],
+            "notice":             None,
+            "num_context_chunks": 0,
         })
 
 

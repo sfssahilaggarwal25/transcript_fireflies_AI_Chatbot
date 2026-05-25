@@ -40,13 +40,16 @@ def find_run_folder(run_id: str | None) -> Path:
             sys.exit(1)
         return folder
 
-    # Auto-find latest — folders are named by timestamp so lexicographic sort works
+    # Auto-find latest — folders are named by timestamp so lexicographic sort works.
+    # Only consider folders that have a completed run_metadata.json (aborted runs excluded).
     run_folders = sorted(
-        [f for f in _RESULTS_DIR.iterdir() if f.is_dir()],
+        [f for f in _RESULTS_DIR.iterdir() if f.is_dir() and (f / "run_metadata.json").exists()],
         reverse=True,
     )
     if not run_folders:
-        print("[ERROR] No test runs found in test_results/")
+        print("[ERROR] No completed test runs found in test_results/")
+        print("        (run_metadata.json is written at the end of each run — "
+              "partial/aborted runs are excluded)")
         sys.exit(1)
 
     latest = run_folders[0]
@@ -59,7 +62,9 @@ def find_run_folder(run_id: str | None) -> Path:
 def load_run_data(run_folder: Path) -> tuple[dict, list[dict]]:
     """
     Returns (metadata, results_sorted_by_id).
-    Exits if run_metadata.json or the easy/ subfolder is missing.
+    run_folder is the timestamp folder (e.g. test_results/2026-05-25_14-30).
+    The difficulty subfolder is read from metadata["difficulty"].
+    Exits if run_metadata.json or the difficulty subfolder is missing.
     """
     meta_path = run_folder / "run_metadata.json"
     if not meta_path.exists():
@@ -69,14 +74,15 @@ def load_run_data(run_folder: Path) -> tuple[dict, list[dict]]:
     with open(meta_path, encoding="utf-8") as f:
         metadata = json.load(f)
 
-    easy_folder = run_folder / "easy"
-    if not easy_folder.exists():
-        print(f"[ERROR] easy/ subfolder not found in {run_folder}")
+    difficulty  = metadata.get("difficulty", "easy")
+    diff_folder = run_folder / difficulty
+    if not diff_folder.exists():
+        print(f"[ERROR] {difficulty}/ subfolder not found in {run_folder}")
         sys.exit(1)
 
-    result_files = sorted(easy_folder.glob("*_result.json"))
+    result_files = sorted(diff_folder.glob("*_result.json"))
     if not result_files:
-        print(f"[ERROR] No result files found in {easy_folder}")
+        print(f"[ERROR] No result files found in {diff_folder}")
         sys.exit(1)
 
     results = []
@@ -91,12 +97,13 @@ def load_run_data(run_folder: Path) -> tuple[dict, list[dict]]:
 # ── Step 3: Build each section of the report ──────────────────────────────────
 
 def _section_header(meta: dict) -> str:
-    run_ts  = meta.get("run_timestamp", "")
-    project = meta.get("project_id", "unknown")
-    now     = datetime.now().strftime("%Y-%m-%d %H:%M")
+    run_ts     = meta.get("run_timestamp", "")
+    project    = meta.get("project_id", "unknown")
+    now        = datetime.now().strftime("%Y-%m-%d %H:%M")
+    difficulty = meta.get("difficulty", "easy").capitalize()
 
     return (
-        f"# Test Report — Easy Level\n\n"
+        f"# Test Report — {difficulty} Level\n\n"
         f"**Project:** `{project}`  \n"
         f"**Run timestamp:** {run_ts}  \n"
         f"**Report generated:** {now}  \n"

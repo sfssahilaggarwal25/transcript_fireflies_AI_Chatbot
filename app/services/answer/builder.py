@@ -1,4 +1,5 @@
 import logging
+import re
 from datetime import date
 from typing import Optional
 from langchain_core.documents import Document
@@ -378,32 +379,45 @@ def build_prompt(
 # Source extraction
 # ──────────────────────────────────────────────────────────────────────────────
 
-def extract_sources(documents: list[Document]) -> list[dict]:
+def extract_sources(documents: list[Document], answer: str = "") -> list[dict]:
     """
     Build the sources list returned alongside every answer.
-    Neighbor chunks (_position set) are skipped — only primary retrieved chunks cited.
-    Deduplicates by (meeting_title, meeting_date, speaker_name).
+
+    Each primary (non-neighbor) chunk becomes its own source entry tagged with
+    chunk_num — the same [n] number the LLM sees in build_context(). This keeps
+    citation numbers and source card numbers in sync so _linkify_citations() in
+    the UI can turn every [n] into a clickable anchor link.
+
+    Neighbor chunks (_position set) are normally skipped, BUT if the LLM
+    actually cited one (i.e., its [n] appears in the answer text), it is
+    included as a source. This handles cases where a neighbor chunk contains a
+    real question or statement the LLM correctly identified and cited, even
+    though it was not a primary retrieval hit (e.g. a speaker whose chunk wasn't
+    tagged with the right signal but was picked up as context).
     """
-    seen:    set[tuple] = set()
+    # Parse chunk numbers the LLM actually cited, e.g. [3], [6, 7], [10]
+    cited_nums: set[int] = set(
+        int(m.group(1))
+        for m in re.finditer(r'\[(\d{1,3})\](?!:)', answer)
+    ) if answer else set()
+
     sources: list[dict] = []
 
-    for doc in documents:
-        meta = doc.metadata
+    for i, doc in enumerate(documents, 1):   # same enumeration as build_context()
+        meta       = doc.metadata
+        is_neighbor = bool(meta.get("_position"))
 
-        if meta.get("_position"):
-            continue   # context neighbors are not citable sources
+        # Skip neighbors the LLM never cited — they are pure context padding
+        if is_neighbor and i not in cited_nums:
+            continue
 
         is_summary    = meta.get("is_meeting_summary", False)
         meeting_title = meta.get("meeting_title", "Unknown Meeting")
         meeting_date  = meta.get("meeting_date", "")
         speaker_name  = "Meeting Summary" if is_summary else meta.get("speaker_name", "")
 
-        key = (meeting_title, meeting_date, speaker_name)
-        if key in seen:
-            continue
-
-        seen.add(key)
         sources.append({
+            "chunk_num":       i,            # matches the [n] label the LLM used
             "meeting_title":   meeting_title,
             "meeting_date":    meeting_date,
             "speaker_name":    speaker_name,

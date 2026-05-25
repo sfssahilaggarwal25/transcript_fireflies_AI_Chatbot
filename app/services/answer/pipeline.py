@@ -457,13 +457,15 @@ def answer_question(query: str, project_id: str) -> dict:
         # ── STEP 5: call LLM ─────────────────────────────────────────────
         logger.info("[5/5] LLM CALL  (model: gemini-2.5-flash-lite)")
         answer = call_gemini(prompt)
-        sources = extract_sources(documents)
+        # Pass answer so cited neighbor chunks are included as sources
+        sources = extract_sources(documents, answer)
+        num_context_chunks = len(documents)  # total [n] labels visible to LLM
 
         elapsed = time.time() - t_start
         logger.info(_SEP)
         logger.info("PIPELINE DONE  (%.1fs)", elapsed)
         logger.info("  intent     : %s", intent.value)
-        logger.info("  sources    : %d unique", len(sources))
+        logger.info("  sources    : %d chunks", len(sources))
         for s in sources:
             logger.info(
                 "    -> %s (%s) | %s",
@@ -475,11 +477,12 @@ def answer_question(query: str, project_id: str) -> dict:
         logger.info(_SEP)
 
         return {
-            "answer":         answer,
-            "sources":        sources,
-            "intent":         intent.value,
-            "retrieval_mode": understanding.retrieval_mode,
-            "notice":         notice,
+            "answer":              answer,
+            "sources":             sources,
+            "intent":              intent.value,
+            "retrieval_mode":      understanding.retrieval_mode,
+            "notice":              notice,
+            "num_context_chunks":  num_context_chunks,
         }
 
     except Exception as e:

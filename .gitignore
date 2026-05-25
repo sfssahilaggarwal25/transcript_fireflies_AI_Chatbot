@@ -86,4 +86,4 @@ reingest.py
 
 find_gaps.py
 
-tests/test_results/*
+tests/test_results/*app/tests/test_results/
