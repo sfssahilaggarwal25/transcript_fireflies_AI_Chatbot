@@ -126,9 +126,10 @@ def answer_query(query: str, project_id: str) -> dict:
     initial_state  = {
         "messages":    [HumanMessage(content=query)],
         "project_id":  project_id,
-        "scope_where": None,   # filled by query_scope_node
-        "scope_ids":   None,   # filled by query_scope_node
-        "scope_type":  "project",   # filled by query_scope_node (default = all meetings)
+        "scope_where":   None,        # filled by query_scope_node
+        "scope_ids":     None,        # filled by query_scope_node
+        "scope_type":    "project",   # filled by query_scope_node (default = all meetings)
+        "recommended_k": 15,          # filled by query_scope_node; default = single-meeting k
     }
 
     error:  str | None = None

@@ -27,6 +27,12 @@ scope_type   — Human-readable scope label. One of:
                "meeting"    → scoped to one or more specific meeting IDs
                "date_range" → scoped to a date cutoff (last N days/weeks)
                Set by query_scope_node. Never changes after that.
+
+recommended_k — Minimum chunk count the system recommends based on scope size.
+               Computed by query_scope_node via _compute_recommended_k().
+               search_transcripts enforces: effective_k = max(k, recommended_k).
+               Prevents the LLM from under-fetching on project-wide queries.
+               Default 15 (set in service.py initial_state).
 """
 
 from typing import Annotated, List, Optional
@@ -36,8 +42,9 @@ from langchain_core.messages import AnyMessage
 
 
 class AgentState(TypedDict):
-    messages:    Annotated[list[AnyMessage], add_messages]
-    project_id:  str
-    scope_where: Optional[dict]        # ChromaDB clause → hybrid_retrieve date_where
-    scope_ids:   Optional[List[str]]   # flat meeting ID list → summaries filter
-    scope_type:  str                   # "project" | "meeting" | "date_range"
+    messages:      Annotated[list[AnyMessage], add_messages]
+    project_id:    str
+    scope_where:   Optional[dict]        # ChromaDB clause → hybrid_retrieve date_where
+    scope_ids:     Optional[List[str]]   # flat meeting ID list → summaries filter
+    scope_type:    str                   # "project" | "meeting" | "date_range"
+    recommended_k: int                   # min k for search_transcripts (scope-based)
