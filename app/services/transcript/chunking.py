@@ -152,7 +152,7 @@ def _detect_signals(text: str) -> dict:
     )
 
     contains_question = (
-        cleaned.endswith("?")
+        "?" in cleaned                          # ? anywhere in text, not just at end
         or bool(_QUESTION_START_RE.match(cleaned))
     )
 

@@ -16,6 +16,14 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# Citation anchor scroll offset — prevents Streamlit's sticky header from
+# covering the target source card when the user clicks a [N] citation link.
+st.markdown("""
+<style>
+[id^="src-"] { scroll-margin-top: 80px; }
+</style>
+""", unsafe_allow_html=True)
+
 # ── Intent metadata ────────────────────────────────────────────────────────────
 INTENT_META = {
     "decision_query":      {"label": "Decision",      "color": "#1E40AF", "bg": "#DBEAFE", "emoji": "🔵"},
@@ -90,12 +98,9 @@ def intent_badge_html(intent: str) -> str:
 
 def _linkify_citations(text: str, num_sources: int) -> str:
     """
-    Convert inline [n] citation markers into anchor links, then convert
-    markdown bullet lines (- item or * item) into HTML <ul><li> so they render
-    correctly when the whole block is passed to st.markdown(unsafe_allow_html=True).
-    Without this, mixing HTML <a> tags with markdown bullets breaks rendering.
-    Single newlines are converted to <br> so numbered list items and sub-bullets
-    never collapse into one run-on paragraph.
+    Convert the LLM answer (markdown + [N] citations) into pure HTML.
+    See production/streamlit_app.py for the full design rationale.
+    Same pipeline as the production UI — keeps both UIs in sync.
     """
     def replacer(m):
         n = int(m.group(1))
@@ -106,33 +111,88 @@ def _linkify_citations(text: str, num_sources: int) -> str:
                 f'text-decoration:none;vertical-align:super;">[{n}]</a>'
             )
         return m.group(0)
-    # Match [n] (1–3 digits) that is NOT followed by a colon (timestamps are [16:39] style)
-    text = re.sub(r'\[(\d{1,3})\](?!:)', replacer, text)
 
-    # Convert markdown bullet lines (- or *) into HTML list so they survive unsafe_allow_html
-    lines = text.split('\n')
-    out, in_list = [], False
-    for line in lines:
-        stripped = line.lstrip()
+    # 1. [N] → anchor links
+    text = re.sub(r'\[(\d{1,3})\]', replacer, text)
+
+    # 2. **text** → <strong>text</strong> globally (before line scan)
+    text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text)
+
+    # 3. Line-by-line structural conversion
+    lines    = text.split('\n')
+    segments: list[str] = []
+    i = 0
+
+    def _is_bold_heading(s: str) -> bool:
+        return bool(re.match(r'^<strong>.+</strong>$', s.strip()))
+
+    def _heading_html(content: str) -> str:
+        return (
+            f'<p style="font-weight:700;font-size:1.0em;'
+            f'margin:0.9em 0 0.2em 0;padding:0;">{content.strip()}</p>'
+        )
+
+    while i < len(lines):
+        raw      = lines[i]
+        stripped = raw.strip()
+
+        if not stripped:
+            i += 1
+            continue
+
+        # Standalone heading
+        if _is_bold_heading(stripped):
+            segments.append(_heading_html(stripped))
+            i += 1
+            continue
+
+        # Bullet or heading-bullet
         if stripped.startswith('- ') or stripped.startswith('* '):
-            if not in_list:
-                out.append('<ul style="margin:0.4em 0 0.4em 1.2em;padding:0;">')
-                in_list = True
-            out.append(f'<li style="margin-bottom:0.3em;">{stripped[2:]}</li>')
-        else:
-            if in_list:
-                out.append('</ul>')
-                in_list = False
-            out.append(line)
-    if in_list:
-        out.append('</ul>')
+            content = stripped[2:].strip()
+            # Bold-only bullet → heading (no dot), not a list item
+            if _is_bold_heading(content):
+                segments.append(_heading_html(content))
+                i += 1
+                continue
+            # Regular bullet list — stop when heading-bullet encountered
+            items: list[str] = []
+            while i < len(lines):
+                s = lines[i].strip()
+                if not (s.startswith('- ') or s.startswith('* ')):
+                    break
+                c = s[2:].strip()
+                if _is_bold_heading(c):
+                    break
+                items.append(f'<li style="margin-bottom:0.3em;">{c}</li>')
+                i += 1
+            if items:
+                segments.append(
+                    '<ul style="margin:0.4em 0 0.5em 1.2em;padding:0;">'
+                    + ''.join(items)
+                    + '</ul>'
+                )
+            continue
 
-    # Convert all newlines to <br> so numbered items and sub-bullets never
-    # collapse into a single paragraph under unsafe_allow_html rendering.
-    result = '\n'.join(out)
-    result = re.sub(r'\n{2,}', '<br><br>', result)
-    result = result.replace('\n', '<br>')
-    return result
+        # Regular text paragraph
+        para: list[str] = []
+        while i < len(lines):
+            s = lines[i].strip()
+            if not s:
+                break
+            if s.startswith('- ') or s.startswith('* '):
+                break
+            if _is_bold_heading(s):
+                break
+            para.append(s)
+            i += 1
+        if para:
+            segments.append(
+                '<p style="margin:0.3em 0;">'
+                + '<br>'.join(para)
+                + '</p>'
+            )
+
+    return '\n'.join(segments)
 
 
 def render_sources(sources: list[dict]):

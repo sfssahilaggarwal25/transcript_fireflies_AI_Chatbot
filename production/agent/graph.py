@@ -108,7 +108,7 @@ def _resolve_scope_labels(project_id: str, scope_ids: list) -> str:
 
 # ── Nodes ─────────────────────────────────────────────────────────────────────
 
-def _build_llm() -> ChatGoogleGenerativeAI:
+def _get_llm_model() -> ChatGoogleGenerativeAI:
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY not set")
@@ -132,15 +132,23 @@ def _make_call_llm(llm_with_tools):
         scope_note = ""
         if scope_type == "meeting" and scope_ids:
             readable = _resolve_scope_labels(project_id, scope_ids)
+            n = len(scope_ids)
+            mtg_word = "meeting" if n == 1 else f"{n} meetings"
             scope_note = (
-                f"\n\nSCOPE ALREADY RESOLVED: This query is limited to {readable}. "
-                f"Do NOT call list_meetings — the scope is already applied. "
-                f"All tools will automatically restrict results to this meeting."
+                f"\n\nSCOPE ALREADY RESOLVED: The meeting reference in this query has been "
+                f"automatically resolved to {readable}. "
+                f"This IS the {mtg_word} the user is asking about — do not try to determine "
+                f"it yourself and do NOT call list_meetings. "
+                f"Your job is to search within this {mtg_word} using the available tools. "
+                f"Call search_transcripts, get_meeting_summaries, list_speakers, or "
+                f"count_signal_chunks directly — the scope is already enforced."
             )
         elif scope_type == "date_range":
             scope_note = (
-                "\n\nSCOPE ALREADY RESOLVED: A date-range filter is active. "
-                "All tools will automatically restrict results to meetings within that range."
+                "\n\nSCOPE ALREADY RESOLVED: A date-range filter is active — the meetings "
+                "within that range have already been identified. "
+                "Do NOT call list_meetings. Use search_transcripts or other tools directly; "
+                "the date filter is enforced automatically."
             )
 
         system   = SystemMessage(content=SYSTEM_PROMPT + scope_note)
@@ -196,7 +204,7 @@ def get_graph():
     lru_cache ensures we don't re-initialize the LLM or rebuild the graph
     on every request.
     """
-    llm         = _build_llm()
+    llm         = _get_llm_model()
     llm_w_tools = llm.bind_tools(TOOLS)
     call_llm    = _make_call_llm(llm_w_tools)
     tools_node  = ToolNode(TOOLS)   # handles InjectedState automatically

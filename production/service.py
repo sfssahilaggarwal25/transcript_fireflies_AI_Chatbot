@@ -47,25 +47,20 @@ def _build_sources(docs) -> list[dict]:
     Convert accumulated LangChain Documents into the source dicts
     that Streamlit's render_sources() expects.
 
-    Deduplicates by (speaker_name, meeting_id) so the sources panel
-    shows one entry per speaker per meeting, not one per chunk.
+    Each chunk is its own source card — no deduplication.
+    _global_chunk_num (set by _append_docs in tools.py) matches the [N]
+    citations the LLM placed in the answer text.
     """
-    seen:    set[tuple]  = set()
-    sources: list[dict]  = []
+    sources: list[dict] = []
 
-    for i, doc in enumerate(docs, 1):
+    for doc in docs:
         meta        = doc.metadata
         is_summary  = bool(meta.get("is_meeting_summary", False))
         speaker     = "Meeting Summary" if is_summary else meta.get("speaker_name", "Unknown")
-        meeting_id  = meta.get("meeting_id", "")
-        dedup_key   = (speaker, meeting_id)
-
-        if dedup_key in seen:
-            continue
-        seen.add(dedup_key)
+        chunk_num   = meta.get("_global_chunk_num", len(sources) + 1)
 
         sources.append({
-            "chunk_num":       i,
+            "chunk_num":       chunk_num,
             "speaker_name":    speaker,
             "meeting_title":   meta.get("meeting_title", "Unknown Meeting"),
             "meeting_date":    meta.get("meeting_date", ""),
@@ -75,6 +70,38 @@ def _build_sources(docs) -> list[dict]:
         })
 
     return sources
+
+
+# ── FUTURE USE: deduplication approach (1 card per speaker per meeting) ────────
+# Uncomment and replace _build_sources() calls with _build_sources_deduped() if
+# you want a cleaner sources panel when a speaker appears in many chunks.
+#
+# Trade-off: [N] citations may mis-align when a speaker has multiple chunks —
+# the collapsed card shows chunk [1] but the LLM may have cited [3] or [7].
+# Only safe if every speaker appears at most once per request (very rare).
+#
+# def _build_sources_deduped(docs) -> list[dict]:
+#     seen:    set[tuple]  = set()
+#     sources: list[dict]  = []
+#     for doc in docs:
+#         meta       = doc.metadata
+#         is_summary = bool(meta.get("is_meeting_summary", False))
+#         speaker    = "Meeting Summary" if is_summary else meta.get("speaker_name", "Unknown")
+#         dedup_key  = (speaker, meta.get("meeting_id", ""))
+#         if dedup_key in seen:
+#             continue
+#         seen.add(dedup_key)
+#         chunk_num  = meta.get("_global_chunk_num", len(sources) + 1)
+#         sources.append({
+#             "chunk_num":       chunk_num,
+#             "speaker_name":    speaker,
+#             "meeting_title":   meta.get("meeting_title", "Unknown Meeting"),
+#             "meeting_date":    meta.get("meeting_date", ""),
+#             "timestamp":       format_timestamp(meta.get("start_time")),
+#             "content_preview": doc.page_content[:200].strip(),
+#             "is_summary":      is_summary,
+#         })
+#     return sources
 
 
 # ── Tool call trace extraction ────────────────────────────────────────────────
@@ -123,6 +150,7 @@ def answer_query(query: str, project_id: str) -> dict:
     reset_doc_accumulator()
 
     graph          = get_graph()
+    print(f"Graph output is: \n\n {graph} \n\n ")
     initial_state  = {
         "messages":    [HumanMessage(content=query)],
         "project_id":  project_id,
@@ -138,7 +166,14 @@ def answer_query(query: str, project_id: str) -> dict:
 
     try:
         result   = graph.invoke(initial_state)
+        print(f"Graph Initial State is: \n\n {initial_state} \n\n ")
+        print(f"Graph Result is: \n\n {result} \n\n ")
         messages = result.get("messages", [])
+        scope_ids = result.get("scope_ids", [])
+        scope_type = result.get("scope_type", "project")
+        print(f"\n\n Graph Scope Type is: {scope_type} \n\n ")
+        print(f"\n\n Graph Scope IDs is:  {scope_ids} \n\n ")
+        print(f"\n\n Graph Messages is: {messages} \n\n ")
 
         # The final answer is the content of the last AIMessage.
         # Gemini 2.5 with extended thinking returns content as a list of blocks;
