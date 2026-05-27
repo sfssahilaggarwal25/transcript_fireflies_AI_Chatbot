@@ -1,0 +1,192 @@
+════════════════════════════════════════════════════════════════
+  HOW TO CREATE expected_output FOR A DEEPEVAL GOLDEN
+════════════════════════════════════════════════════════════════
+
+GOLDEN RULE
+───────────
+Never write expected_output from memory.
+Always verify the ground truth from ChromaDB first, then run the agent.
+
+
+════════════════════════════════════════════════════════════════
+  STEP 1 — CHECK WHAT ACTUALLY EXISTS IN CHROMADB
+════════════════════════════════════════════════════════════════
+
+This is your ground truth. Run BEFORE the agent.
+
+  # See all meetings + their chunk/signal counts:
+  python -m app.agent.tests.deepeval_tests.verify_chunks meetings
+
+  # See exact speaker names stored in DB (use these verbatim in expected_output):
+  python -m app.agent.tests.deepeval_tests.verify_chunks speakers --meeting-date 2026-05-07
+
+  # Check if a keyword/topic exists in ChromaDB at all:
+  python -m app.agent.tests.deepeval_tests.verify_chunks keyword --keyword "OCA"
+
+  # See every chunk for a signal in a meeting (ground truth count):
+  python -m app.agent.tests.deepeval_tests.verify_chunks signal \
+      --signal commitment --meeting-date 2026-05-07
+
+  ✓ If data exists → continue to Step 2
+  ✗ If data does NOT exist → the query has no answer in the DB.
+    Write expected_output that checks the agent says "not found" gracefully.
+
+
+════════════════════════════════════════════════════════════════
+  STEP 2 — RUN THE AGENT AND SEE WHAT IT RETURNS
+════════════════════════════════════════════════════════════════
+
+  python -m app.agent.tests.deepeval_tests.probe_query "your query here"
+
+  Read the 4 sections printed:
+
+    [ANSWER]           → What the agent said. Check first word (Yes/No?), dates, names.
+    [TOOL CALLS]       → Which tools fired and with what args.
+    [SOURCES]          → Speaker names, meeting dates, timestamps of retrieved chunks.
+    [DERIVATION HINTS] → Auto-extracted candidate sentences for expected_output.
+
+
+════════════════════════════════════════════════════════════════
+  STEP 3 — CHECK FOR RECALL GAPS
+════════════════════════════════════════════════════════════════
+
+Compare what ChromaDB has (Step 1) vs what the agent retrieved (Step 2 [SOURCES]).
+
+  # Quick compare command (pass agent-count from [SOURCES]):
+  python -m app.agent.tests.deepeval_tests.verify_chunks compare \
+      --signal commitment --meeting-date 2026-05-07 --agent-count 44
+
+  ✓ Agent count = DB count  → Perfect recall. Safe to write expected_output from agent answer.
+  ✗ Agent count < DB count  → Agent missed chunks. Write conservative expected_output
+                               (e.g. "At least 5..." not "All 44...").
+  ✗ Agent count = 0, DB has data → Retrieval is broken for this query.
+                               Write expected_output from DB ground truth anyway.
+                               The Golden will FAIL until you fix retrieval. That is correct.
+
+
+════════════════════════════════════════════════════════════════
+  STEP 4 — CHECK FOR FALSE POSITIVES (PRECISION)
+════════════════════════════════════════════════════════════════
+
+In the verify_chunks signal output, look for ⚠️ markers:
+
+    [001] Speaker (00:15)  ⚠️ NO SIGNAL KEYWORD — possible false positive
+          "text that was tagged commitment but doesn't look like one"
+
+  → Read the flagged chunks manually.
+  → If they are NOT genuine commitments/decisions/etc, the regex over-tagged them.
+  → Reduce your count estimate accordingly when writing expected_output.
+  → Never assert an exact count. Always write "At least N..." to absorb false positives.
+
+
+════════════════════════════════════════════════════════════════
+  STEP 5 — WRITE expected_output (4 sentence types)
+════════════════════════════════════════════════════════════════
+
+Every Golden needs at least one sentence of each type:
+
+  TYPE 1 — SCOPE CHECK (did the agent answer from the right meeting?)
+  ─────────────────────────────────────────────────────────────────────
+  Source: [SOURCES] meeting_date column from probe_query
+  Template: "The answer is scoped to the meeting on [DATE]."
+            "No content from meetings before [DATE] appears."
+
+  TYPE 2 — CONTENT CHECK (does the answer contain the real fact?)
+  ─────────────────────────────────────────────────────────────────────
+  Source: verify_chunks (exact speaker names, counts, topics confirmed in DB)
+  Template: "The name [EXACT STORED NAME] appears in the answer."
+            "At least [N] specific [commitments/decisions/topics] are described."
+            "The answer states [SPECIFIC FACT — e.g. '10 meetings', 'OCA came first']."
+
+  TYPE 3 — FORMAT CHECK (does the answer follow the attribution rules?)
+  ─────────────────────────────────────────────────────────────────────
+  Source: [ANSWER] from probe_query — look for (MM:SS) patterns, Yes/No start
+  Template: "At least one timestamp in MM:SS format appears after a speaker name."
+            "The answer begins with Yes."   ← only for yes/no queries
+
+  TYPE 4 — NEGATIVE CHECK (did the agent NOT hallucinate or leak scope?)
+  ─────────────────────────────────────────────────────────────────────
+  Source: [SOURCES] — check no wrong dates; [ANSWER] — check no error messages
+  Template: "The answer does not contain 'I could not' or 'unable to retrieve'."
+            "No content from [WRONG_DATE] or earlier appears in the answer."
+
+
+════════════════════════════════════════════════════════════════
+  STEP 6 — ADD THE GOLDEN TO goldens.py
+════════════════════════════════════════════════════════════════
+
+  Golden(
+      input="your exact query",
+      expected_output=(
+          "TYPE 1 scope sentence. "
+          "TYPE 2 content sentence. "
+          "TYPE 3 format sentence. "
+          "TYPE 4 negative sentence."
+      ),
+      additional_metadata={"id": "X1", "category": "...", "tags": [...]},
+  )
+
+  Rules for expected_output sentences:
+    ✅ "The date 2026-05-07 appears in the answer."       ← evaluator can check Yes/No
+    ✅ "The name Rhythm jalhotra appears in the answer."  ← verifiable
+    ✅ "At least one timestamp in MM:SS format is present." ← checkable
+    ❌ "The answer clearly summarises the meeting."        ← vague, not checkable
+    ❌ "The answer provides relevant details."             ← meaningless
+    ❌ "The answer is good and accurate."                  ← not checkable
+
+
+════════════════════════════════════════════════════════════════
+  STEP 7 — VERIFY THE GOLDEN WORKS
+════════════════════════════════════════════════════════════════
+
+  # Confirm it appears in the dataset:
+  python -m app.agent.tests.deepeval_tests.run_deepeval --dry-run --ids X1
+
+  # Run DeepEval on just this one Golden:
+  python -m app.agent.tests.deepeval_tests.run_deepeval --ids X1
+
+  Expected result:
+    PASS  → agent answer satisfied all expected_output sentences ✓
+    FAIL  → a sentence was not satisfied → either the agent has a bug,
+            or your expected_output sentence is wrong → fix whichever is true
+
+
+════════════════════════════════════════════════════════════════
+  QUICK REFERENCE — WHICH SCRIPT FOR WHAT
+════════════════════════════════════════════════════════════════
+
+  QUESTION                              SCRIPT          COMMAND
+  ──────────────────────────────────    ────────────    ─────────────────────────────────────
+  Does the topic exist in ChromaDB?     verify_chunks   keyword --keyword "term"
+  How many meetings + their counts?     verify_chunks   meetings
+  Exact speaker names in DB?            verify_chunks   speakers --meeting-date DATE
+  Ground truth count for a signal?      verify_chunks   signal --signal X --meeting-date DATE
+  Did agent miss chunks?                verify_chunks   compare --signal X --agent-count N
+  What did the agent actually return?   probe_query     "your query"
+
+
+════════════════════════════════════════════════════════════════
+  GROUND TRUTH FACTS FOR proj_nolocode_001
+════════════════════════════════════════════════════════════════
+
+  Total meetings : 10
+
+  #   Date         Title                         Chunks  commit  dec  quest  issue  doc
+  1   2026-03-19   Nolocode meeting with Ashpreet   191      18    2     45      4    4
+  2   2026-03-25   Nolocode AI meeting              211      33    4     59      6    2
+  9   2026-04-14   Nolocode-M1                      155      23    1     34     15    1
+  10  2026-04-14   Nolocode-AWS-deployment          127      10    0     17      8    1
+  8   2026-04-15   Nolocode-M2-and-M4               257      38    3     79     12    5
+  7   2026-04-20   Nolocode-catchup                 176      47    4     28     10    0
+  6   2026-04-22   Nolocode-AI-meeting               45      13    0     21      0    0
+  3   2026-04-24   Nolocode-M2-formula-discussion   240      42    1     65      7    1
+  5   2026-05-05   Nolocode-meeting                  53      10    0      7      3    2
+  4   2026-05-07   Nolocode-meeting (LAST)          204      44    5     28      9    0
+
+  Signal totals across all meetings:
+    commitment     : 179 chunks
+    question       : 238 chunks
+    decision       :  19 chunks
+    open_issue     :  74 chunks
+    document_share :  16 chunks
+    total non-summary: 1,659 chunks

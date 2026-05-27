@@ -49,12 +49,13 @@ Thumbs.db
 *.log
 logs/
 
-# Database
+# Database (generic — sqlite files outside chroma_db/ are excluded)
 *.db
-*.sqlite3
 
-# ChromaDB — local vector database (contains meeting content, rebuilds from webhooks)
-chroma_db/
+# ChromaDB — committed to repo so Streamlit Cloud + Docker can use it at runtime.
+# The index is read-only for demo deployments (34 MB total, safe to track in git).
+# To rebuild: run app/scripts/reingest.py and re-commit.
+# chroma_db/    ← intentionally NOT ignored
 
 # Claude Code project files
 .claude/

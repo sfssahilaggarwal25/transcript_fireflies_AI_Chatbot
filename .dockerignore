@@ -1,41 +1,48 @@
-# Runtime data — mounted as a volume, never baked into the image
-chroma_db/
-
-# POC/RAG pipeline — not used in production agent deployment
-app/rag/
-
-# Secrets — injected via env vars at runtime
-.env
-.env.*
-
-# Python bytecode
-__pycache__/
-*.pyc
-*.pyo
-
-# Virtual environment — rebuilt inside Docker by uv
+# ── Python runtime artifacts ──────────────────────────────────────────────────
 .venv/
-venv/
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.eggs/
 
-# Dev tooling
+# ── Secrets (set these as env vars in Railway dashboard instead) ──────────────
+.env
+.env.local
+.env.*.local
+
+# ── Test folders (not needed at runtime) ─────────────────────────────────────
+app/agent/tests/
+app/rag/tests/
+app/tests/
+
+# ── Planning & architecture docs inside app/ (not needed at runtime) ─────────
+app/agent/ARCHITECTURE.md
+app/agent/PLAN.md
+
+# ── Root-level docs and dev scripts ──────────────────────────────────────────
+docs/
+scripts/
+
+# ── Dev artifacts / large output files ───────────────────────────────────────
+pipeline.log
+*.log
+test_output.txt
+chunks_output.json
+uv.lock
+
+# ── DeepEval cache ────────────────────────────────────────────────────────────
+.deepeval/
+
+# ── Git history ───────────────────────────────────────────────────────────────
 .git/
-.claude/
+.gitignore
+
+# ── IDE and OS files ──────────────────────────────────────────────────────────
 .vscode/
 .idea/
-
-# Documentation — not needed at runtime
-docs/
-README.md
-CLAUDE.md
-
-# Dev and test scripts — not needed at runtime
-scripts/
-app/agent/tests/
-
-# Test outputs
-chunks_output.json
-test_output.txt
-
-# OS artefacts
 .DS_Store
 Thumbs.db
+
+# NOTE: chroma_db/ is intentionally NOT listed here.
+# It holds the pre-built vector index (34 MB) required at runtime.

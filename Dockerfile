@@ -1,26 +1,28 @@
 FROM python:3.12-slim
 
-# supervisor runs FastAPI + Streamlit as two managed processes in one container
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends supervisor \
+# System dependencies needed by chromadb / onnxruntime
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
     && rm -rf /var/lib/apt/lists/*
-
-# uv: fast Python dependency installer
-RUN pip install uv --quiet
 
 WORKDIR /app
 
-# Install deps first — layer is cached until pyproject.toml/uv.lock changes
-COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
+# Install Python dependencies first (layer-cached)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code and config
+# Copy the full project (includes chroma_db/ with pre-built vector index)
 COPY . .
 
-# Active venv is on the PATH
-ENV PATH="/app/.venv/bin:$PATH"
+# Expose Streamlit default port
+EXPOSE 8501
 
-# FastAPI webhook port + Streamlit UI port
-EXPOSE 8000 8501
+# Health-check so Railway knows the app is ready
+HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health || exit 1
 
-CMD ["supervisord", "-n", "-c", "/app/supervisord.conf"]
+# Run the agent Streamlit app
+CMD ["streamlit", "run", "app/agent/streamlit_app.py", \
+     "--server.port=8501", \
+     "--server.address=0.0.0.0", \
+     "--server.headless=true"]
