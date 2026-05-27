@@ -89,3 +89,5 @@ find_gaps.py
 tests/test_results/*app/tests/test_results/
 app/tests/deepeval_tests/
 app/tests/test_results/
+
+.deepeval/

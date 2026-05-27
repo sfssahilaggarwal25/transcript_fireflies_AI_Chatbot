@@ -4,10 +4,10 @@ Run: python demo_pipeline.py
 """
 import json
 from app.config import CONSTANT_TRANSCRIPT
-from app.services.transcript.normalize import normalize_transcript
-from app.services.transcript.metadata import build_meeting_metadata
-from app.services.transcript.chunking import create_chunks
-from app.services.storage.project_store import get_project_for_meeting, get_speaker_role
+from app.core.transcript.normalize import normalize_transcript
+from app.core.transcript.metadata import build_meeting_metadata
+from app.core.transcript.chunking import create_chunks
+from app.core.storage.project_store import get_project_for_meeting, get_speaker_role
 
 DIVIDER = "\n" + "=" * 65
 

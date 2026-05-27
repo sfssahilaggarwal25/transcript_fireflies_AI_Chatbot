@@ -1,8 +1,8 @@
 import sys
 sys.path.insert(0, '.')
 
-from app.services.storage.project_store import get_meeting_ids_for_project
-from app.services.storage.db import get_raw_collection
+from app.core.storage.project_store import get_meeting_ids_for_project
+from app.core.storage.db import get_raw_collection
 
 PROJECT = 'proj_nolocode_001'
 

@@ -21,11 +21,11 @@
 
 #     # Our modules — full trace
 #     for name in (
-#     "app.services.answer.pipeline",
-#     "app.services.answer.builder",
-#     "app.services.answer.metadata",
-#     "app.services.answer.scope",
-#     "app.services.query_intent",
+#     "app.rag.answer.pipeline",
+#     "app.rag.answer.builder",
+#     "app.rag.answer.metadata",
+#     "app.core.scope",
+#     "app.rag.query_intent",
 #     "app.services.retrieval.retriever",
 #     "app.services.retrieval.reranker",
 #     ):

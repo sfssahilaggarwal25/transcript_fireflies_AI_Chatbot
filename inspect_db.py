@@ -10,7 +10,7 @@ import logging
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-from app.services.storage.db import get_raw_collection
+from app.core.storage.db import get_raw_collection
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

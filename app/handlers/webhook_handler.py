@@ -2,16 +2,16 @@ import time
 from app.config import Config, CONSTANT_TRANSCRIPT
 from app.logger import get_logger
 
-from app.services.documents.mapper import chunks_to_documents
-from app.services.storage.chunk_store import store_documents
-from app.services.transcript.metadata import build_meeting_metadata
-from app.services.transcript.chunking import create_chunks, build_summary_chunk
-from app.services.transcript.normalize import normalize_transcript
+from app.core.documents.mapper import chunks_to_documents
+from app.core.storage.chunk_store import store_documents
+from app.core.transcript.metadata import build_meeting_metadata
+from app.core.transcript.chunking import create_chunks, build_summary_chunk
+from app.core.transcript.normalize import normalize_transcript
 from app.clients.fireflies_client import fetch_transcript
 from app.clients.gemini_client import generate_meeting_summary
-from app.services.storage.project_store import get_project_for_meeting, get_speaker_role
-from app.services.storage.chunk_store import get_distinct_meeting_ids
-from app.services.storage.db import reset_vectorstore
+from app.core.storage.project_store import get_project_for_meeting, get_speaker_role
+from app.core.storage.chunk_store import get_distinct_meeting_ids
+from app.core.storage.db import reset_vectorstore
 
 log = get_logger("webhook_handler")
 

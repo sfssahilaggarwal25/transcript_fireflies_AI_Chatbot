@@ -1,4 +1,4 @@
-from app.services.storage.db import get_raw_collection
+from app.core.storage.db import get_raw_collection
 
 col = get_raw_collection()
 results = col.get(include=["metadatas"])
@@ -47,7 +47,7 @@ shared_keywords = [
     "module", "approach", "stress test", "agent", "architecture",
 ]
 
-from app.services.retrieval.retriever import retrieve_documents
+from app.core.retrieval.retriever import retrieve_documents
 
 for keyword in shared_keywords:
     docs = retrieve_documents(keyword, "proj_nolocode_001", k=6)

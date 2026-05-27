@@ -7,8 +7,8 @@ import os
 import sys
 import asyncio
 import json
-from app.services.transcript.normalize import normalize_transcript, group_by_speaker
-from app.services.transcript.metadata import build_meeting_metadata
+from app.core.transcript.normalize import normalize_transcript, group_by_speaker
+from app.core.transcript.metadata import build_meeting_metadata
 from app.handlers.webhook_handler import handle_fireflies_webhook
 from app.config import CONSTANT_TRANSCRIPT
 

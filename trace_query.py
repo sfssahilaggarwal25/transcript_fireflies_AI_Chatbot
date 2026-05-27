@@ -11,8 +11,8 @@ import sys
 import io
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
-from app.services.query_intent import classify_query_intent, QueryIntent
-from app.services.retrieval.retriever import (
+from app.rag.query_intent import classify_query_intent, QueryIntent
+from app.core.retrieval.retriever import (
     retrieve_documents,
     retrieve_commitment_documents,
     retrieve_decision_candidates,
@@ -25,7 +25,7 @@ from app.services.answer_service import (
     _call_gemini,
     _extract_sources,
 )
-from app.services.storage.db import get_raw_collection
+from app.core.storage.db import get_raw_collection
 
 
 # ─────────────────────────────────────────────────────────────
