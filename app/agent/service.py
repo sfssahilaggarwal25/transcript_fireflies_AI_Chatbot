@@ -35,9 +35,22 @@ from app.agent import (
     reset_doc_accumulator,
     get_accumulated_docs,
 )
-from app.rag.answer.builder import format_timestamp
 
 logger = logging.getLogger(__name__)
+
+
+# ── Timestamp formatter ───────────────────────────────────────────────────────
+
+def format_timestamp(sec: int | float | None) -> str | None:
+    """Format seconds-from-meeting-start → MM:SS, or H:MM:SS for long meetings."""
+    if sec is None:
+        return None
+    total_seconds = int(sec)
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    if hours:
+        return f"{hours}:{minutes:02d}:{seconds:02d}"
+    return f"{minutes:02d}:{seconds:02d}"
 
 
 # ── Source extraction ─────────────────────────────────────────────────────────

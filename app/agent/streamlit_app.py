@@ -24,7 +24,8 @@ import time
 from pathlib import Path
 
 # ── sys.path: project root must be on the path before any imports ─────────────
-sys.path.insert(0, str(Path(__file__).parent.parent))
+_PROJECT_ROOT = Path(__file__).parent.parent.parent   # app/agent/ → app/ → project root
+sys.path.insert(0, str(_PROJECT_ROOT))
 
 import streamlit as st
 from dotenv import load_dotenv
@@ -122,7 +123,7 @@ st.markdown("""
 
 @st.cache_data(ttl=120)
 def load_projects() -> dict:
-    with open("projects.json", "r", encoding="utf-8") as f:
+    with open(_PROJECT_ROOT / "projects.json", "r", encoding="utf-8") as f:
         return json.load(f)
 
 

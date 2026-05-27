@@ -1,0 +1,41 @@
+# Runtime data — mounted as a volume, never baked into the image
+chroma_db/
+
+# POC/RAG pipeline — not used in production agent deployment
+app/rag/
+
+# Secrets — injected via env vars at runtime
+.env
+.env.*
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment — rebuilt inside Docker by uv
+.venv/
+venv/
+
+# Dev tooling
+.git/
+.claude/
+.vscode/
+.idea/
+
+# Documentation — not needed at runtime
+docs/
+README.md
+CLAUDE.md
+
+# Dev and test scripts — not needed at runtime
+scripts/
+app/agent/tests/
+
+# Test outputs
+chunks_output.json
+test_output.txt
+
+# OS artefacts
+.DS_Store
+Thumbs.db

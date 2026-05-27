@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8000:8000"   # FastAPI — Fireflies webhook
+      - "8501:8501"   # Streamlit — production agent UI
+    volumes:
+      - ./chroma_db:/app/chroma_db   # bind mount — SCP your local chroma_db here before first run
+    env_file:
+      - .env
+    restart: unless-stopped
