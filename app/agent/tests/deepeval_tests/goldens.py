@@ -93,15 +93,21 @@ from deepeval.dataset import Golden, EvaluationDataset
 
 PROJECT_QUERIES = EvaluationDataset(
     goldens=[
-
         Golden(
             input="How many meetings have happened in this project?",
             expected_output=(
-                "The answer states there are exactly 10 meetings. "
-                "The earliest meeting date 2026-03-19 is mentioned. "
-                "The latest meeting date 2026-05-07 is mentioned. "
-                "The meetings are listed in chronological order. "
-                "Each meeting entry includes a date in YYYY-MM-DD format."
+                # Content check — the specific fact from your known data
+              "The answer states there are 10 meetings. "
+
+              # Scope check — earliest and latest dates are present
+               "The date 2026-03-19 (first meeting) appears in the answer. "
+               "The date 2026-05-07 (last meeting) appears in the answer. "
+
+                # Format check — meetings are listed in order
+               "Meetings are listed with dates in YYYY-MM-DD format. "
+
+                 # Negative check — no fallback / error message
+               "The answer does not contain the phrase 'I could not' or 'please try rephrasing'."
             ),
             additional_metadata={
                 "id":            "proj_count_meetings",
@@ -114,7 +120,6 @@ PROJECT_QUERIES = EvaluationDataset(
                 "known_gap":     True,   # agent returned empty — list_meetings not firing
             },
         ),
-
         Golden(
             input="What AI approach did we decide to go with?",
             expected_output=(

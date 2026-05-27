@@ -7,6 +7,19 @@ _DECISION_RE = re.compile(
     re.IGNORECASE
 )
 
+# Exclude process-talk about decisions (future/hypothetical) — mirrors _FALSE_COMMITMENT_RE.
+# The noun "decision" alone triggers _DECISION_RE, but "make a decision" / "take a decision"
+# / "before you make a decision" describes the process of deciding, not a made decision.
+_FALSE_DECISION_RE = re.compile(
+    r"\b(make a decision|take a decision|come to a decision|"
+    r"before (you |we |they |i )?(make|take|reach) a decision|"
+    r"better decision|right decision|own decision|"
+    r"need to (decide|make a decision)|"
+    r"haven'?t decided|have not decided|no decision yet|"
+    r"without a decision|can('?t| not) decide)\b",
+    re.IGNORECASE,
+)
+
 
 _COMMITMENT_RE = re.compile(
     r"\b(i will|i'?ll|we will|we'?ll|going to|will make sure|committ?ed to|"
@@ -144,7 +157,10 @@ def _detect_signals(text: str) -> dict:
             "contains_open_issue": False,
         }
 
-    contains_decision = bool(_DECISION_RE.search(cleaned))
+    contains_decision = (
+        bool(_DECISION_RE.search(cleaned))
+        and not bool(_FALSE_DECISION_RE.search(cleaned))
+    )
 
     contains_commitment = (
         bool(_COMMITMENT_RE.search(cleaned))

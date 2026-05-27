@@ -160,7 +160,7 @@ def cmd_signal(args):
         speaker = meta.get("speaker_name", "Unknown")
         meeting = meta.get("meeting_title", "Unknown")
         date    = meta.get("meeting_date", "")
-        text    = doc.strip()[:200]
+        text    = doc.strip()
 
         # Flag likely false positives — short or vague chunks
         flag = ""
@@ -217,7 +217,9 @@ def _get_signal_keywords(signal: str) -> list[str]:
     """Return keywords that should appear in a genuine signal chunk."""
     return {
         "commitment":     ["will", "i'll", "going to", "commit", "responsible", "take", "action", "follow"],
-        "decision":       ["decided", "agreed", "confirmed", "approved", "we will", "chosen", "going with"],
+        "decision":       ["decided", "decision", "agreed", "confirmed", "approved", "finalized",
+                           "going with", "stick with", "let's go with", "move forward with",
+                           "chosen", "selected"],
         "question":       ["?", "how", "why", "what", "when", "where", "could you", "can you"],
         "open_issue":     ["issue", "problem", "error", "bug", "not working", "concern", "blocker", "risk"],
         "document_share": ["http", "www", "link", "doc", "sheet", "file", "folder", "drive", "share"],
