@@ -14,10 +14,18 @@ dependencies = [
     "langchain-google-genai>=4.2.2",
     "load-dotenv>=0.1.0",
     "numpy>=2.4.4",
-    "onnxruntime==1.16.3",
     "pip>=26.1",
     "rank-bm25>=0.2.2",
     "requests",
     "streamlit>=1.57.0",
     "uvicorn>=0.46.0",
+]
+
+# onnxruntime is a declared dep of chromadb but is NEVER imported in this app
+# (we use GeminiEmbeddings — chromadb's ONNX function is lazy and never called).
+# Overriding it to a never-true marker removes it from the lock entirely,
+# so deployment works on platforms with no onnxruntime wheels (e.g. SCC).
+[tool.uv]
+override-dependencies = [
+    "onnxruntime ; python_version < '2'",
 ]
