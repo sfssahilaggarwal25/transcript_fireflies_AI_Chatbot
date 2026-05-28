@@ -531,7 +531,7 @@ def get_meeting_summaries(
             return f"No summary found matching '{meeting_title}'."
 
     # Sort chronologically BEFORE assigning global numbers so [N] matches reading order
-    sorted_docs   = sorted(docs, key=lambda d: d.metadata.get("meeting_date", ""))
+    sorted_docs   = sorted(docs, key=lambda d: str(d.metadata.get("meeting_date", "")))
     chunk_numbers = _append_docs(sorted_docs)
 
     # Format output with [N] citations so LLM can reference summaries inline
@@ -772,7 +772,7 @@ def count_signal_chunks(
                 for text, meta in zip(raw_docs, raw_metas)
             ]
             docs.sort(key=lambda d: (
-                d.metadata.get("meeting_date", ""),
+                str(d.metadata.get("meeting_date", "")),
                 d.metadata.get("start_time", 0) or 0,
             ))
             _append_docs(docs)

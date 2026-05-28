@@ -1,3 +1,10 @@
+import sys
+from pathlib import Path
+
+_ROOT = Path(__file__).resolve().parents[3]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
 from app.agent.service import answer_query
 
 # from app.agent import get_graph
@@ -23,7 +30,7 @@ from app.agent.service import answer_query
 
 
 res_query = answer_query(
-    query="What questions did Harsh Vardhan raise about the AI architecture approach?", project_id="proj_nolocode_001")
+    query="Give the summary of previous meeting?", project_id="proj_nolocode_001")
 
 print('Query output ------------------')
 print("Query Whole Result:", res_query)
