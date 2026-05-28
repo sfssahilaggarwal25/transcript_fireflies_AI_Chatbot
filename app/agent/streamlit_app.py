@@ -28,6 +28,7 @@ _PROJECT_ROOT = Path(__file__).parent.parent.parent   # app/agent/ → app/ → 
 sys.path.insert(0, str(_PROJECT_ROOT))
 
 import streamlit as st
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -36,6 +37,13 @@ from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from app.agent import get_graph, reset_doc_accumulator, get_accumulated_docs
 from app.agent.service import _build_sources, _extract_tool_calls
 from app.core.storage.db import get_raw_collection
+
+
+def _fmt_date(val) -> str:
+    """Convert a meeting_date value (ISO string or Unix ms timestamp) to YYYY-MM-DD."""
+    if isinstance(val, (int, float)) and val > 1e9:
+        return datetime.fromtimestamp(val / 1000, tz=timezone.utc).strftime("%Y-%m-%d")
+    return str(val) if val else ""
 
 
 # ── Page config ───────────────────────────────────────────────────────────────
@@ -147,7 +155,7 @@ def get_project_stats(project_id: str) -> dict:
                 meetings[mid] = {
                     "num":   m.get("meeting_number", 0),
                     "title": m.get("meeting_title", "Unknown"),
-                    "date":  m.get("meeting_date", ""),
+                    "date":  _fmt_date(m.get("meeting_date", "")),
                 }
             name = m.get("speaker_name")
             if name and name not in speakers:
@@ -189,7 +197,7 @@ def _scope_label(scope_type: str, scope_ids, project_id: str) -> str:
             )
             m = (res.get("metadatas") or [{}])[0]
             title = m.get("meeting_title", mid)
-            date  = m.get("meeting_date", "")
+            date  = _fmt_date(m.get("meeting_date", ""))
             num   = m.get("meeting_number", "")
             labels.append(f"Meeting #{num}: {title} ({date})")
         return ", ".join(labels)
@@ -371,13 +379,13 @@ def render_sources(sources: list[dict]):
                 header = (
                     f"**[{display_n}] 📋 Meeting Summary** &nbsp;·&nbsp; "
                     f"📅 {s['meeting_title']} &nbsp;·&nbsp; "
-                    f"`{s['meeting_date']}`" + ts_str
+                    f"`{_fmt_date(s['meeting_date'])}`" + ts_str
                 )
             else:
                 header = (
                     f"**[{display_n}] 👤 {s['speaker_name']}** &nbsp;·&nbsp; "
                     f"📅 {s['meeting_title']} &nbsp;·&nbsp; "
-                    f"`{s['meeting_date']}`" + ts_str
+                    f"`{_fmt_date(s['meeting_date'])}`" + ts_str
                 )
 
             st.markdown(header, unsafe_allow_html=True)

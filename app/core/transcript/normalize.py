@@ -90,7 +90,12 @@ def normalize_transcript(raw_data: Dict[str, Any]) -> Dict[str, Any]:
         except (AttributeError, IndexError):
             pass
     if not date_str:
-        date_str = transcript.get("date")
+        raw_date = transcript.get("date")
+        if isinstance(raw_date, (int, float)) and raw_date > 1e9:
+            from datetime import datetime, timezone
+            date_str = datetime.fromtimestamp(raw_date / 1000, tz=timezone.utc).strftime("%Y-%m-%d")
+        else:
+            date_str = raw_date
 
     normalized = {
         "meeting_id": transcript["id"],

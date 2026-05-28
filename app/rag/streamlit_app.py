@@ -1,10 +1,19 @@
 import json
 import re
+from datetime import datetime, timezone
+
 import streamlit as st
 
 from app.logging_config import setup_pipeline_logging
 from app.services.answer_service import answer_question
 from app.core.storage.db import get_raw_collection
+
+
+def _fmt_date(val) -> str:
+    """Convert a meeting_date value (ISO string or Unix ms timestamp) to YYYY-MM-DD."""
+    if isinstance(val, (int, float)) and val > 1e9:
+        return datetime.fromtimestamp(val / 1000, tz=timezone.utc).strftime("%Y-%m-%d")
+    return str(val) if val else ""
 
 setup_pipeline_logging()
 
@@ -65,7 +74,7 @@ def get_project_stats(project_id: str) -> dict:
         )
         metas = results.get("metadatas", [])
         meetings = sorted(
-            {(m.get("meeting_title", ""), m.get("meeting_date", ""))
+            {(m.get("meeting_title", ""), _fmt_date(m.get("meeting_date", "")))
              for m in metas if m.get("meeting_id") and not m.get("is_meeting_summary")},
             key=lambda x: x[1],
         )
@@ -212,14 +221,14 @@ def render_sources(sources: list[dict]):
                 st.markdown(
                     f"**[{display_n}] 📋 Meeting Summary** &nbsp;·&nbsp; "
                     f"📅 {s['meeting_title']} &nbsp;·&nbsp; "
-                    f"`{s['meeting_date']}`"
+                    f"`{_fmt_date(s['meeting_date'])}`"
                     + ts_str
                 )
             else:
                 st.markdown(
                     f"**[{display_n}] {s['speaker_name']}** &nbsp;·&nbsp; "
                     f"📅 {s['meeting_title']} &nbsp;·&nbsp; "
-                    f"`{s['meeting_date']}`"
+                    f"`{_fmt_date(s['meeting_date'])}`"
                     + ts_str,
                     unsafe_allow_html=True,
                 )
