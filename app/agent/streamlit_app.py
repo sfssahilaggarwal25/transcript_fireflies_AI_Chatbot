@@ -153,7 +153,7 @@ def get_project_stats(project_id: str) -> dict:
             if name and name not in speakers:
                 speakers[name] = m.get("speaker_role", "unknown")
 
-        sorted_meetings = sorted(meetings.values(), key=lambda x: x["date"])
+        sorted_meetings = sorted(meetings.values(), key=lambda x: str(x.get("date", "")))
         return {
             "chunk_count":   len([m for m in metas if not m.get("is_meeting_summary")]),
             "meeting_count": len(meetings),
@@ -161,8 +161,7 @@ def get_project_stats(project_id: str) -> dict:
             "meetings":      sorted_meetings,
             "speakers":      speakers,
         }
-    except Exception as e:
-        st.error(f"[DEBUG] get_project_stats failed: {e}")
+    except Exception:
         return {
             "chunk_count": 0, "meeting_count": 0, "speaker_count": 0,
             "meetings": [], "speakers": {},
