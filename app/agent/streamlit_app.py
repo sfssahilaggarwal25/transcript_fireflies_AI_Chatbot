@@ -161,7 +161,8 @@ def get_project_stats(project_id: str) -> dict:
             "meetings":      sorted_meetings,
             "speakers":      speakers,
         }
-    except Exception:
+    except Exception as e:
+        st.error(f"[DEBUG] get_project_stats failed: {e}")
         return {
             "chunk_count": 0, "meeting_count": 0, "speaker_count": 0,
             "meetings": [], "speakers": {},
