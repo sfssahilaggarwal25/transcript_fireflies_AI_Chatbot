@@ -68,17 +68,8 @@ def normalize_transcript(raw_data: Dict[str, Any]) -> Dict[str, Any]:
     for s in sentences:
         cleaned = _clean_sentence(s["text"])
         if len(cleaned) >= 8:
-            # Normalize timing to start_time/end_time in seconds regardless of source format.
-            # Live Fireflies API returns rawStartTimeMs/rawEndTimeMs (int, ms).
-            # CONSTANT_TRANSCRIPT uses start_time/end_time (float, seconds) directly.
-            if "rawStartTimeMs" in s or "rawEndTimeMs" in s:
-                raw_start = s.get("rawStartTimeMs")
-                raw_end = s.get("rawEndTimeMs")
-                start_s = raw_start / 1000.0 if raw_start is not None else None
-                end_s = raw_end / 1000.0 if raw_end is not None else None
-            else:
-                start_s = s.get("start_time")
-                end_s = s.get("end_time")
+            start_s = s.get("start_time")
+            end_s = s.get("end_time")
 
             cleaned_sentences.append({
                 **s,
