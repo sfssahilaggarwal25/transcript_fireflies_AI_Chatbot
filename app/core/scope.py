@@ -100,7 +100,7 @@ def get_project_meetings_sorted(project_id: str) -> list[tuple[str, str]]:
             if mid and d and mid not in seen:
                 seen[mid]        = d
                 seen_titles[mid] = title
-        sorted_meetings = sorted(seen.items(), key=lambda x: x[1], reverse=True)
+        sorted_meetings = sorted(seen.items(), key=lambda x: str(x[1]), reverse=True)
         logger.debug(
             "  [scope] project meetings (newest->oldest): %s",
             " | ".join(
@@ -110,7 +110,8 @@ def get_project_meetings_sorted(project_id: str) -> list[tuple[str, str]]:
             ),
         )
         return sorted_meetings
-    except Exception:
+    except Exception as e:
+        logger.warning("get_project_meetings_sorted failed: %s", e)
         return []
 
 
