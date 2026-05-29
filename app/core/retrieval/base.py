@@ -4,6 +4,7 @@ base.py — Shared retrieval utilities.
 Validation helpers, ChromaDB filter builder, corpus fetch, debug logging.
 Used by hybrid.py, structured.py, and topic.py — not imported externally.
 """
+import json
 import logging
 from typing import Optional
 
@@ -12,6 +13,40 @@ from langchain_core.documents import Document
 from app.core.storage.db import get_raw_collection
 
 logger = logging.getLogger(__name__)
+
+
+# ── Per-request BM25 corpus cache ─────────────────────────────────────────────
+# _fetch_project_corpus() pulls ALL matching chunks from ChromaDB on every call.
+# Within one query the LLM can call search_transcripts 3-6 times — each call
+# would re-fetch the same 1,669 chunks. scope_where is fixed for the whole query
+# (set once by query_scope_node), so the corpus is identical across tool calls
+# with the same (project_id, hard_filters, date_where).
+#
+# Cache key: (project_id, hard_filters_json, date_where_json)
+# Lifetime:  one query — reset_corpus_cache() is called by service.py at the
+#            start of answer_query(), before graph.invoke().
+#
+# Thread safety: each HTTP request gets its own Python thread (FastAPI/uvicorn
+# default). Module-level dicts are per-process, not per-thread. If you move to
+# async workers or multi-threading, replace this with a contextvars.ContextVar.
+
+_corpus_cache: dict[tuple, list[Document]] = {}
+
+
+def reset_corpus_cache() -> None:
+    """Clear the BM25 corpus cache. Call once at the start of each new query."""
+    _corpus_cache.clear()
+
+
+def _make_corpus_key(
+    project_id: str,
+    hard_filters: Optional[dict],
+    date_where: Optional[dict],
+) -> tuple:
+    """Build a hashable cache key from the three corpus-defining parameters."""
+    hf_key = json.dumps(hard_filters, sort_keys=True) if hard_filters else None
+    dw_key = json.dumps(date_where,   sort_keys=True) if date_where   else None
+    return (project_id, hf_key, dw_key)
 
 DEFAULT_TOP_K = 8
 MAX_TOP_K = 25
@@ -92,22 +127,38 @@ def _fetch_project_corpus(
 
     hard_filters narrow the corpus (e.g. speaker_name for compound retrieval).
     date_where scopes to specific meeting(s) from scope resolution.
+
+    Results are cached per (project_id, hard_filters, date_where) for the
+    duration of one query. The LLM calls search_transcripts multiple times with
+    the same scope — without this cache each call re-fetches the full corpus
+    from ChromaDB. Cache is reset by reset_corpus_cache() in service.py before
+    each new query so stale data is never returned.
     """
+    key = _make_corpus_key(project_id, hard_filters, date_where)
+    if key in _corpus_cache:
+        cached = _corpus_cache[key]
+        logger.debug("corpus cache HIT  | key=%s | %d docs", key, len(cached))
+        return cached
+
     collection = get_raw_collection()
     conditions = [{"project_id": {"$eq": project_id}}]
     if hard_filters:
-        for key, value in hard_filters.items():
-            conditions.append({key: {"$eq": value}})
+        for k, value in hard_filters.items():
+            conditions.append({k: {"$eq": value}})
     if date_where:
         conditions.append(date_where)
     where_filter = {"$and": conditions} if len(conditions) > 1 else conditions[0]
 
     results = collection.get(where=where_filter, include=["documents", "metadatas"])
-    return [
+    corpus = [
         Document(page_content=results["documents"][i], metadata=results["metadatas"][i])
         for i in range(len(results.get("ids", [])))
         if not results["metadatas"][i].get("is_meeting_summary")  # exclude AI summaries
     ]
+
+    _corpus_cache[key] = corpus
+    logger.debug("corpus cache MISS | key=%s | %d docs fetched", key, len(corpus))
+    return corpus
 
 
 # ── Debug logging ─────────────────────────────────────────────────────────────

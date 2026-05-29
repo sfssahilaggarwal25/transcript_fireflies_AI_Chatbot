@@ -30,6 +30,20 @@ When the user says **"update files"** or **"session done"**, immediately update 
 
 ---
 
+## Active vs Deprecated Code — CRITICAL
+
+**`app/agent/`** is the ACTIVE implementation. All new work, bug fixes, and suggestions go here.
+
+**`app/rag/`** is the OLD/DEPRECATED implementation. Do NOT:
+- Suggest edits to files in `app/rag/`
+- Read `app/rag/` files as reference for new work
+- Confuse `app/rag/prompts.py` with `app/agent/prompts.py`
+- Confuse `app/rag/streamlit_app.py` with `app/agent/streamlit_app.py`
+
+If asked something ambiguous (e.g. "fix the prompts" or "update the tests"), always default to `app/agent/`. Only touch `app/rag/` if the user explicitly names that path.
+
+---
+
 ## Project Overview
 
 This is an AI Meeting Intelligence POC for Project Managers. It answers questions about past meetings by searching Fireflies.ai transcripts using RAG.

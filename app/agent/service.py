@@ -35,6 +35,7 @@ from app.agent import (
     reset_doc_accumulator,
     get_accumulated_docs,
 )
+from app.core.retrieval import reset_corpus_cache
 
 logger = logging.getLogger(__name__)
 
@@ -159,8 +160,11 @@ def answer_query(query: str, project_id: str) -> dict:
     """
     t_start = time.time()
 
-    # Clear the per-request doc accumulator before invoking the graph
+    # Clear per-request state before invoking the graph.
+    # reset_corpus_cache() prevents _fetch_project_corpus() from returning
+    # chunks from the previous query when scope or data has changed.
     reset_doc_accumulator()
+    reset_corpus_cache()
 
     graph          = get_graph()
     print(f"Graph output is: \n\n {graph} \n\n ")

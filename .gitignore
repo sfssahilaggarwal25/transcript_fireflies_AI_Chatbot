@@ -89,5 +89,8 @@ find_gaps.py
 
 app/rag/tests/test_results/
 app/rag/tests/deepeval_tests/
+app/agents/tests/test_context_expansion.py
+app/agents/tests/test_corpus_cache.py
+app/agents/tests/test_reranker_integration.py
 
 .deepeval/

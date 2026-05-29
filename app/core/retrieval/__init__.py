@@ -13,6 +13,7 @@ Import from this package:
   from app.core.retrieval import hybrid_retrieve, compound_retrieve, ...
 """
 
+from .base import reset_corpus_cache
 from .config import RetrievalConfig, get_retrieval_config
 from .hybrid import (
     hybrid_retrieve,
@@ -26,6 +27,8 @@ from .metadata_retrieve import analytical_retrieve, contribution_retrieve, signa
 from .topic import topic_summary_retrieve, retrieve_timeline_documents
 
 __all__ = [
+    # Cache management
+    "reset_corpus_cache",
     # Config
     "RetrievalConfig",
     "get_retrieval_config",

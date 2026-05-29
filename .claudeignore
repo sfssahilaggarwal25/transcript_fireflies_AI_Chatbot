@@ -1,0 +1,13 @@
+# Claude Code ignore file — controls what Claude auto-reads during codebase scanning
+#
+# ACTIVE implementation: app/agent/
+# DEPRECATED implementation: app/rag/
+#
+# Excluding app/rag/ prevents conflicts when Claude auto-reads files,
+# since both folders have streamlit_app.py, prompts.py, and test structures.
+
+app/rag/
+
+# Also exclude generated test result artifacts — too noisy for context
+app/agent/tests/test_results/
+app/rag/tests/test_results/
