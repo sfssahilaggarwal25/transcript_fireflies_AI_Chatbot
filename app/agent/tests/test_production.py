@@ -30,7 +30,7 @@ from app.agent.service import answer_query
 
 
 res_query = answer_query(
-    query="Give the summary of previous meeting?", project_id="proj_nolocode_001")
+    query="Give the details of change in forecasting formulas for this meeting on 2026-05-05?", project_id="proj_nolocode_001")
 
 print('Query output ------------------')
 print("Query Whole Result:", res_query)

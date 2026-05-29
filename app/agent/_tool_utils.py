@@ -69,6 +69,32 @@ _EXPAND_TOP_N = 5
 # Lower = higher precision; higher = more recall. 10 is the production-tested value.
 _RERANK_TOP_N = 10
 
+# ── Diversity cap constants ───────────────────────────────────────────────────
+# Applied after hybrid_retrieve, before reranking. Project-wide queries only —
+# bypassed when scope_ids is set (single-meeting queries need no diversity).
+#
+# _DIVERSITY_CAP_FLOOR: minimum slots guaranteed to every meeting in the pool.
+# _DIVERSITY_PASS_RATE: fraction of a meeting's retrieved docs that pass through.
+#   Each meeting contributes at most round(count × rate) chunks, floored at 3.
+# _DIVERSITY_MAX_MEETING_FRACTION: the ceiling = round(total × fraction).
+#   No single meeting exceeds this share of the reranker pool.
+#   Scales with k automatically — at k=25: ceiling=6, at k=40: ceiling=10.
+#
+# Two dominant meetings: both hit their proportional cap independently.
+# One chunk meetings: cap=floor=3, but only 1 doc exists → 1 passes (floor ≠ target).
+
+_DIVERSITY_CAP_FLOOR            = 3
+_DIVERSITY_PASS_RATE            = 0.5   # each meeting passes half its retrieved docs
+_DIVERSITY_MAX_MEETING_FRACTION = 0.25  # no meeting exceeds 25% of the reranker pool
+
+# Query words that signal a broad synthesis request across meetings.
+# search_transcripts doubles effective_k when detected (project-wide only).
+_OVERVIEW_SIGNALS = frozenset({
+    "overview", "all", "across", "throughout",
+    "explain", "describe", "complete", "full", "entire",
+    "summarize", "summary", "detail", "everything",
+})
+
 
 # ── Doc accumulator ───────────────────────────────────────────────────────────
 # Collects LangChain Documents from all tool calls in one graph run.
@@ -311,3 +337,47 @@ def _expand_context(docs: list[Document], n: int = _EXPAND_TOP_N) -> list[Docume
                 existing_ids.add(next_id)
 
     return result
+
+
+# ── Meeting diversity cap ─────────────────────────────────────────────────────
+
+def _apply_diversity_cap(docs: list[Document]) -> list[Document]:
+    """
+    Limit chunks per meeting_id before reranking.
+
+    Each meeting passes at most PASS_RATE of its retrieved docs, with a
+    minimum floor of _DIVERSITY_CAP_FLOOR and a ceiling that scales with
+    the total pool size (round(total × _DIVERSITY_MAX_MEETING_FRACTION)).
+
+    Proportional ceiling means overview queries (k=40) allow more chunks
+    from a dedicated meeting than focused queries (k=25) — consistent with
+    the k-boost intent. RRF rank order is preserved within each meeting.
+
+    Called only for project-wide queries (scope_ids=None in tools.py).
+    """
+    if not docs:
+        return docs
+
+    from collections import Counter
+    counts      = Counter(d.metadata.get("meeting_id", "") for d in docs)
+    total       = len(docs)
+    cap_ceiling = max(_DIVERSITY_CAP_FLOOR, round(total * _DIVERSITY_MAX_MEETING_FRACTION))
+
+    seen:    dict[str, int] = {}
+    diverse: list[Document] = []
+
+    for doc in docs:
+        mid = doc.metadata.get("meeting_id", "")
+        cap = max(
+            _DIVERSITY_CAP_FLOOR,
+            min(cap_ceiling, round(counts[mid] * _DIVERSITY_PASS_RATE)),
+        )
+        if seen.get(mid, 0) < cap:
+            diverse.append(doc)
+            seen[mid] = seen.get(mid, 0) + 1
+
+    logger.debug(
+        "diversity_cap | input=%d | output=%d | ceiling=%d | meetings_in_pool=%d",
+        total, len(diverse), cap_ceiling, len(counts),
+    )
+    return diverse

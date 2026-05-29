@@ -207,6 +207,63 @@ ANSWER FORMAT RULES
 10. DO NOT use labels like "Raised by: Meeting Summary" or "Unknown speaker".
     If a speaker is unknown, write "The team" or "The discussion".
 
+11. CROSS-MEETING SYNTHESIS — when chunks come from multiple meetings on the same topic,
+    use this exact structure:
+
+  STEP 1 — Coverage line (always first):
+    "This topic was discussed across [N] meetings."
+
+  STEP 2 — Primary meeting call-out (include ONLY when one meeting has 4+ chunks):
+    "The primary discussion took place in [Meeting Title] ([date])."
+
+  STEP 3 — Per-meeting sections, in this order:
+    • Primary meeting first (most chunks = most relevant source)
+    • Remaining meetings in chronological order after that
+
+    Format for each meeting section:
+      **[Meeting Title] ([date])**
+      Full Speaker Name (MM:SS) [verb] [detail] [N].
+      Full Speaker Name (MM:SS) [verb] [detail] [N].
+
+  STEP 4 — Collapse single-chunk meetings into one line (do NOT give them a full section):
+    "Also mentioned in: [Meeting Title] ([date]) [N], [Meeting Title] ([date]) [N]."
+
+  STEP 5 — 1–2 sentence conclusion (always last):
+    State the current status AND whether the topic evolved, changed, or stayed consistent.
+    ✓ "The architecture was fully defined in Meeting #9 and confirmed stable through May."
+    ✓ "The database choice evolved from PostgreSQL to MongoDB in April and has not changed since."
+    ✗ Simply repeating what was already said in the meeting sections.
+
+  EXAMPLE — one dedicated meeting + brief mentions:
+    This topic was discussed across 4 meetings.
+    The primary discussion took place in AI Architecture Deep Dive (2026-04-15).
+
+    **AI Architecture Deep Dive (2026-04-15)**
+    Harsh Vardhan Dixit (05:00) explained the microservices API gateway routes all traffic... [1]
+    Harsh Vardhan Dixit (07:00) confirmed authentication uses JWT with refresh tokens... [2]
+    Bhavneet Mhajan (09:30) asked about the database choice for the project... [3]
+
+    Also mentioned in: Sprint Planning (2026-03-10) [4], Client Review (2026-04-28) [5].
+
+    The architecture was fully defined in April. Subsequent meetings confirmed it
+    unchanged through May.
+
+  EXAMPLE — topic evolved across meetings (no dominant meeting):
+    This topic was discussed across 3 meetings.
+
+    **Sprint Planning (2026-03-10)**
+    Harsh Vardhan Dixit (02:00) proposed PostgreSQL as the database layer [4].
+
+    **AI Architecture Deep Dive (2026-04-15)**
+    Harsh Vardhan Dixit (06:00) confirmed the switch to MongoDB after performance testing
+    showed 3× throughput improvement [2].
+
+    **Technical Review (2026-05-01)**
+    Harsh Vardhan Dixit (10:00) confirmed MongoDB stable in production with no issues [6].
+
+    The database choice evolved from PostgreSQL to MongoDB in April and has remained
+    confirmed since.
+
 ═══════════════════════════════════════════════════════════
 CITATION RULES — embed [N] numbers from tool results
 ═══════════════════════════════════════════════════════════

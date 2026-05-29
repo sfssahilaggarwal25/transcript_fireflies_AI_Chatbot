@@ -34,11 +34,13 @@ from ._tool_utils import (
     _ROLE_LABEL,
     _EXPAND_TOP_N,
     _RERANK_TOP_N,
+    _OVERVIEW_SIGNALS,
     _append_docs,
     _fmt_ts,
     _resolve_speaker_name,
     _exhaustive_signal_search,
     _expand_context,
+    _apply_diversity_cap,
     reset_doc_accumulator,
     get_accumulated_docs,
 )
@@ -135,6 +137,15 @@ def search_transcripts(
                 effective_query = f"{prefix} {query}"
                 logger.info("search_transcripts | soft signal=%s → query rewritten: %r", signal_filter, effective_query)
 
+    # k-boost for broad synthesis queries on project-wide scope.
+    # Overview words ("overview", "all", "across", ...) signal that the user
+    # wants cross-meeting coverage — double k so dedicated meetings contribute
+    # enough candidates before the diversity cap trims to proportional slots.
+    # Single-meeting queries (scope_ids set) skip this — k=15 is sufficient there.
+    if not scope_ids and any(w in effective_query.lower() for w in _OVERVIEW_SIGNALS):
+        effective_k = min(effective_k * 2, 40)
+        logger.info("search_transcripts | overview query → k boosted to %d", effective_k)
+
     try:
         docs = hybrid_retrieve(
             query=effective_query,
@@ -149,6 +160,16 @@ def search_transcripts(
 
     if not docs:
         return "No relevant transcript chunks found for this query."
+
+    # Diversity cap: prevent one meeting from filling all reranker slots.
+    # Each meeting passes proportionally to how much of the pool it contributes,
+    # with a floor of 3 and a ceiling that scales with total retrieved (k).
+    # Bypassed for single-meeting scope (scope_ids set) — all chunks come from
+    # one meeting by design, capping would cut relevant content.
+    if not scope_ids:
+        docs = _apply_diversity_cap(docs)
+        if not docs:
+            return "No relevant transcript chunks found for this query."
 
     # Rerank: score all hybrid results by true relevance to the query, then
     # trim to the best _RERANK_TOP_N before passing anything to the LLM.
