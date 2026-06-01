@@ -17,6 +17,7 @@ Contents
 """
 
 import logging
+from datetime import datetime, timezone
 from typing import Optional
 
 from langchain_core.documents import Document
@@ -24,6 +25,32 @@ from langchain_core.documents import Document
 from app.core.storage.db import get_raw_collection
 
 logger = logging.getLogger(__name__)
+
+
+# ── Shared date formatter ─────────────────────────────────────────────────────
+
+def fmt_date(val) -> str:
+    """
+    Convert any meeting_date value to a human-readable YYYY-MM-DD string.
+
+    Handles three formats stored in ChromaDB:
+      - Unix milliseconds (13-digit int, e.g. 1775044800000) → divide by 1000
+      - Unix seconds      (10-digit int, e.g. 1775044800)    → use directly
+      - ISO string        ("2026-03-10")                     → return as-is
+
+    Use this everywhere meeting_date is shown — in tool output the LLM reads,
+    in source cards, and in the sidebar. Never pass raw metadata dates to output.
+    """
+    if val is None:
+        return ""
+    if isinstance(val, (int, float)) and val > 0:
+        ts = val / 1000 if val > 1e10 else val   # ms → s conversion only for 13-digit values
+        try:
+            return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d")
+        except (OSError, OverflowError, ValueError):
+            return str(int(val))
+    s = str(val).strip()
+    return s if s else ""
 
 
 # ── Signal maps & constants ───────────────────────────────────────────────────
@@ -268,7 +295,7 @@ def _exhaustive_signal_search(
     for doc, num in zip(docs, chunk_numbers):
         meta = doc.metadata
         ts   = _fmt_ts(meta.get("start_time"))
-        lines.append(f"[{num}] {meta.get('speaker_name','Unknown')} {ts} — {meta.get('meeting_title','Unknown Meeting')} ({meta.get('meeting_date','')})")
+        lines.append(f"[{num}] {meta.get('speaker_name','Unknown')} {ts} — {meta.get('meeting_title','Unknown Meeting')} ({fmt_date(meta.get('meeting_date',''))})")
         lines.append(f"    {doc.page_content.strip()[:400]}")
         lines.append("")
     return "\n".join(lines)

@@ -154,15 +154,18 @@ def _make_call_llm(llm_with_tools):
         system   = SystemMessage(content=SYSTEM_PROMPT + scope_note)
         messages = [system] + list(state["messages"])
 
-        logger.debug("call_llm | messages=%d", len(messages))
+        from langchain_core.messages import ToolMessage
+        round_num = sum(1 for m in state["messages"] if isinstance(m, ToolMessage)) + 1
+        logger.info("[3] AGENT    — round %d | scope=%s | messages=%d", round_num, scope_type, len(messages))
+
         response = llm_with_tools.invoke(messages)
 
         tool_calls = getattr(response, "tool_calls", [])
-        logger.info(
-            "llm response | tool_calls=%d | content_len=%d",
-            len(tool_calls),
-            len(str(response.content)),
-        )
+        if tool_calls:
+            names = ", ".join(tc["name"] for tc in tool_calls)
+            logger.info("    tool calls | round %d → [%s]", round_num, names)
+        else:
+            logger.info("    final answer | round %d → no tool calls, generating answer", round_num)
         return {"messages": [response]}
 
     return call_llm

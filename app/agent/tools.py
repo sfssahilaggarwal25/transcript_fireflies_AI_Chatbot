@@ -37,6 +37,7 @@ from ._tool_utils import (
     _OVERVIEW_SIGNALS,
     _append_docs,
     _fmt_ts,
+    fmt_date,
     _resolve_speaker_name,
     _exhaustive_signal_search,
     _expand_context,
@@ -208,14 +209,15 @@ def search_transcripts(
         date     = meta.get("meeting_date", "")
         ts       = _fmt_ts(meta.get("start_time"))
 
+        date_str = fmt_date(date)
         if position == "before":
-            lines.append(f"[CONTEXT ↑ before] {speaker} {ts} — {meeting} ({date})")
+            lines.append(f"[CONTEXT ↑ before] {speaker} {ts} — {meeting} ({date_str})")
             lines.append(f"    {doc.page_content.strip()[:300]}")
         elif position == "after":
-            lines.append(f"[CONTEXT ↓ after] {speaker} {ts} — {meeting} ({date})")
+            lines.append(f"[CONTEXT ↓ after] {speaker} {ts} — {meeting} ({date_str})")
             lines.append(f"    {doc.page_content.strip()[:300]}")
         else:
-            lines.append(f"[{next(num_iter)}] {speaker} {ts} — {meeting} ({date})")
+            lines.append(f"[{next(num_iter)}] {speaker} {ts} — {meeting} ({date_str})")
             lines.append(f"    {doc.page_content.strip()[:400]}")
         lines.append("")
 
@@ -281,7 +283,7 @@ def get_meeting_summaries(
     lines: list[str] = [f"Found {len(sorted_docs)} meeting summary/summaries:\n"]
     for doc, num in zip(sorted_docs, chunk_numbers):
         meta = doc.metadata
-        lines.append(f"[{num}] ## Meeting #{meta.get('meeting_number','')}: {meta.get('meeting_title','Unknown Meeting')}  ({meta.get('meeting_date','')})")
+        lines.append(f"[{num}] ## Meeting #{meta.get('meeting_number','')}: {meta.get('meeting_title','Unknown Meeting')}  ({fmt_date(meta.get('meeting_date',''))})")
         lines.append(doc.page_content.strip()[:800])
         lines.append("")
     return "\n".join(lines)
@@ -325,10 +327,10 @@ def list_meetings(
     if not seen:
         return "No meetings found for this project."
 
-    meetings = sorted(seen.values(), key=lambda x: x["date"])
+    meetings = sorted(seen.values(), key=lambda x: fmt_date(x["date"]))
     lines = [f"{len(meetings)} meetings in this project:\n"]
     for m in meetings:
-        lines.append(f"  Meeting #{m['number']}: {m['title']}  —  {m['date']}")
+        lines.append(f"  Meeting #{m['number']}: {m['title']}  —  {fmt_date(m['date'])}")
     return "\n".join(lines)
 
 

@@ -8,33 +8,32 @@ Usage
     result = answer_query(
         query      = "What did Bhavneet say about the forecasting timeline?",
         project_id = "proj_nolocode_001",
+        session_id = "abc123",   # optional — omit for stateless mode
     )
     # result keys: answer, sources, tool_calls, model, error
 
-Difference from app.services.answer_service.answer_question()
---------------------------------------------------------------
-  - No fixed intent routing — the LLM decides what to retrieve
-  - Handles ANY query, including cross-meeting synthesis and novel question types
-  - Multi-hop: LLM can call multiple tools in sequence before answering
-  - Returns tool_calls trace so the caller can show the "thinking process"
-  - Sources are speaker/meeting-level (no [N] chunk citation numbers)
+Chat history
+------------
+  Pass session_id (obtained from chat_store.create_session) to enable:
+    - Conversation history injected into the LLM context (last 5 turns)
+    - Scope inheritance across turns ("that meeting" resolves correctly)
+    - Turn persisted to PostgreSQL after each successful query
 
-Compatibility
--------------
-  The returned dict includes the same keys as the deterministic pipeline
-  (answer, sources, intent, notice) so the existing Streamlit UI can render
-  production results without modification.
+  If session_id is None or DATABASE_URL is not set, the pipeline runs
+  stateless — identical to the original behaviour before chat history.
 """
 
 import logging
 import time
-from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
+from langchain_core.messages import HumanMessage, AIMessage
 
 from app.agent import (
     get_graph,
     reset_doc_accumulator,
     get_accumulated_docs,
 )
+from app.agent.chat_store import get_chat_store
+from app.agent._tool_utils import fmt_date
 from app.core.retrieval import reset_corpus_cache
 
 logger = logging.getLogger(__name__)
@@ -76,46 +75,15 @@ def _build_sources(docs) -> list[dict]:
         sources.append({
             "chunk_num":       chunk_num,
             "speaker_name":    speaker,
+            "speaker_role":    meta.get("speaker_role", "unknown") if not is_summary else "summary",
             "meeting_title":   meta.get("meeting_title", "Unknown Meeting"),
-            "meeting_date":    meta.get("meeting_date", ""),
+            "meeting_date":    fmt_date(meta.get("meeting_date", "")),
             "timestamp":       format_timestamp(meta.get("start_time")),
-            "content_preview": doc.page_content[:200].strip(),
+            "content_preview": doc.page_content[:350].strip(),
             "is_summary":      is_summary,
         })
 
     return sources
-
-
-# ── FUTURE USE: deduplication approach (1 card per speaker per meeting) ────────
-# Uncomment and replace _build_sources() calls with _build_sources_deduped() if
-# you want a cleaner sources panel when a speaker appears in many chunks.
-#
-# Trade-off: [N] citations may mis-align when a speaker has multiple chunks —
-# the collapsed card shows chunk [1] but the LLM may have cited [3] or [7].
-# Only safe if every speaker appears at most once per request (very rare).
-#
-# def _build_sources_deduped(docs) -> list[dict]:
-#     seen:    set[tuple]  = set()
-#     sources: list[dict]  = []
-#     for doc in docs:
-#         meta       = doc.metadata
-#         is_summary = bool(meta.get("is_meeting_summary", False))
-#         speaker    = "Meeting Summary" if is_summary else meta.get("speaker_name", "Unknown")
-#         dedup_key  = (speaker, meta.get("meeting_id", ""))
-#         if dedup_key in seen:
-#             continue
-#         seen.add(dedup_key)
-#         chunk_num  = meta.get("_global_chunk_num", len(sources) + 1)
-#         sources.append({
-#             "chunk_num":       chunk_num,
-#             "speaker_name":    speaker,
-#             "meeting_title":   meta.get("meeting_title", "Unknown Meeting"),
-#             "meeting_date":    meta.get("meeting_date", ""),
-#             "timestamp":       format_timestamp(meta.get("start_time")),
-#             "content_preview": doc.page_content[:200].strip(),
-#             "is_summary":      is_summary,
-#         })
-#     return sources
 
 
 # ── Tool call trace extraction ────────────────────────────────────────────────
@@ -129,15 +97,44 @@ def _extract_tool_calls(messages: list) -> list[dict]:
     for msg in messages:
         if isinstance(msg, AIMessage) and getattr(msg, "tool_calls", []):
             for tc in msg.tool_calls:
-                # Strip injected state args that the LLM didn't supply
                 args = {k: v for k, v in tc["args"].items() if k != "state"}
                 trace.append({"tool": tc["name"], "args": args})
     return trace
 
 
+# ── Answer extractor ──────────────────────────────────────────────────────────
+
+def _extract_answer(messages: list) -> str:
+    """
+    Extract the final answer text from the last AIMessage in the thread.
+    Handles both plain string content (Gemini 2.0) and list-of-blocks
+    content (Gemini 2.5 extended thinking).
+    """
+    for msg in reversed(messages):
+        if isinstance(msg, AIMessage) and msg.content:
+            raw = msg.content
+            if isinstance(raw, str):
+                return raw
+            if isinstance(raw, list):
+                parts = [
+                    b["text"]
+                    for b in raw
+                    if isinstance(b, dict) and b.get("type") == "text"
+                ]
+                text = "\n".join(parts).strip()
+                if text:
+                    return text
+    return ""
+
+
 # ── Main entry point ──────────────────────────────────────────────────────────
 
-def answer_query(query: str, project_id: str) -> dict:
+def answer_query(
+    query:      str,
+    project_id: str,
+    session_id: str | None = None,
+    max_turns:  int = 5,
+) -> dict:
     """
     Run the production LangGraph agent and return a structured result.
 
@@ -145,91 +142,115 @@ def answer_query(query: str, project_id: str) -> dict:
     ----------
     query      : Natural language question from the PM
     project_id : Project scope — enforced backend-side, never from LLM
+    session_id : PostgreSQL session ID for chat history (None = stateless)
+    max_turns  : Max prior turns to load as LLM context (default 5)
 
     Returns
     -------
     dict with keys:
-      answer          (str)        — LLM-generated answer
-      sources         (list[dict]) — speaker/meeting-level source entries
-      tool_calls      (list[dict]) — tool call trace [{tool, args}, ...]
-      intent          (str)        — always "production_agent" for routing detection
-      notice          (str|None)   — any advisory notice (None for prod path)
-      num_context_chunks (int)     — number of docs retrieved across all tool calls
-      model           (str)        — model used
-      error           (str|None)   — exception message if something failed
+      answer             (str)        — LLM-generated answer
+      sources            (list[dict]) — speaker/meeting-level source entries
+      tool_calls         (list[dict]) — tool call trace [{tool, args}, ...]
+      intent             (str)        — always "production_agent"
+      notice             (str|None)   — advisory notice (None for prod path)
+      num_context_chunks (int)        — docs retrieved across all tool calls
+      model              (str)        — model used
+      error              (str|None)   — exception message if something failed
     """
     t_start = time.time()
 
-    # Clear per-request state before invoking the graph.
-    # reset_corpus_cache() prevents _fetch_project_corpus() from returning
-    # chunks from the previous query when scope or data has changed.
     reset_doc_accumulator()
     reset_corpus_cache()
 
-    graph          = get_graph()
-    print(f"Graph output is: \n\n {graph} \n\n ")
-    initial_state  = {
-        "messages":    [HumanMessage(content=query)],
-        "project_id":  project_id,
-        "scope_where":   None,        # filled by query_scope_node
-        "scope_ids":     None,        # filled by query_scope_node
-        "scope_type":    "project",   # filled by query_scope_node (default = all meetings)
-        "recommended_k": 15,          # filled by query_scope_node; default = single-meeting k
+    logger.info("═══============================= Starting production agent query ═══=============================")
+    logger.info(
+        "══ NEW QUERY ══ | project=%s | session=%s\n          query: %s",
+        project_id, session_id or "stateless", query,
+    )
+
+    # ── [1] Load conversation history ─────────────────────────────────────────
+    # M2/M3: get_chat_store() returns None if DATABASE_URL not set or DB is down.
+    # get_llm_messages() returns [] on any DB failure — query proceeds stateless.
+    store = get_chat_store()
+    history_messages = []
+    if store and session_id:
+        history_messages = store.get_llm_messages(session_id, max_turns)
+        logger.info(
+            "[1] HISTORY  — %d messages (%d prior turns) loaded | session=%s",
+            len(history_messages), len(history_messages) // 2, session_id,
+        )
+    else:
+        logger.info("[1] HISTORY  — stateless (no session / no DB)")
+
+    graph = get_graph()
+    initial_state = {
+        "messages":      history_messages + [HumanMessage(content=query)],
+        "project_id":    project_id,
+        "session_id":    session_id,
+        "scope_where":   None,
+        "scope_ids":     None,
+        "scope_type":    "project",
+        "recommended_k": 15,
     }
 
-    error:  str | None = None
-    answer: str        = ""
-    messages: list     = []
+    # F1 FIX: initialise result before the try block so that if graph.invoke()
+    # raises before assigning result, the save_turn block inside the try is
+    # simply skipped — no NameError, no polluting history with error turns.
+    result:   dict       = {}
+    messages: list       = []
+    answer:   str        = ""
+    error:    str | None = None
 
     try:
         result   = graph.invoke(initial_state)
-        print(f"Graph Initial State is: \n\n {initial_state} \n\n ")
-        print(f"Graph Result is: \n\n {result} \n\n ")
         messages = result.get("messages", [])
-        scope_ids = result.get("scope_ids", [])
-        scope_type = result.get("scope_type", "project")
-        print(f"\n\n Graph Scope Type is: {scope_type} \n\n ")
-        print(f"\n\n Graph Scope IDs is:  {scope_ids} \n\n ")
-        print(f"\n\n Graph Messages is: {messages} \n\n ")
-
-        # The final answer is the content of the last AIMessage.
-        # Gemini 2.5 with extended thinking returns content as a list of blocks;
-        # Gemini 2.0 returns a plain string. Handle both formats.
-        for msg in reversed(messages):
-            if isinstance(msg, AIMessage) and msg.content:
-                raw = msg.content
-                if isinstance(raw, str):
-                    answer = raw
-                elif isinstance(raw, list):
-                    # Extract text blocks from extended-thinking content format
-                    text_parts = [
-                        block["text"]
-                        for block in raw
-                        if isinstance(block, dict) and block.get("type") == "text"
-                    ]
-                    answer = "\n".join(text_parts).strip()
-                if answer:
-                    break
+        answer   = _extract_answer(messages)
 
         if not answer:
             answer = "I could not generate an answer. Please try rephrasing your question."
 
+        logger.info(
+            "    answer ready | %d chars | %d docs retrieved",
+            len(answer), len(get_accumulated_docs()),
+        )
+
+        # Save turn INSIDE try — only persist successful queries.
+        # Failed queries must NOT appear in history (would corrupt future context).
+        # M2: save_turn is a silent no-op on DB failure.
+        if store and session_id and answer:
+            docs_for_save = get_accumulated_docs()
+            sources_for_save = _build_sources(docs_for_save)
+            turn_index = store.get_next_turn_index(session_id)
+            store.save_turn(
+                session_id=session_id,
+                turn_index=turn_index,
+                human=query,
+                ai=answer,
+                sources=sources_for_save,
+                tool_calls=_extract_tool_calls(messages),
+                num_chunks=len(docs_for_save),
+                scope_type=result.get("scope_type", "project"),
+                scope_ids=result.get("scope_ids"),
+                scope_where=result.get("scope_where"),
+            )
+
     except Exception as exc:
-        logger.exception("Production agent error for query=%r project=%s", query, project_id)
+        logger.exception(
+            "Production agent error for query=%r project=%s", query, project_id
+        )
         error  = str(exc)
         answer = f"Something went wrong: {exc}"
+        # save_turn intentionally skipped — don't pollute history with error turns
 
-    # Build sources from accumulated docs
-    docs    = get_accumulated_docs()
-    sources = _build_sources(docs)
-
+    docs       = get_accumulated_docs()
+    sources    = _build_sources(docs)
     elapsed_ms = round((time.time() - t_start) * 1000)
     tool_calls = _extract_tool_calls(messages)
 
     logger.info(
-        "production answer_query | project=%s | tools_called=%d | docs=%d | "
-        "sources=%d | elapsed=%dms",
-        project_id, len(tool_calls), len(docs), len(sources), elapsed_ms,
+        "══ DONE (%dms) ══ | tools=%d | docs=%d | answer=%d chars | project=%s | session=%s",
+        elapsed_ms, len(tool_calls), len(docs), len(answer),
+        project_id, session_id or "stateless",
     )
 
     return {

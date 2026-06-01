@@ -33,6 +33,12 @@ recommended_k — Minimum chunk count the system recommends based on scope size.
                search_transcripts enforces: effective_k = max(k, recommended_k).
                Prevents the LLM from under-fetching on project-wide queries.
                Default 15 (set in service.py initial_state).
+
+session_id   — PostgreSQL session ID linking this graph run to a chat session.
+               Set once at graph entry in service.py from the caller.
+               Read by query_scope_node to load previous scope for inheritance.
+               None when DATABASE_URL is not set or chat history is disabled.
+               NEVER modified after initial_state is created.
 """
 
 from typing import Annotated, List, Optional
@@ -44,6 +50,7 @@ from langchain_core.messages import AnyMessage
 class AgentState(TypedDict):
     messages:      Annotated[list[AnyMessage], add_messages]
     project_id:    str
+    session_id:    Optional[str]         # PostgreSQL session → scope inheritance
     scope_where:   Optional[dict]        # ChromaDB clause → hybrid_retrieve date_where
     scope_ids:     Optional[List[str]]   # flat meeting ID list → summaries filter
     scope_type:    str                   # "project" | "meeting" | "date_range"

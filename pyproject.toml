@@ -19,6 +19,7 @@ dependencies = [
     "requests",
     "streamlit>=1.57.0",
     "uvicorn>=0.46.0",
+    "psycopg2-binary>=2.9.9",
 ]
 
 # onnxruntime is a declared dep of chromadb but is NEVER imported in this app

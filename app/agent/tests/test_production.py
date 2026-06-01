@@ -5,6 +5,14 @@ _ROOT = Path(__file__).resolve().parents[3]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
+# ── Load env vars + wire up pipeline logging before any app imports ───────────
+from dotenv import load_dotenv
+load_dotenv(_ROOT / ".env")
+
+from app.logging_config import setup_pipeline_logging
+setup_pipeline_logging()
+
+# ── App imports (after logging is ready) ─────────────────────────────────────
 from app.agent.service import answer_query
 
 # from app.agent import get_graph
@@ -30,15 +38,27 @@ from app.agent.service import answer_query
 
 
 res_query = answer_query(
-    query="Give the details of change in forecasting formulas for this meeting on 2026-05-05?", project_id="proj_nolocode_001")
+    query="Give the details of change in forecasting formulas for this meeting on 2026-05-05?",
+    project_id="proj_nolocode_001",
+)
 
-print('Query output ------------------')
-print("Query Whole Result:", res_query)
-print('Query output ------------------" )')
-print("Answer:", res_query["answer"])
-print("Sources:")   
+SEP = "=" * 70
+print(f"\n{SEP}")
+print("ANSWER")
+print(SEP)
+print(res_query["answer"])
+
+print(f"\n{SEP}")
+print(f"SOURCES  ({len(res_query['sources'])} chunks)")
+print(SEP)
 for s in res_query["sources"]:
-    print(f"  - {s['speaker_name']} | {s['meeting_title']} ({s['meeting_date']})")
-print("Tool calls:")
+    print(f"  [{s['chunk_num']}] {s['speaker_name']} | {s['meeting_title']} ({s['meeting_date']}) {s.get('timestamp','')}")
+
+print(f"\n{SEP}")
+print(f"TOOL CALLS  ({len(res_query['tool_calls'])})")
+print(SEP)
 for tc in res_query["tool_calls"]:
-    print(f"  - {tc['tool']} with args {tc['args']}")   
+    print(f"  - {tc['tool']} | {tc['args']}")
+
+if res_query.get("error"):
+    print(f"\n[ERROR] {res_query['error']}")   

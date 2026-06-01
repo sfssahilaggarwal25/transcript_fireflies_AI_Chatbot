@@ -7,11 +7,48 @@ flow through parse_meeting_scope() and come out as a single ChromaDB where-claus
 """
 import logging
 import re
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from app.core.storage.db import get_raw_collection
 
 logger = logging.getLogger(__name__)
+
+
+def _normalize_meeting_date(raw) -> str:
+    """
+    Normalize any meeting_date value from ChromaDB to YYYY-MM-DD string.
+
+    ChromaDB stores meeting_date in two formats depending on when the meeting
+    was ingested:
+      - ISO string: "2026-05-05" or "2026-03-19T06:44:26.000Z"   (newer meetings)
+      - Unix ms int: 1775823300000                                 (older meetings)
+      - Unix ms string: "1775823300000"                            (rare variant)
+
+    All three are normalised to "YYYY-MM-DD" so that:
+      1. Sorting is chronologically correct (string comparison works on ISO dates).
+      2. The scope LLM prompt always shows human-readable dates.
+      3. Date arithmetic ("last 7 days") works correctly.
+    """
+    if not raw and raw != 0:
+        return ""
+
+    # ── Already an ISO date string "YYYY-MM-DD" ───────────────────────────────
+    if isinstance(raw, str) and re.match(r"^\d{4}-\d{2}-\d{2}", raw):
+        return raw[:10]   # strip time part if present ("2026-03-19T06:44:26.000Z")
+
+    # ── Unix timestamp (int or large-number string) ───────────────────────────
+    # Heuristic: any value > 1e10 is milliseconds, <= 1e10 is seconds.
+    # Real meeting dates: 2026 ≈ 1.77e12 ms ≈ 1.77e9 s — both > 1e10 when ms.
+    try:
+        ts = int(raw)
+        if ts > 1_000_000_000_000:   # milliseconds → convert to seconds
+            ts = ts // 1000
+        return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d")
+    except (ValueError, TypeError, OSError):
+        pass
+
+    # ── Fallback: return as string (avoids crashing the caller) ──────────────
+    return str(raw)
 
 # ── Month name -> number ───────────────────────────────────────────────────────
 
@@ -95,20 +132,20 @@ def get_project_meetings_sorted(project_id: str) -> list[tuple[str, str]]:
         seen_titles: dict[str, str] = {}
         for m in results.get("metadatas", []):
             mid   = m.get("meeting_id", "")
-            d     = m.get("meeting_date", "")
+            raw_d = m.get("meeting_date", "")
             title = m.get("meeting_title", "")
-            if mid and d and mid not in seen:
-                seen[mid]        = d
+            if mid and raw_d != "" and mid not in seen:
+                seen[mid]        = _normalize_meeting_date(raw_d)   # always YYYY-MM-DD
                 seen_titles[mid] = title
-        sorted_meetings = sorted(seen.items(), key=lambda x: str(x[1]), reverse=True)
-        logger.debug(
-            "  [scope] project meetings (newest->oldest): %s",
-            " | ".join(
-                f"{title!r} ({d}) [{mid[:12]}]"
-                for mid, d in sorted_meetings
-                for title in [seen_titles.get(mid, "?")]
-            ),
-        )
+        # Sort by normalized ISO date string — chronologically correct
+        sorted_meetings = sorted(seen.items(), key=lambda x: x[1], reverse=True)
+
+        lines = ["  [scope] %d meetings found (newest → oldest):" % len(sorted_meetings)]
+        # for i, (mid, d) in enumerate(sorted_meetings, 1):
+        #     title = seen_titles.get(mid, "?")
+        #     lines.append("    #%-2d  %s  %-40s  [%s]" % (i, d, f"'{title}'", mid))
+        # logger.info("\n".join(lines))
+
         return sorted_meetings
     except Exception as e:
         logger.warning("get_project_meetings_sorted failed: %s", e)

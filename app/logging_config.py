@@ -50,50 +50,70 @@ def setup_pipeline_logging() -> None:
     """
     Configure logging for the meeting intelligence pipeline.
 
-    - Console output (works with Streamlit)
-    - File fallback logging
-    - Captures all app.services modules automatically
-    - Suppresses noisy third-party libraries
+    Covers both app.agent (LangGraph agent + chat history + scope resolver)
+    and app.services / app.core (retrieval, chunking, old RAG pipeline).
+
+    Output:
+      - pipeline.log  — always written, survives Streamlit output capture
+      - stderr        — visible in the terminal where `streamlit run` was launched
+
+    How to watch live:
+      tail -f pipeline.log          (Mac/Linux terminal)
     """
 
     fmt = logging.Formatter(
-        "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
+        "%(asctime)s | %(levelname)-7s | %(name)s | %(message)s",
+        datefmt="%H:%M:%S",
     )
 
-    # Prevent duplicate handlers on Streamlit hot reload
-    app_logger = logging.getLogger("app.services")
-    app_logger.handlers.clear()
-
-    # Console handler
-    console_handler = logging.StreamHandler(sys.__stderr__)
-    console_handler.setLevel(logging.DEBUG)
-    console_handler.setFormatter(fmt)
-
-    # File handler
+    # File handler — reliable regardless of Streamlit output redirection
     file_handler = logging.FileHandler(
         "pipeline.log",
         mode="a",
-        encoding="utf-8"
+        encoding="utf-8",
     )
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(fmt)
 
-    # Root application logger
-    app_logger.setLevel(logging.DEBUG)
-    app_logger.addHandler(console_handler)
-    app_logger.addHandler(file_handler)
-    app_logger.propagate = False
+    # Console handler — use sys.__stderr__ (original fd, not Streamlit-patched)
+    console_handler = logging.StreamHandler(sys.__stderr__)
+    console_handler.setLevel(logging.DEBUG)
+    console_handler.setFormatter(fmt)
 
-    # Silence noisy libraries
-    noisy_libs = (
-        "httpx",
-        "httpcore",
-        "google",
-        "langchain",
-        "chromadb",
-        "tenacity",
-        "urllib3",
+    # ── Modules to instrument ─────────────────────────────────────────────────
+    # Each module gets both handlers attached directly (propagate=False prevents
+    # duplicate lines from parent logger catchall).
+    _AGENT_MODULES = (
+        "app.agent.streamlit_app",    # query banner + DONE footer (UI path)
+        "app.agent.chat_store",       # PostgreSQL session/turn CRUD
+        "app.agent.scope_llm",        # Stage 1 LLM + Stage 2 scope_parser
+        "app.agent.query_scope",      # query_scope_node output
+        "app.agent.service",          # history load + final answer save (API path)
+        "app.agent.graph",            # LLM calls + tool_calls count
+        "app.agent.tools",            # individual tool execution
     )
 
-    for lib in noisy_libs:
+    _SERVICE_MODULES = (
+        "app.services.retrieval.retriever",
+        "app.services.retrieval.reranker",
+        "app.core.retrieval.hybrid",
+        "app.core.retrieval.reranker",
+        "app.core.scope",
+        "app.rag.answer.pipeline",
+        "app.rag.answer.builder",
+        "app.rag.answer.metadata",
+        "app.rag.query_intent",
+    )
+
+    for name in _AGENT_MODULES + _SERVICE_MODULES:
+        log = logging.getLogger(name)
+        log.handlers.clear()          # drop stale handlers from hot-reload
+        log.setLevel(logging.DEBUG)
+        log.addHandler(file_handler)
+        log.addHandler(console_handler)
+        log.propagate = False
+
+    # ── Silence noisy third-party libraries ───────────────────────────────────
+    for lib in ("httpx", "httpcore", "google", "langchain", "chromadb",
+                "tenacity", "urllib3", "openai", "anthropic"):
         logging.getLogger(lib).setLevel(logging.WARNING)
