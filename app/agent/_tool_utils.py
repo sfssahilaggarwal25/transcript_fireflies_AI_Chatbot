@@ -403,8 +403,14 @@ def _apply_diversity_cap(docs: list[Document]) -> list[Document]:
             diverse.append(doc)
             seen[mid] = seen.get(mid, 0) + 1
 
-    logger.debug(
-        "diversity_cap | input=%d | output=%d | ceiling=%d | meetings_in_pool=%d",
-        total, len(diverse), cap_ceiling, len(counts),
+    logger.info(
+        "  diversity_cap : input=%d | after_cap=%d | dropped=%d | ceiling=%d | meetings=%d",
+        total, len(diverse), total - len(diverse), cap_ceiling, len(counts),
     )
+    for mid, kept in seen.items():
+        original = counts[mid]
+        logger.info(
+            "    meeting_id=%s | retrieved=%d | kept=%d | dropped=%d",
+            mid, original, kept, original - kept,
+        )
     return diverse

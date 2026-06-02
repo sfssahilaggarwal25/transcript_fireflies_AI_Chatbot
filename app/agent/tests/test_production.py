@@ -38,7 +38,7 @@ from app.agent.service import answer_query
 
 
 res_query = answer_query(
-    query="Give the details of change in forecasting formulas for this meeting on 2026-05-05?",
+    query="Give me the details about AI Architecture",
     project_id="proj_nolocode_001",
 )
 

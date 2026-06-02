@@ -173,21 +173,57 @@ def hybrid_retrieve(
     """
     query      = _validate_query(query)
     project_id = _validate_project_id(project_id)
-
+    
+    logger.debug("HYBRID RETRIEVAL | query=%r | project=%s", query, project_id)
     # Stage 1a: dense — post-filter summaries (DB filter can't exclude absent fields)
     dense_filter = _build_filter(project_id, hard_filters, date_where)
     vectorstore  = get_vectorstore()
     raw_dense    = vectorstore.similarity_search(query=query, k=k, filter=dense_filter)
     dense_docs   = [d for d in raw_dense if not d.metadata.get("is_meeting_summary")]
+    logger.info("  dense      : %d results (summaries dropped)", len(dense_docs))
     logger.debug("  filter     : %s", dense_filter)
     if len(raw_dense) != len(dense_docs):
         logger.info("  dense      : dropped %d summary chunk(s)", len(raw_dense) - len(dense_docs))
+
+    logger.info("=" * 64)
+    logger.info("  DENSE CHUNKS — accuracy check [%d total]", len(dense_docs))
+    # logger.info("=" * 64)
+    # for i, doc in enumerate(dense_docs, 1):
+    #     m   = doc.metadata
+    #     txt = doc.page_content.replace("\n", " ").strip()
+    #     logger.info("  [%d/%d] speaker  : %s", i, len(dense_docs), m.get("speaker_name", "?"))
+    #     logger.info("         meeting  : %s  (%s)", m.get("meeting_title", "?"), m.get("meeting_date", "?"))
+    #     logger.info("         chunk_id : %s", m.get("chunk_id", "?"))
+    #     logger.info(
+    #         "         signals  : decision=%s | commitment=%s | question=%s",
+    #         m.get("contains_decision",   False),
+    #         m.get("contains_commitment", False),
+    #         m.get("contains_question",   False),
+    #     )
+    #     logger.info("         TEXT     : %s", txt[:300])
+    #     logger.info("-" * 64)
     _log_chunk_list("STAGE 1a — DENSE", dense_docs)
 
     # Stage 1b: BM25 (corpus already excludes summaries via _fetch_project_corpus)
     corpus    = _fetch_project_corpus(project_id, hard_filters, date_where)
     bm25_docs = _bm25_search(query, corpus, k=k)
     logger.info("  corpus size: %d transcript docs (summaries excluded)", len(corpus))
+    # logger.info("  BM25 CHUNKS — accuracy check [%d total]", len(bm25_docs))
+    # logger.info("=" * 64)
+    # for i, doc in enumerate(bm25_docs, 1):
+    #     m   = doc.metadata
+    #     txt = doc.page_content.replace("\n", " ").strip()
+    #     logger.info("  [%d/%d] speaker  : %s", i, len(bm25_docs), m.get("speaker_name", "?"))
+    #     logger.info("         meeting  : %s  (%s)", m.get("meeting_title", "?"), m.get("meeting_date", "?"))
+    #     logger.info("         chunk_id : %s", m.get("chunk_id", "?"))
+    #     logger.info(
+    #         "         signals  : decision=%s | commitment=%s | question=%s",
+    #         m.get("contains_decision",   False),
+    #         m.get("contains_commitment", False),
+    #         m.get("contains_question",   False),
+    #     )
+    #     logger.info("         TEXT     : %s", txt[:300])
+    #     logger.info("-" * 64)
     _log_chunk_list("STAGE 1b — BM25", bm25_docs)
 
     # Stage 2: RRF merge
