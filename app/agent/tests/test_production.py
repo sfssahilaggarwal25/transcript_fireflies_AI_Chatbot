@@ -38,7 +38,9 @@ from app.agent.service import answer_query
 
 
 res_query = answer_query(
-    query="Give me the details about AI Architecture",
+    # query="Give me the details about AI Architecture",
+    # query="What was discussed about the multi-agent system?",
+    query="What was the impact on architecture after Redis implementation?",
     project_id="proj_nolocode_001",
 )
 

@@ -20,6 +20,7 @@ import logging
 from typing import Annotated, Optional
 
 from langchain_core.documents import Document
+from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
@@ -33,8 +34,8 @@ from ._tool_utils import (
     _SOFT_SIGNAL_PREFIX,
     _ROLE_LABEL,
     _EXPAND_TOP_N,
-    _RERANK_TOP_N,
-    _OVERVIEW_SIGNALS,
+    RETRIEVAL_PRESETS,
+    select_preset,
     _append_docs,
     _fmt_ts,
     fmt_date,
@@ -81,9 +82,8 @@ def search_transcripts(
         better than 'what was decided'. Good queries include topic keywords, names,
         or technical terms likely to appear in the transcript.
     k : int, optional
-        Number of chunks to retrieve (default 15, max 25). The system automatically
-        adjusts k based on query scope — only override when you need more than default:
-        set k=25 for "give me ALL", set k=10 for "find any single example".
+        Ignored — k is controlled automatically by the retrieval preset system.
+        focused preset (single meeting) = 20, standard (default) = 40, broad (overview) = 55.
     speaker_name : str, optional
         Filter results to a specific speaker's contributions only. Use the full name
         as it appears in meeting records (e.g. 'Harsh Vardhan', 'Bhavneet Mahajan').
@@ -100,10 +100,9 @@ def search_transcripts(
             "signal_filter alone is not enough — query is always required."
         )
 
-    project_id    = state["project_id"]
-    scope_where   = state.get("scope_where")
-    scope_ids     = state.get("scope_ids")
-    recommended_k = state.get("recommended_k", 15)
+    project_id  = state["project_id"]
+    scope_where = state.get("scope_where")
+    scope_ids   = state.get("scope_ids")
 
     resolved_speaker = None
     if speaker_name:
@@ -122,9 +121,18 @@ def search_transcripts(
             speaker_name=resolved_speaker,
         )
 
-    effective_k     = min(max(int(k), recommended_k), 25)
     filters: dict   = {}
     effective_query = query
+
+    # Extract original user query early — used for both preset selection and reranking.
+    # The LLM often strips intent words ("details", "all", "explain") when forming
+    # the tool query. Using the original preserves those signals so the preset system
+    # can correctly detect broad/overview intent.
+    messages = state.get("messages", []) if state else []
+    original_user_query = next(
+        (m.content for m in reversed(messages) if isinstance(m, HumanMessage)),
+        effective_query,  # fallback if no HumanMessage found
+    )
 
     if resolved_speaker:
         filters["speaker_name"] = resolved_speaker
@@ -138,14 +146,19 @@ def search_transcripts(
                 effective_query = f"{prefix} {query}"
                 logger.info("search_transcripts | soft signal=%s → query rewritten: %r", signal_filter, effective_query)
 
-    # k-boost for broad synthesis queries on project-wide scope.
-    # Overview words ("overview", "all", "across", ...) signal that the user
-    # wants cross-meeting coverage — double k so dedicated meetings contribute
-    # enough candidates before the diversity cap trims to proportional slots.
-    # Single-meeting queries (scope_ids set) skip this — k=15 is sufficient there.
-    if not scope_ids and any(w in effective_query.lower() for w in _OVERVIEW_SIGNALS):
-        effective_k = min(effective_k * 2, 40)
-        logger.info("search_transcripts | overview query → k boosted to %d", effective_k)
+    # Preset selection uses original_user_query so intent words stripped by the LLM
+    # ("details", "explain", "all", "summarize") still trigger the broad preset.
+    # Example: user says "give me the details about AI Architecture"
+    #          LLM sends query="AI Architecture" — "detail" lost, standard preset fires
+    #          With original query — "detail" detected, broad preset fires (k=55)
+    preset_name  = select_preset(scope_ids, original_user_query)
+    preset       = RETRIEVAL_PRESETS[preset_name]
+    effective_k  = preset["k"]
+    rerank_top_n = preset["rerank_top_n"]
+    logger.info(
+        "search_transcripts | preset=%s | k=%d | rerank_top_n=%d | trigger=%r",
+        preset_name, effective_k, rerank_top_n, original_user_query[:60],
+    )
 
     try:
         docs = hybrid_retrieve(
@@ -173,7 +186,7 @@ def search_transcripts(
             return "No relevant transcript chunks found for this query."
 
     # Rerank: score all hybrid results by true relevance to the query, then
-    # trim to the best _RERANK_TOP_N before passing anything to the LLM.
+    # trim to preset rerank_top_n before passing anything to the LLM.
     #
     # Why here and not inside hybrid_retrieve:
     #   Reranking needs the full query intent — hybrid_retrieve only knows keywords.
@@ -186,12 +199,22 @@ def search_transcripts(
     #   not relevance top-5). Rerank first → expand the right anchors.
     #
     # The exhaustive signal path already returned above — no skip needed here.
+    #
+    # Query decoupling: retrieval uses effective_query (LLM-simplified keywords,
+    # better for vector/BM25 matching). Reranker uses original_user_query
+    # (full natural language, preserves intent for the LLM scorer).
+    if original_user_query != effective_query:
+        logger.info(
+            "search_transcripts | rerank query decoupled | retrieval=%r | rerank=%r",
+            effective_query, original_user_query,
+        )
+
     docs = rerank_documents(
-        query=effective_query,
+        query=original_user_query,  # full user intent → reranker understands scope
         documents=docs,
-        topic_hint=effective_query,
+        topic_hint=effective_query, # clean keyword topic → modifier-aware rule fires correctly
         speaker_hint=resolved_speaker or "",
-        top_n=_RERANK_TOP_N,
+        top_n=rerank_top_n,
     )
 
     # Expand context: inject prev/next neighbors for top-5 ranked chunks
@@ -210,6 +233,9 @@ def search_transcripts(
         ts       = _fmt_ts(meta.get("start_time"))
 
         date_str = fmt_date(date)
+        relevance     = meta.get("_relevance", "high")
+        relevance_tag = " [LOW RELEVANCE — treat as background context only]" if relevance == "low" else ""
+
         if position == "before":
             lines.append(f"[CONTEXT ↑ before] {speaker} {ts} — {meeting} ({date_str})")
             lines.append(f"    {doc.page_content.strip()[:300]}")
@@ -217,7 +243,7 @@ def search_transcripts(
             lines.append(f"[CONTEXT ↓ after] {speaker} {ts} — {meeting} ({date_str})")
             lines.append(f"    {doc.page_content.strip()[:300]}")
         else:
-            lines.append(f"[{next(num_iter)}] {speaker} {ts} — {meeting} ({date_str})")
+            lines.append(f"[{next(num_iter)}] {speaker} {ts} — {meeting} ({date_str}){relevance_tag}")
             lines.append(f"    {doc.page_content.strip()[:400]}")
         lines.append("")
 

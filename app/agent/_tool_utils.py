@@ -91,10 +91,48 @@ _ROLE_LABEL = {
 # At most 2 * _EXPAND_TOP_N ChromaDB ID-lookups per search_transcripts call.
 _EXPAND_TOP_N = 5
 
-# After reranking, keep only the best N chunks before passing to the LLM.
-# Matches the old RAG pipeline's post-rerank trim (10 was validated there).
-# Lower = higher precision; higher = more recall. 10 is the production-tested value.
-_RERANK_TOP_N = 10
+# ── 3-tier retrieval preset system ───────────────────────────────────────────
+# k            : chunks fetched by hybrid_retrieve (ChromaDB + BM25 pool size)
+# rerank_top_n : how many top chunks reranker keeps before passing to LLM
+#
+# focused  — single-meeting scope: small corpus, precision beats recall
+#            k=20 → diversity cap passes ~10 → reranker keeps best 8
+# standard — project-wide topic/detail queries (~80% of all real queries)
+#            k=40 → diversity cap passes ~20 → reranker keeps best 10
+# broad    — overview/synthesis spanning all meetings, maximize recall
+#            k=55 → diversity cap passes ~25 → reranker keeps best 12
+#
+# Preset is chosen once per tool call by select_preset() — never by formula.
+# This keeps cost, latency, and test assertions predictable.
+
+RETRIEVAL_PRESETS: dict[str, dict] = {
+    "focused":  {"k": 20, "rerank_top_n": 8},
+    "standard": {"k": 40, "rerank_top_n": 10},
+    "broad":    {"k": 55, "rerank_top_n": 12},
+}
+
+# Words that signal a broad cross-meeting synthesis query → broad preset
+_OVERVIEW_SIGNALS = frozenset({
+    "overview", "all", "across", "throughout",
+    "explain", "describe", "complete", "full", "entire",
+    "summarize", "summary", "detail", "everything",
+})
+
+
+def select_preset(scope_ids: Optional[list], query: str) -> str:
+    """
+    Map scope + query signals to a retrieval preset name.
+
+    focused  — scope_ids is set (specific meeting or explicit meeting list)
+    broad    — project-wide query + overview/synthesis keywords detected
+    standard — everything else; the safe default covering ~80% of queries
+    """
+    if scope_ids:
+        return "focused"
+    if any(w in query.lower() for w in _OVERVIEW_SIGNALS):
+        return "broad"
+    return "standard"
+
 
 # ── Diversity cap constants ───────────────────────────────────────────────────
 # Applied after hybrid_retrieve, before reranking. Project-wide queries only —
@@ -105,7 +143,7 @@ _RERANK_TOP_N = 10
 #   Each meeting contributes at most round(count × rate) chunks, floored at 3.
 # _DIVERSITY_MAX_MEETING_FRACTION: the ceiling = round(total × fraction).
 #   No single meeting exceeds this share of the reranker pool.
-#   Scales with k automatically — at k=25: ceiling=6, at k=40: ceiling=10.
+#   Scales with k automatically — at k=40: ceiling=10, at k=55: ceiling=13.
 #
 # Two dominant meetings: both hit their proportional cap independently.
 # One chunk meetings: cap=floor=3, but only 1 doc exists → 1 passes (floor ≠ target).
@@ -113,14 +151,6 @@ _RERANK_TOP_N = 10
 _DIVERSITY_CAP_FLOOR            = 3
 _DIVERSITY_PASS_RATE            = 0.5   # each meeting passes half its retrieved docs
 _DIVERSITY_MAX_MEETING_FRACTION = 0.25  # no meeting exceeds 25% of the reranker pool
-
-# Query words that signal a broad synthesis request across meetings.
-# search_transcripts doubles effective_k when detected (project-wide only).
-_OVERVIEW_SIGNALS = frozenset({
-    "overview", "all", "across", "throughout",
-    "explain", "describe", "complete", "full", "entire",
-    "summarize", "summary", "detail", "everything",
-})
 
 
 # ── Doc accumulator ───────────────────────────────────────────────────────────
