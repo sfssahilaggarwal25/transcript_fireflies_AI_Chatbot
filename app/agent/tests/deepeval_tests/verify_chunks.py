@@ -171,7 +171,7 @@ def cmd_signal(args):
             flag = "  ⚠️  NO SIGNAL KEYWORD — possible false positive"
 
         print(f"  [{i:03d}] {speaker} ({ts})  —  {meeting} ({date}){flag}")
-        print(f"         \"{text}{'…' if len(doc.strip()) > 200 else ''}\"")
+        print(f"         \"{text}\"")
         print()
 
     print(f"{'─'*65}")
@@ -299,7 +299,7 @@ def cmd_speaker(args):
         signals = [s for s, f in _SIGNAL_MAP.items() if meta.get(f)]
         sig_str = f"  [{', '.join(signals)}]" if signals else ""
         print(f"  [{i:03d}] ({ts})  —  {meeting} ({date}){sig_str}")
-        print(f"         \"{doc.strip()[:200]}{'…' if len(doc.strip()) > 200 else ''}\"")
+        print(f"         \"{doc.strip()}\"")
         print()
 
     print(f"{'─'*65}")
@@ -309,7 +309,7 @@ def cmd_speaker(args):
     print(f"  Use the EXACT stored name: \"{exact_name}\"")
     print(f"  → Sentence: \"The name {exact_name} appears in the answer.\"")
     if metas:
-        dates_seen = sorted(set(m.get("meeting_date","") for m in metas))
+        dates_seen = sorted(set(str(m.get("meeting_date", "")) for m in metas))
         print(f"  → Meetings where they appear: {dates_seen}")
     print(f"{'═'*65}\n")
 
@@ -343,7 +343,7 @@ def cmd_keyword(args):
         if not m.get("is_meeting_summary")
         and all(kw in d.lower() for kw in keywords_lower)
     ]
-    matched.sort(key=lambda p: (p[0].get("meeting_date",""), p[0].get("start_time", 0)))
+    matched.sort(key=lambda p: (str(p[0].get("meeting_date", "")), p[0].get("start_time", 0) or 0))
 
     kw_label = " AND ".join(f'"{kw}"' for kw in args.keyword)
     print(f"\n{'═'*65}")
@@ -380,11 +380,165 @@ def cmd_keyword(args):
             signals = [s for s, f in _SIGNAL_MAP.items() if meta.get(f)]
             sig_str = f"  [{', '.join(signals)}]" if signals else ""
             print(f"  [{i:03d}] {speaker} ({ts})  —  {meeting} ({date}){sig_str}")
-            print(f"         \"{doc.strip()[:200]}{'…' if len(doc.strip()) > 200 else ''}\"")
+            print(f"         \"{doc.strip()}\"")
             print()
 
     print(f"{'─'*65}")
     print(f"  TOTAL: {len(matched)} chunks contain {kw_label}")
+    print(f"{'═'*65}\n")
+
+
+# ── Command: context ──────────────────────────────────────────────────────────
+
+def cmd_context(args):
+    """
+    Show all chunks from a meeting within a time window around a given timestamp.
+
+    Use this to understand the conversation context around a specific chunk —
+    e.g. to verify whether a retrieved chunk is actually about the right topic,
+    or to see what was said just before/after a decision was made.
+
+    Usage:
+        python -m app.agent.tests.deepeval_tests.verify_chunks context \\
+            --meeting-date 2026-04-20 --timestamp 07:37 --window 120
+    """
+    meeting_date = args.meeting_date
+    window_sec   = args.window
+
+    # Parse --timestamp: accepts "MM:SS", "HH:MM:SS", or raw seconds
+    ts_raw = args.timestamp
+    try:
+        parts = ts_raw.split(":")
+        if len(parts) == 2:
+            center_sec = int(parts[0]) * 60 + int(parts[1])
+        elif len(parts) == 3:
+            center_sec = int(parts[0]) * 3600 + int(parts[1]) * 60 + int(parts[2])
+        else:
+            center_sec = int(ts_raw)
+    except ValueError:
+        print(f"[ERROR] Cannot parse --timestamp '{ts_raw}'. Use MM:SS, HH:MM:SS, or seconds.")
+        return
+
+    low  = center_sec - window_sec
+    high = center_sec + window_sec
+
+    col = get_raw_collection()
+    results = col.get(
+        where={"$and": [
+            {"project_id":         {"$eq": args.project_id}},
+            {"meeting_date":       {"$eq": meeting_date}},
+            {"is_meeting_summary": {"$ne": True}},
+        ]},
+        include=["metadatas", "documents"],
+    )
+
+    metas = results.get("metadatas", [])
+    docs  = results.get("documents", [])
+
+    if not metas:
+        print(f"\n[ERROR] No chunks found for meeting_date='{meeting_date}'.")
+        print("  Run 'meetings' command to see exact dates.")
+        return
+
+    pairs = [
+        (m, d) for m, d in zip(metas, docs)
+        if low <= (m.get("start_time") or 0) <= high
+    ]
+    pairs.sort(key=lambda p: p[0].get("start_time") or 0)
+
+    print(f"\n{'═'*65}")
+    print(f"  CONTEXT — {meeting_date} | around {ts_raw} | ±{window_sec}s window")
+    print(f"  Chunks in window [{_fmt_ts(low)} → {_fmt_ts(high)}]: {len(pairs)}")
+    print(f"{'═'*65}\n")
+
+    if not pairs:
+        print(f"  ✗ No chunks found in this time window.")
+        print(f"  → Try --window {window_sec * 2} to widen the search.")
+        print()
+        return
+
+    for meta, doc in pairs:
+        ts      = _fmt_ts(meta.get("start_time"))
+        speaker = meta.get("speaker_name", "Unknown")
+        signals = [s for s, f in _SIGNAL_MAP.items() if meta.get(f)]
+        sig_str = f"  [{', '.join(signals)}]" if signals else ""
+        marker  = "  ◀ TARGET" if abs((meta.get("start_time") or 0) - center_sec) <= 5 else ""
+
+        print(f"  ({ts}) {speaker}{sig_str}{marker}")
+        print(f"    \"{doc.strip()[:300]}{'…' if len(doc.strip()) > 300 else ''}\"")
+        print()
+
+    print(f"{'─'*65}")
+    print(f"  TIP: Widen window with --window {window_sec * 2} to see more context.")
+    print(f"{'═'*65}\n")
+
+
+# ── Command: meeting ──────────────────────────────────────────────────────────
+
+def cmd_meeting(args):
+    """
+    Show every chunk from a specific meeting, sorted chronologically.
+
+    Usage:
+        python -m app.agent.tests.deepeval_tests.verify_chunks meeting \\
+            --meeting-date 2026-04-20
+
+        # Filter to one speaker within the meeting
+        python -m app.agent.tests.deepeval_tests.verify_chunks meeting \\
+            --meeting-date 2026-04-20 --speaker "Karan Middha"
+    """
+    meeting_date = args.meeting_date
+
+    col = get_raw_collection()
+    results = col.get(
+        where={"$and": [
+            {"project_id":         {"$eq": args.project_id}},
+            {"meeting_date":       {"$eq": meeting_date}},
+            {"is_meeting_summary": {"$ne": True}},
+        ]},
+        include=["metadatas", "documents"],
+    )
+
+    metas = results.get("metadatas", [])
+    docs  = results.get("documents", [])
+
+    if not metas:
+        print(f"\n[ERROR] No chunks found for meeting_date='{meeting_date}'.")
+        print("  Run 'meetings' command to see all available dates.")
+        return
+
+    pairs = list(zip(metas, docs))
+
+    # Optional speaker filter
+    if args.speaker:
+        name_lower = args.speaker.lower()
+        pairs = [(m, d) for m, d in pairs if name_lower in m.get("speaker_name", "").lower()]
+        if not pairs:
+            print(f"\n[ERROR] No chunks from speaker '{args.speaker}' in meeting {meeting_date}.")
+            return
+
+    pairs.sort(key=lambda p: p[0].get("start_time") or 0)
+
+    meeting_title = pairs[0][0].get("meeting_title", "Unknown") if pairs else "Unknown"
+    speaker_label = f" | speaker: {args.speaker}" if args.speaker else ""
+
+    print(f"\n{'═'*65}")
+    print(f"  ALL CHUNKS — {meeting_title} ({meeting_date}){speaker_label}")
+    print(f"  Total chunks: {len(pairs)}")
+    print(f"{'═'*65}\n")
+
+    for i, (meta, doc) in enumerate(pairs, 1):
+        ts      = _fmt_ts(meta.get("start_time"))
+        speaker = meta.get("speaker_name", "Unknown")
+        signals = [s for s, f in _SIGNAL_MAP.items() if meta.get(f)]
+        sig_str = f"  [{', '.join(signals)}]" if signals else ""
+
+        print(f"  [{i:03d}] ({ts}) {speaker}{sig_str}")
+        print(f"         \"{doc.strip()[:300]}{'…' if len(doc.strip()) > 300 else ''}\"")
+        print()
+
+    print(f"{'─'*65}")
+    print(f"  TOTAL: {len(pairs)} chunks | {meeting_title} ({meeting_date}){speaker_label}")
     print(f"{'═'*65}\n")
 
 
@@ -432,7 +586,7 @@ def cmd_meetings(args):
             if m.get(field):
                 meetings[mid][sig] += 1
 
-    ordered = sorted(meetings.values(), key=lambda x: x["date"])
+    ordered = sorted(meetings.values(), key=lambda x: str(x["date"]))
 
     print(f"\n{'═'*75}")
     print(f"  GROUND TRUTH — All Meetings in project '{args.project_id}'")
@@ -494,7 +648,7 @@ def cmd_speakers(args):
     print(f"{'═'*65}\n")
 
     for name, info in sorted(speakers.items(), key=lambda x: x[1]["count"], reverse=True):
-        mtg_list = sorted(info["meetings"])
+        mtg_list = sorted(info["meetings"], key=str)
         print(f"  \"{name}\"  [{info['role']}]  —  {info['count']} chunks  |  meetings: {mtg_list}")
 
     print(f"\n  Total speakers: {len(speakers)}")
@@ -515,21 +669,28 @@ def main():
     parser.add_argument("--project-id", default=_PROJECT_ID)
     sub = parser.add_subparsers(dest="command", required=True)
 
+    def _add_output(p):
+        p.add_argument("--output", "-o", metavar="FILE",
+                       help="Save output to a file (e.g. --output results.txt)")
+
     # signal
     p_signal = sub.add_parser("signal", help="Show all chunks with a given signal flag")
     p_signal.add_argument("--signal", required=True, choices=list(_SIGNAL_MAP.keys()))
     p_signal.add_argument("--meeting-date", help="e.g. 2026-05-07")
     p_signal.add_argument("--agent-count", type=int, help="How many chunks your agent retrieved")
+    _add_output(p_signal)
 
     # speaker
     p_speaker = sub.add_parser("speaker", help="Show all chunks from a speaker")
     p_speaker.add_argument("--name", required=True, help="Partial or full speaker name")
     p_speaker.add_argument("--meeting-date")
+    _add_output(p_speaker)
 
     # keyword
     p_kw = sub.add_parser("keyword", help="Find chunks containing keywords (raw text scan)")
     p_kw.add_argument("--keyword", action="append", required=True,
                       help="Keyword to search for (repeat for multiple, all must match)")
+    _add_output(p_kw)
 
     # compare
     p_cmp = sub.add_parser("compare", help="Compare agent retrieval vs ChromaDB ground truth")
@@ -537,13 +698,30 @@ def main():
     p_cmp.add_argument("--meeting-date")
     p_cmp.add_argument("--agent-count", type=int, required=True,
                        help="How many chunks the agent retrieved for this query")
+    _add_output(p_cmp)
+
+    # context
+    p_ctx = sub.add_parser("context", help="Show all chunks around a timestamp in a meeting")
+    p_ctx.add_argument("--meeting-date", required=True, help="e.g. 2026-04-20")
+    p_ctx.add_argument("--timestamp",    required=True, help="Center timestamp: MM:SS or HH:MM:SS")
+    p_ctx.add_argument("--window",       type=int, default=120,
+                       help="Seconds before/after timestamp to include (default: 120)")
+    _add_output(p_ctx)
+
+    # meeting (all chunks from one meeting)
+    p_one = sub.add_parser("meeting", help="Show all chunks from a specific meeting")
+    p_one.add_argument("--meeting-date", required=True, help="e.g. 2026-04-20")
+    p_one.add_argument("--speaker", help="Optional: filter to one speaker (partial name ok)")
+    _add_output(p_one)
 
     # meetings
-    sub.add_parser("meetings", help="List all meetings with chunk and signal counts")
+    p_mtg = sub.add_parser("meetings", help="List all meetings with chunk and signal counts")
+    _add_output(p_mtg)
 
     # speakers
     p_spk = sub.add_parser("speakers", help="List all speakers with exact stored names")
     p_spk.add_argument("--meeting-date")
+    _add_output(p_spk)
 
     args = parser.parse_args()
 
@@ -551,11 +729,22 @@ def main():
         "signal":   cmd_signal,
         "speaker":  cmd_speaker,
         "keyword":  cmd_keyword,
+        "context":  cmd_context,
+        "meeting":  cmd_meeting,
         "compare":  cmd_compare,
         "meetings": cmd_meetings,
         "speakers": cmd_speakers,
     }
-    dispatch[args.command](args)
+
+    output_file = getattr(args, "output", None)
+    if output_file:
+        with open(output_file, "w", encoding="utf-8") as f:
+            sys.stdout = f
+            dispatch[args.command](args)
+        sys.stdout = sys.__stdout__
+        print(f"✓ Output saved to: {output_file}")
+    else:
+        dispatch[args.command](args)
 
 
 if __name__ == "__main__":

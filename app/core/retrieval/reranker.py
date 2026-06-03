@@ -4,6 +4,7 @@ import unicodedata
 from typing import Optional
 
 from google import genai
+from google.genai import types as genai_types
 from langchain_core.documents import Document
 
 from app.config import Config
@@ -17,7 +18,6 @@ _MAX_PREVIEW_CHARS = 450  # 300 was too short — key statements mid-chunk were 
 def rerank_documents(
     query: str,
     documents: list[Document],
-    intent_hint: str = "",
     topic_hint: str = "",
     speaker_hint: str = "",
     top_n: Optional[int] = None,
@@ -105,7 +105,11 @@ def rerank_documents(
             raise RuntimeError("GEMINI_API_KEY not set")
 
         client = genai.Client(api_key=Config.GEMINI_API_KEY)
-        response = client.models.generate_content(model=_RERANK_MODEL, contents=prompt)
+        response = client.models.generate_content(
+            model=_RERANK_MODEL,
+            contents=prompt,
+            config=genai_types.GenerateContentConfig(temperature=0.0),
+        )
         raw = response.text.strip()
 
         # Strip markdown code fence if Gemini wraps the JSON
@@ -163,6 +167,16 @@ def rerank_documents(
             len(hard_drop), len(soft_pass), len(direct_pass),
         )
 
+        for rank, (orig_idx, doc, score) in enumerate(direct_pass, 1):
+            m = doc.metadata
+            logger.info(
+                "  direct_pass[%d]: score=%.1f | orig_pos=%d | speaker=%s | meeting=%s | \"%s\"",
+                rank, score, orig_idx + 1,
+                m.get("speaker_name", "?"),
+                m.get("meeting_title", "?")[:40],
+                doc.page_content.replace("\n", " "),
+            )
+
         for rank, (orig_idx, doc, score) in enumerate(indexed, 1):
             m      = doc.metadata
             tier   = "DROP" if score <= 2 else ("LOW" if score <= 6 else "HIGH")
@@ -175,7 +189,8 @@ def rerank_documents(
             )
 
         # direct_pass first (score 7-10), then soft_pass (score 3-6), hard_drop excluded
-        passing  = direct_pass + soft_pass
+        # We are applying the limit of 2 for the direct_pass tier to ensure we only feed the most relevant chunks to the LLM when top_n is set. If there are fewer than 2 direct_pass chunks, we fill the remaining slots with soft_pass chunks, which are still relevant but less directly on point. This way, we maintain a high relevance threshold while also providing enough context for the LLM to work with.
+        passing = direct_pass if len(direct_pass) >= 2 else direct_pass + soft_pass
         reranked = [doc for _, doc, _ in passing]
         return reranked[:top_n] if top_n else reranked
 

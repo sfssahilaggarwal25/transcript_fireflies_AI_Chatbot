@@ -227,5 +227,5 @@ def get_graph():
     builder.add_edge("tools", "agent")
 
     graph = builder.compile()
-    logger.info("Production graph compiled | model=%s | tools=%d", _AGENT_MODEL, len(TOOLS))
+    logger.info("[GRAPH COMPILATION] Production graph compiled | model=%s | tools=%d", _AGENT_MODEL, len(TOOLS))
     return graph

@@ -203,6 +203,7 @@ def answer_query(
 
     try:
         result   = graph.invoke(initial_state)
+        logger.info("[2] GRAPH    — invocation complete | session=%s", session_id or "stateless")
         messages = result.get("messages", [])
         answer   = _extract_answer(messages)
 

@@ -60,7 +60,7 @@ def query_scope_node(state: AgentState) -> dict:
             "recommended_k": 25,
         }
 
-    logger.info("[2] SCOPE    — resolving: %r", query[:100])
+    logger.info("[2] GRAPH 1st Node query_scope_node — query: %r", query[:100])
 
     project_id = state["project_id"]
     session_id = state.get("session_id")   # None when DATABASE_URL not set
@@ -75,7 +75,7 @@ def query_scope_node(state: AgentState) -> dict:
 
     # D. Log and return
     logger.info(
-        "[2] SCOPE    — resolved | type=%-12s  ids=%-30s  k=%d",
+        "[2] SCOPE Resolved | type=%-12s  ids=%-30s  k=%d",
         result["scope_type"],
         str(result["scope_ids"]),
         result["recommended_k"],

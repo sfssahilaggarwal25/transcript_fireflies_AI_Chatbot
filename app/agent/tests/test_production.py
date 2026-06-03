@@ -40,7 +40,9 @@ from app.agent.service import answer_query
 res_query = answer_query(
     # query="Give me the details about AI Architecture",
     # query="What was discussed about the multi-agent system?",
-    query="What was the impact on architecture after Redis implementation?",
+    # query="What was the impact on architecture after Redis implementation?",
+    # query="Which AI approach we are decided to go with?",
+    query="What did the team decide about quantum computing implementation in the project?",
     project_id="proj_nolocode_001",
 )
 

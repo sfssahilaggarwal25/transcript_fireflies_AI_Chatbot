@@ -178,9 +178,13 @@ def search_transcripts(
     # Diversity cap: prevent one meeting from filling all reranker slots.
     # Each meeting passes proportionally to how much of the pool it contributes,
     # with a floor of 3 and a ceiling that scales with total retrieved (k).
-    # Bypassed for single-meeting scope (scope_ids set) — all chunks come from
-    # one meeting by design, capping would cut relevant content.
-    if not scope_ids:
+    # Bypassed when:
+    #   - scope_ids set: single-meeting query, all chunks from one meeting by design
+    #   - resolved_speaker set: speaker filter already constrains the pool to one
+    #     person's contributions — capping per-meeting would cut deep recall for
+    #     speaker deep-dive queries (e.g. speaker has 80+ chunks in one meeting)
+    if not scope_ids and not resolved_speaker:
+        logger.info("search_transcripts | applying diversity cap for project wide query")
         docs = _apply_diversity_cap(docs)
         if not docs:
             return "No relevant transcript chunks found for this query."
