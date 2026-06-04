@@ -89,40 +89,68 @@ def _bm25_search(query: str, corpus: list[Document], k: int) -> list[Document]:
 
 
 def _rrf_merge(
-    dense_docs: list[Document],
-    bm25_docs:  list[Document],
-    rrf_k: int = 60,
+    dense_docs:   list[Document],
+    bm25_docs:    list[Document],
+    rrf_k:        int   = 30,   # 60→30: k=30 ensures BM25 35% weight remains visible
+                                # even at lower ranks. k=60+35% compressed BM25 too
+                                # much — exact name matches lost rank → retrieval failed.
+                                # k=30 is the original RRF paper value, k=60 was a
+                                # conservative default for noisy web search — not right
+                                # for meeting transcript semantic retrieval.
+    dense_weight: float = 0.65, # dense dominates: meeting speech is informal, semantic
+                                # search finds "I think that makes sense" as a decision;
+                                # BM25 cannot match what has no keyword overlap.
+    bm25_weight:  float = 0.35, # BM25 still contributes for exact names ("Harsh Vardhan"),
+                                # technical terms ("hybrid search", "Module 4"), and any
+                                # chunk where the user's keyword literally appears.
 ) -> tuple[list[Document], dict]:
     """
-    Reciprocal Rank Fusion: score = Σ 1/(rrf_k + rank).
-    rrf_k=60 is the standard constant.
-    Chunks appearing in both lists get double boost.
+    Weighted Reciprocal Rank Fusion: score = Σ weight / (rrf_k + rank).
+
+    Dense and BM25 contribute with different weights because meeting transcripts
+    are informal speech — semantic search (dense) is more reliable than keyword
+    matching (BM25) for this data. A chunk in BOTH lists gets both contributions
+    (0.65 + 0.35 = 1.0), which is the strongest possible signal.
+
     Returns (merged_by_score_desc, overlap_stats).
     """
-    scores:   dict[str, float]    = {}
-    doc_map:  dict[str, Document] = {}
-    dense_ids: set[str] = set()
-    bm25_ids:  set[str] = set()
+    scores:      dict[str, float]    = {}
+    doc_map:     dict[str, Document] = {}
+    dense_rank:  dict[str, int]      = {}   # for tie-breaking: prefer lower dense rank
+    dense_ids:   set[str] = set()
+    bm25_ids:    set[str] = set()
 
     for rank, doc in enumerate(dense_docs):
         cid = doc.metadata.get("chunk_id", str(id(doc)))
-        scores[cid]  = scores.get(cid, 0.0) + 1.0 / (rrf_k + rank + 1)
-        doc_map[cid] = doc
+        scores[cid]     = scores.get(cid, 0.0) + dense_weight / (rrf_k + rank + 1)
+        doc_map[cid]    = doc
+        dense_rank[cid] = rank   # store dense rank for tie-breaking
         dense_ids.add(cid)
 
     for rank, doc in enumerate(bm25_docs):
         cid = doc.metadata.get("chunk_id", str(id(doc)))
-        scores[cid]  = scores.get(cid, 0.0) + 1.0 / (rrf_k + rank + 1)
+        scores[cid]  = scores.get(cid, 0.0) + bm25_weight / (rrf_k + rank + 1)
         doc_map[cid] = doc
         bm25_ids.add(cid)
 
     overlap = dense_ids & bm25_ids
     stats   = {
-        "dense_only": len(dense_ids - overlap),
-        "bm25_only":  len(bm25_ids  - overlap),
-        "overlap":    len(overlap),
+        "dense_only":   len(dense_ids - overlap),
+        "bm25_only":    len(bm25_ids  - overlap),
+        "overlap":      len(overlap),
+        "dense_weight": dense_weight,
+        "bm25_weight":  bm25_weight,
+        "rrf_k":        rrf_k,
     }
-    sorted_ids = sorted(scores, key=lambda x: scores[x], reverse=True)
+
+    # Tie-breaking: equal RRF scores → prefer dense-retrieved chunks (lower dense rank
+    # wins). BM25-only chunks (not in dense list) get rank=infinity → sorted last.
+    # This is intentional: dense = semantic understanding, BM25 = keyword match.
+    # When equally scored, semantic match is the more reliable signal.
+    sorted_ids = sorted(
+        scores,
+        key=lambda cid: (-scores[cid], dense_rank.get(cid, float("inf"))),
+    )
     return [doc_map[i] for i in sorted_ids], stats
 
 
@@ -162,6 +190,7 @@ def hybrid_retrieve(
     hard_filters: Optional[dict] = None,
     date_where: Optional[dict] = None,
     k: int = 25,
+    dense_query: Optional[str] = None,
 ) -> list[Document]:
     """
     Hybrid retrieval: dense vector search + BM25, merged via RRF.
@@ -170,15 +199,19 @@ def hybrid_retrieve(
     date_where: pre-built ChromaDB clause from parse_meeting_scope() — scopes
       retrieval to specific meeting(s) or a date range.
     k: adaptive — caller passes from get_retrieval_config().
+    dense_query: if provided, used for dense vector search instead of query.
+      Lets callers pass the full natural-language PM question for semantic
+      search while keeping a cleaned keyword form in query for BM25.
     """
     query      = _validate_query(query)
     project_id = _validate_project_id(project_id)
-    
-    logger.debug("HYBRID RETRIEVAL | query=%r | project=%s", query, project_id)
-    # Stage 1a: dense — post-filter summaries (DB filter can't exclude absent fields)
+    _dense_q   = dense_query.strip() if dense_query and dense_query.strip() else query
+
+    logger.debug("HYBRID RETRIEVAL | bm25_query=%r | dense_query=%r | project=%s", query, _dense_q, project_id)
+    # Stage 1a: dense — uses _dense_q (original PM query when provided, richer semantic signal)
     dense_filter = _build_filter(project_id, hard_filters, date_where)
     vectorstore  = get_vectorstore()
-    raw_dense    = vectorstore.similarity_search(query=query, k=k, filter=dense_filter)
+    raw_dense    = vectorstore.similarity_search(query=_dense_q, k=k, filter=dense_filter)
     dense_docs   = [d for d in raw_dense if not d.metadata.get("is_meeting_summary")]
     logger.info("  dense      : %d results (summaries dropped)", len(dense_docs))
     logger.debug("  filter     : %s", dense_filter)
@@ -187,21 +220,21 @@ def hybrid_retrieve(
 
     logger.info("=" * 64)
     logger.info("  DENSE CHUNKS — accuracy check [%d total]", len(dense_docs))
-    # logger.info("=" * 64)
-    # for i, doc in enumerate(dense_docs, 1):
-    #     m   = doc.metadata
-    #     txt = doc.page_content.replace("\n", " ").strip()
-    #     logger.info("  [%d/%d] speaker  : %s", i, len(dense_docs), m.get("speaker_name", "?"))
-    #     logger.info("         meeting  : %s  (%s)", m.get("meeting_title", "?"), m.get("meeting_date", "?"))
-    #     logger.info("         chunk_id : %s", m.get("chunk_id", "?"))
-    #     logger.info(
-    #         "         signals  : decision=%s | commitment=%s | question=%s",
-    #         m.get("contains_decision",   False),
-    #         m.get("contains_commitment", False),
-    #         m.get("contains_question",   False),
-    #     )
-    #     logger.info("         TEXT     : %s", txt[:300])
-    #     logger.info("-" * 64)
+    logger.info("=" * 64)
+    for i, doc in enumerate(dense_docs, 1):
+        m   = doc.metadata
+        txt = doc.page_content.replace("\n", " ").strip()
+        logger.info("  [%d/%d] speaker  : %s", i, len(dense_docs), m.get("speaker_name", "?"))
+        logger.info("         meeting  : %s  (%s)", m.get("meeting_title", "?"), m.get("meeting_date", "?"))
+        logger.info("         chunk_id : %s", m.get("chunk_id", "?"))
+        logger.info(
+            "         signals  : decision=%s | commitment=%s | question=%s",
+            m.get("contains_decision",   False),
+            m.get("contains_commitment", False),
+            m.get("contains_question",   False),
+        )
+        logger.info("         TEXT     : %s", txt[:300])
+        logger.info("-" * 64)
     _log_chunk_list("STAGE 1a — DENSE", dense_docs)
 
     # Stage 1b: BM25 (corpus already excludes summaries via _fetch_project_corpus)
@@ -229,8 +262,9 @@ def hybrid_retrieve(
     # Stage 2: RRF merge
     merged, stats = _rrf_merge(dense_docs, bm25_docs)
     logger.info(
-        "  rrf stats  : dense_only=%d | bm25_only=%d | overlap=%d | total=%d",
+        "  rrf stats  : dense_only=%d | bm25_only=%d | overlap=%d | total=%d | w=%.2f/%.2f | k=%d",
         stats["dense_only"], stats["bm25_only"], stats["overlap"], len(merged),
+        stats["dense_weight"], stats["bm25_weight"], stats["rrf_k"],
     )
 
     result = merged[:k]

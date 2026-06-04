@@ -189,13 +189,19 @@ PROJECT_QUERIES = EvaluationDataset(
               "31:32",   # Harsh — single agent first
             ],
 
-            # Fact layer
+            # Fact layer — every fact verified against actual DB chunk text.
+            # SFS Apr 8 (39:02):    "approach one is finalized for module four as well"
+            # Bhavneet Apr 15 (55:00): "now that we're going with approach one"
+            # Bhavneet Mar 25 (1:02:07): "RAG based approach for the non preset questions"
+            # Karan Mar 25 (1:06:08): "approach one and two is just for the stress test case"
+            # Harsh Mar 25 (31:32): "first we will go with the single agent approach...Else...multi agent"
+            # REMOVED: "Akash confirmed" — Akash is NOT a speaker in DB (0 chunks)
             "must_have_facts": [
-            "Approach 1 finalized for stress test",
-            "RAG based approach for general queries",
-            "single agent architecture preferred initially",
-            "multi agent as fallback if needed",
-            "Akash confirmed the decision",
+                "approach one is finalized for module four",
+                "going with approach one",
+                "RAG based approach for non preset questions",
+                "approach one and two is just for the stress test",
+                "single agent approach first multi agent if needed",
             ],
 
             # Hallucination layer
@@ -366,15 +372,23 @@ Golden(
             "22:43",   # cascade concern on forecasts
         ],
 
-        # Fact layer
+        # Fact layer — verified against actual DB chunk text (Karan's own words).
+        # Karan Mar 02 (33:19): "We are not saving that drivers to the back end"
+        # Karan Mar 02 (33:46): "calculations are only being done on the front end"
+        # Karan Mar 02 (44:25): "we are not using Redis"  [decision]
+        # Karan Mar 02 (55:56): "it will only complicate the architecture" (microservices)
+        # Karan Mar 02 (59:02): "two different microservices now only like AI...and forecasting"
+        # Karan Apr 08 (22:43): "all the forecast will be regenerated again" (save button)
+        # Karan Apr 20 (07:37): "We'll go with your. Your recommended approach"
+        # REMOVED: "technical coordination role not developer" — 0 DB matches
         "must_have_facts": [
-            "technical coordination role not developer",
-            "drivers saved on frontend only not backend",
-            "microservices complicate architecture",
-            "Redis not being used by their team",
-            "save button triggers forecast regeneration cascade",
-            "agreed to recommended approach after confusion",
-            "time estimation coordination",
+            "not saving drivers to the back end",
+            "forecasting is being done on the front end",
+            "we are not using Redis",
+            "it will only complicate the architecture",
+            "two different microservices AI and forecasting",
+            "all the forecast will be regenerated again",
+            "go with your recommended approach",
         ],
 
         # Hallucination layer
@@ -536,16 +550,25 @@ Golden(
             "19:13",   # Nolocode AI — formula change not rework
         ],
 
-        # Fact layer
+        # Fact layer — every fact verified against actual DB chunk text.
+        # Facts kept even if agent misses them (= retrieval gap signal).
+        #
+        # Rhythm Mar 19 (05:24):     "We do not have any formula to how to calculate for forecasting"
+        # Bhavneet Apr 24 (09:38):   "follows the same formula as accruals" (= standardization)
+        # Nolocode AI May 5 (01:36): "new updated formulas...newly introduced calculations"
+        # Rhythm May 7 (08:18):      "third point is high effort"
+        # Rhythm May 7 (09:09):      "pick interest from depth...effort is high...following the hierarchy"
+        # Nolocode AI May 7 (19:13): "just a change in formula, not a rework of forecasting" (exact)
+        # Karan May 7 (55:14):       "final decision and no further changes...in the formulas"
+        # FIXED: "standardized across accruals" → "follows the same formula as accruals" (DB exact)
+        # REMOVED: "forecasting pages validated complete by May 7" — 0 DB matches
         "must_have_facts": [
-            "March — team missing forecasting formulas",
-            "retained earnings formula not provided",
-            "April — formula logic standardized across accruals",
-            "May 5 — new updated formulas introduced",
-            "May 7 — hierarchy change required for interest from debt",
-            "HIGH effort for hierarchy change",
-            "formula change not forecasting rework",
-            "forecasting pages validated complete by May 7",
+            "do not have formula to calculate for forecasting",
+            "follows the same formula as accruals",
+            "new updated formulas newly introduced calculations",
+            "high effort for hierarchy change interest from debt",
+            "change in formula not a rework of forecasting",
+            "final decision no further changes in the formulas",
         ],
 
         # Hallucination layer
@@ -619,19 +642,32 @@ Golden(
             "55:49",   # parent document retriever strategy
         ],
 
-        # Fact layer
+        # Fact layer — every fact verified against actual DB chunk text.
+        # Facts kept even if agent currently misses them (= retrieval gap signal).
+        # Only removed: facts whose content does NOT exist in DB at all.
+        #
+        # Approach 1 — all verified in DB (Harsh 11:29, 10:46, 26:46):
+        #   "classifying the user query into a stress test query...or...general query"
+        #   "separate Python file...manual...change in the repo...make it live again"
+        #   "took around like three days to implement"
+        # Approach 2 — all verified in DB (Harsh 27:36, 31:32, 39:18, 45:24, 55:49):
+        #   "document will be processed into the markdown and Python function"
+        #   "function is validated, then...indexed into the vector store"
+        #   "first we will go with the single agent approach"
+        #   "60 seconds in POC...almost double"
+        #   "it's a kind of parent document retriever"
+        #   "why is returning insolvent" (Harsh 36:39)
         "must_have_facts": [
-            "query classified as stress test or general",
-            "separate Python file per stress test approach 1",
-            "3 days per stress test implementation",
-            "manual repo change required for each new test",
-            "scalability problem with approach 1",
-            "approach 2 agent generates Python function from document",
-            "function validated before indexing to vector store",
-            "single agent first multi-agent if needed",
-            "approach 2 POC took 60 seconds double of approach 1",
-            "parent document retriever search on summary output is function",
-            "POC issue returning insolvent",
+            "classifying user query into stress test or general",
+            "separate Python file for each stress test",
+            "three days to implement",
+            "manually change the repo and make it live",
+            "document processed into markdown and Python function",
+            "function validated before indexing into vector store",
+            "single agent approach first",
+            "60 seconds in POC almost double",
+            "parent document retriever",
+            "returning insolvent",
         ],
 
         # Hallucination layer

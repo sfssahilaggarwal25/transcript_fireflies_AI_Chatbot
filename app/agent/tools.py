@@ -67,7 +67,7 @@ def search_transcripts(
     - Specific topics, technical decisions, features, or blockers
     - Speaker contributions (use speaker_name to scope to one person)
     - Decisions made (signal_filter='decision')
-    - Action items / commitments (signal_filter='commitment')
+    - Action items / commitments (signal_filter='commitment')   
     - Questions that were raised (signal_filter='question')
     - Open issues / blockers (signal_filter='open_issue')
     - Documents / files shared by participants (signal_filter='document_share')
@@ -151,13 +151,15 @@ def search_transcripts(
     # Example: user says "give me the details about AI Architecture"
     #          LLM sends query="AI Architecture" — "detail" lost, standard preset fires
     #          With original query — "detail" detected, broad preset fires (k=55)
-    preset_name  = select_preset(scope_ids, original_user_query)
-    preset       = RETRIEVAL_PRESETS[preset_name]
-    effective_k  = preset["k"]
-    rerank_top_n = preset["rerank_top_n"]
+    preset_name          = select_preset(scope_ids, original_user_query)
+    preset               = RETRIEVAL_PRESETS[preset_name]
+    effective_k          = preset["k"]
+    rerank_top_n         = preset["rerank_top_n"]
+    diversity_cap_floor  = preset["diversity_cap_floor"]
+    sort_by              = preset["sort_by"]
     logger.info(
-        "search_transcripts | preset=%s | k=%d | rerank_top_n=%d | trigger=%r",
-        preset_name, effective_k, rerank_top_n, original_user_query[:60],
+        "search_transcripts | preset=%s | k=%d | rerank_top_n=%d | floor=%d | sort=%s | trigger=%r",
+        preset_name, effective_k, rerank_top_n, diversity_cap_floor, sort_by, original_user_query[:60],
     )
 
     try:
@@ -167,6 +169,7 @@ def search_transcripts(
             hard_filters=filters if filters else None,
             date_where=scope_where,
             k=effective_k,
+            dense_query=original_user_query,
         )
     except Exception as exc:
         logger.warning("search_transcripts error: %s", exc)
@@ -178,14 +181,11 @@ def search_transcripts(
     # Diversity cap: prevent one meeting from filling all reranker slots.
     # Each meeting passes proportionally to how much of the pool it contributes,
     # with a floor of 3 and a ceiling that scales with total retrieved (k).
-    # Bypassed when:
-    #   - scope_ids set: single-meeting query, all chunks from one meeting by design
-    #   - resolved_speaker set: speaker filter already constrains the pool to one
-    #     person's contributions — capping per-meeting would cut deep recall for
-    #     speaker deep-dive queries (e.g. speaker has 80+ chunks in one meeting)
+    # Bypassed for single-meeting scope (scope_ids set) — all chunks come from
+    # one meeting by design, capping would cut relevant content.
     if not scope_ids and not resolved_speaker:
         logger.info("search_transcripts | applying diversity cap for project wide query")
-        docs = _apply_diversity_cap(docs)
+        docs = _apply_diversity_cap(docs, floor=diversity_cap_floor)
         if not docs:
             return "No relevant transcript chunks found for this query."
 
@@ -220,6 +220,28 @@ def search_transcripts(
         speaker_hint=resolved_speaker or "",
         top_n=rerank_top_n,
     )
+
+    # Temporal sort: after reranking filters irrelevant chunks, re-sort by date so
+    # the LLM sees chronological evolution rather than relevance-ranked order.
+    # Only applies to temporal preset — other presets keep relevance order.
+    if sort_by == "date" and docs:
+        def _date_sort_key(doc):
+            date = doc.metadata.get("meeting_date")
+            ts   = doc.metadata.get("start_time", 0) or 0
+            if not date:
+                return (0, ts)
+            if isinstance(date, (int, float)):
+                # epoch milliseconds → convert to seconds for comparison
+                return (int(date) // 1000, ts)
+            # ISO string "YYYY-MM-DD" — convert to epoch seconds for uniform comparison
+            try:
+                from datetime import datetime
+                return (int(datetime.fromisoformat(str(date)).timestamp()), ts)
+            except Exception:
+                return (0, ts)
+
+        docs.sort(key=_date_sort_key)
+        logger.info("search_transcripts | temporal sort applied — %d docs sorted by date", len(docs))
 
     # Expand context: inject prev/next neighbors for top-5 ranked chunks
     expanded      = _expand_context(docs, n=_EXPAND_TOP_N)

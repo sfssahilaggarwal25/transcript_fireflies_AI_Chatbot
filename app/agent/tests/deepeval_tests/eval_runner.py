@@ -1,5 +1,6 @@
 import csv
 import json
+import re
 from dataclasses import dataclass
 
 from google import genai
@@ -68,16 +69,19 @@ def eval_fact_recall(
     if not must_have_facts:
         return 1.0, [], []
 
+    clean_answer = re.sub(r'\[\d+\]', '', answer).strip()
+
     prompt = f"""You are a strict evaluator checking if facts are present in an answer.
 
-Answer: "{answer}"
+Answer:
+{clean_answer}
 
 Rules:
-1. Mark present=true if the MEANING is conveyed — exact words not needed
+1. Mark present=true only if the CORE MEANING is clearly conveyed — exact words not needed,
+   but the specific claim must be there. A vague related mention does NOT count.
 2. "approach one" = "first approach" = "Approach 1" → present
 3. If fact says "X not discussed" → only mark present if answer EXPLICITLY says X was NOT discussed or not found
 4. If fact says "X decided" → only mark present if answer clearly states a decision was made about X
-5. Partial mentions do NOT count — core meaning must be there
 
 Respond ONLY as valid JSON array, no explanation, no markdown:
 [{{"fact": "...", "present": true/false, "reason": "one line"}}]

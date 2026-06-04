@@ -64,18 +64,24 @@ _SIGNAL_MAP = {
 }
 
 # HARD signals → applied as a ChromaDB metadata gate before retrieval.
-# High-precision regex means chunks without these keywords almost certainly
-# aren't that type — gating is safe and improves precision.
+# Only document_share stays hard — file sharing is always explicit ("shared a doc",
+# "here's the link") so regex precision is near-perfect. Hard-gating safe here.
 #
 # SOFT signals → intent embedded into the query text; NOT gated at DB level.
-# These types can be expressed without the expected keywords
-# (e.g. questions without '?', issues phrased as observations).
-# Hard-gating would silently exclude valid chunks before retrieval starts.
+# decision/commitment moved from hard → soft because meeting conversations express
+# these implicitly ("I don't think it's required", "let's go with X", "makes sense")
+# without using explicit "decided/committed" keywords. Hard-gating silently excluded
+# the most valuable chunks. Soft lets reranker find them semantically.
+#
+# count_signal_chunks and _exhaustive_signal_search still use the stored
+# contains_* tags directly — they are unaffected by this change.
 
-_HARD_SIGNAL_FILTERS = frozenset({"decision", "commitment", "document_share"})
-_SOFT_SIGNAL_FILTERS = frozenset({"question", "open_issue"})
+_HARD_SIGNAL_FILTERS = frozenset({"document_share"})
+_SOFT_SIGNAL_FILTERS = frozenset({"decision", "commitment", "question", "open_issue"})
 
 _SOFT_SIGNAL_PREFIX = {
+    "decision":   "decided about",
+    "commitment": "committed to about",
     "question":   "questions and clarifications raised about",
     "open_issue": "unresolved issues problems and blockers about",
 }
@@ -106,9 +112,13 @@ _EXPAND_TOP_N = 5
 # This keeps cost, latency, and test assertions predictable.
 
 RETRIEVAL_PRESETS: dict[str, dict] = {
-    "focused":  {"k": 20, "rerank_top_n": 8},
-    "standard": {"k": 40, "rerank_top_n": 10},
-    "broad":    {"k": 55, "rerank_top_n": 12},
+    "focused":  {"k": 20, "rerank_top_n": 8,  "diversity_cap_floor": 3, "sort_by": "relevance"},
+    "standard": {"k": 40, "rerank_top_n": 10, "diversity_cap_floor": 3, "sort_by": "relevance"},
+    "broad":    {"k": 55, "rerank_top_n": 12, "diversity_cap_floor": 3, "sort_by": "relevance"},
+    # temporal: cross-meeting timeline queries — floor=6 guarantees each meeting gets
+    # enough chunks for chronological coverage; sort_by=date preserves timeline order
+    # after reranking so the LLM sees evolution in sequence, not by relevance rank.
+    "temporal": {"k": 55, "rerank_top_n": 16, "diversity_cap_floor": 6, "sort_by": "date"},
 }
 
 # Words that signal a broad cross-meeting synthesis query → broad preset
@@ -118,18 +128,33 @@ _OVERVIEW_SIGNALS = frozenset({
     "summarize", "summary", "detail", "everything",
 })
 
+# Words that signal a temporal/evolution query → temporal preset
+# Checked before _OVERVIEW_SIGNALS so "across meetings" with "evolve" → temporal not broad.
+# Scoped queries (scope_ids set) bypass both — focused always wins.
+_TEMPORAL_SIGNALS = frozenset({
+    "evolve", "evolution", "evolved",
+    "progress", "changed", "changes",
+    "over time", "across meetings",
+    "history", "timeline",
+    "how did", "develop", "when did", "what changed",
+})
+
 
 def select_preset(scope_ids: Optional[list], query: str) -> str:
     """
     Map scope + query signals to a retrieval preset name.
 
     focused  — scope_ids is set (specific meeting or explicit meeting list)
-    broad    — project-wide query + overview/synthesis keywords detected
+    temporal — project-wide query with evolution/timeline keywords
+    broad    — project-wide query with overview/synthesis keywords
     standard — everything else; the safe default covering ~80% of queries
     """
     if scope_ids:
         return "focused"
-    if any(w in query.lower() for w in _OVERVIEW_SIGNALS):
+    q = query.lower()
+    if any(w in q for w in _TEMPORAL_SIGNALS):
+        return "temporal"
+    if any(w in q for w in _OVERVIEW_SIGNALS):
         return "broad"
     return "standard"
 
@@ -398,18 +423,22 @@ def _expand_context(docs: list[Document], n: int = _EXPAND_TOP_N) -> list[Docume
 
 # ── Meeting diversity cap ─────────────────────────────────────────────────────
 
-def _apply_diversity_cap(docs: list[Document]) -> list[Document]:
+def _apply_diversity_cap(
+    docs: list[Document],
+    floor: int = _DIVERSITY_CAP_FLOOR,
+) -> list[Document]:
     """
     Limit chunks per meeting_id before reranking.
 
     Each meeting passes at most PASS_RATE of its retrieved docs, with a
-    minimum floor of _DIVERSITY_CAP_FLOOR and a ceiling that scales with
-    the total pool size (round(total × _DIVERSITY_MAX_MEETING_FRACTION)).
+    minimum of `floor` and a ceiling that scales with the total pool size
+    (round(total × _DIVERSITY_MAX_MEETING_FRACTION)).
 
-    Proportional ceiling means overview queries (k=40) allow more chunks
-    from a dedicated meeting than focused queries (k=25) — consistent with
-    the k-boost intent. RRF rank order is preserved within each meeting.
+    floor is preset-driven:
+      standard/broad/focused → floor=3 (default)
+      temporal               → floor=6 (guarantees timeline coverage per meeting)
 
+    RRF rank order is preserved within each meeting.
     Called only for project-wide queries (scope_ids=None in tools.py).
     """
     if not docs:
@@ -418,7 +447,7 @@ def _apply_diversity_cap(docs: list[Document]) -> list[Document]:
     from collections import Counter
     counts      = Counter(d.metadata.get("meeting_id", "") for d in docs)
     total       = len(docs)
-    cap_ceiling = max(_DIVERSITY_CAP_FLOOR, round(total * _DIVERSITY_MAX_MEETING_FRACTION))
+    cap_ceiling = max(floor, round(total * _DIVERSITY_MAX_MEETING_FRACTION))
 
     seen:    dict[str, int] = {}
     diverse: list[Document] = []
@@ -426,7 +455,7 @@ def _apply_diversity_cap(docs: list[Document]) -> list[Document]:
     for doc in docs:
         mid = doc.metadata.get("meeting_id", "")
         cap = max(
-            _DIVERSITY_CAP_FLOOR,
+            floor,
             min(cap_ceiling, round(counts[mid] * _DIVERSITY_PASS_RATE)),
         )
         if seen.get(mid, 0) < cap:
@@ -434,8 +463,8 @@ def _apply_diversity_cap(docs: list[Document]) -> list[Document]:
             seen[mid] = seen.get(mid, 0) + 1
 
     logger.info(
-        "  diversity_cap : input=%d | after_cap=%d | dropped=%d | ceiling=%d | meetings=%d",
-        total, len(diverse), total - len(diverse), cap_ceiling, len(counts),
+        "  diversity_cap : input=%d | after_cap=%d | dropped=%d | ceiling=%d | floor=%d | meetings=%d",
+        total, len(diverse), total - len(diverse), cap_ceiling, floor, len(counts),
     )
     for mid, kept in seen.items():
         original = counts[mid]
