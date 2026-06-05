@@ -206,8 +206,8 @@ def search_transcripts(
     # Two-stage expansion strategy:
     #   Stage 1 (above): short chunks get neighbors added BEFORE reranking so the
     #     reranker can score the full conversational unit, not a fragment.
-    #   Stage 2 (_expand_context below): top-5 RANKED chunks get neighbors added
-    #     AFTER reranking to give the LLM richer display context around best hits.
+    #   Stage 2 (_expand_context below): all direct_pass (score 7+) chunks get
+    #     neighbors added AFTER reranking to give the LLM richer display context.
     #
     # The exhaustive signal path already returned above — no skip needed here.
     #

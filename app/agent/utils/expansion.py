@@ -99,13 +99,18 @@ def _expand_short_chunks_for_reranking(docs: list[Document]) -> list[Document]:
 
 def _expand_context(docs: list[Document], n: int = _EXPAND_TOP_N) -> list[Document]:
     """
-    Post-rerank: inject prev/next neighbor chunks adjacent to the top-n anchor docs.
+    Post-rerank: inject prev/next neighbor chunks adjacent to confirmed-relevant chunks.
 
-    A retrieved chunk is a ~500-char slice of conversation. The sentence just
-    before or after often contains the cause, consequence, or reply the LLM
-    needs for a complete answer.
+    Expansion gate (in priority order):
+      1. _relevance="high" tag (set by reranker on direct_pass chunks, score 7-10)
+         → expand ALL high-relevance chunks regardless of position.
+      2. Fallback: no _relevance tag → expand first n chunks by position (legacy path).
 
-    Cost: at most 2*n ChromaDB ID-lookups (O(1) fetches, not corpus scans).
+    Using the relevance tag instead of a fixed position count means broad/speaker/
+    contribution queries — where many chunks legitimately score 7+ — get full
+    neighbor context, not just the first 5.
+
+    Cost: at most 2 × (high-relevance chunk count) ChromaDB ID-lookups per call.
     Dedup: existing_ids prevents a neighbor appearing twice if it was also top-k.
     Neighbors carry _position='before'/'after' → labeled [CONTEXT] in output,
     excluded from accumulated_docs so they don't appear as citable sources.
@@ -119,7 +124,13 @@ def _expand_context(docs: list[Document], n: int = _EXPAND_TOP_N) -> list[Docume
     for i, doc in enumerate(docs):
         m = doc.metadata
 
-        if i >= n or m.get("is_meeting_summary"):
+        has_relevance_tag = "_relevance" in m
+        should_expand = (
+            (has_relevance_tag     and m["_relevance"] == "high") or
+            (not has_relevance_tag and i < n)
+        )
+
+        if not should_expand or m.get("is_meeting_summary"):
             result.append(doc)
             continue
 

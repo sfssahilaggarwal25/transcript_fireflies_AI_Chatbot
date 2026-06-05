@@ -188,11 +188,33 @@ def rerank_documents(
                 doc.page_content[:60].replace("\n", " "),
             )
 
-        # direct_pass first (score 7-10), then soft_pass (score 3-6), hard_drop excluded
-        # We are applying the limit of 2 for the direct_pass tier to ensure we only feed the most relevant chunks to the LLM when top_n is set. If there are fewer than 2 direct_pass chunks, we fill the remaining slots with soft_pass chunks, which are still relevant but less directly on point. This way, we maintain a high relevance threshold while also providing enough context for the LLM to work with.
-        passing = direct_pass if len(direct_pass) >= 2 else direct_pass + soft_pass
+        # Passing strategy:
+        #
+        # direct_pass (7-10) — never cut. top_n must not drop confirmed-relevant chunks.
+        #   Cutting a score-7+ chunk to honour a fixed top_n is the root cause of
+        #   missing facts on broad/speaker/contribution queries where many chunks
+        #   legitimately score high.
+        #
+        # soft_pass (3-6) — fills remaining slots up to top_n only. These are
+        #   borderline; limiting them protects context window without losing real answers.
+        #
+        # MAX_CHUNKS = 20: hard ceiling so LLM context never explodes regardless of
+        #   how many direct_pass chunks a very broad query produces.
+        #
+        # Fallback: fewer than 2 direct_pass → include at least 3 soft_pass so the
+        #   LLM always has enough context to work with.
+
+        MAX_CHUNKS = 20
+        soft_slots = max(0, (top_n or MAX_CHUNKS) - len(direct_pass))
+
+        if len(direct_pass) < 2:
+            fill = soft_pass[:max(soft_slots, 3)]
+        else:
+            fill = soft_pass[:soft_slots]
+
+        passing  = direct_pass + fill
         reranked = [doc for _, doc, _ in passing]
-        return reranked[:top_n] if top_n else reranked
+        return reranked[:MAX_CHUNKS]
 
     except Exception as e:
         logger.warning("Re-ranking failed (%s) — returning original order", e)
