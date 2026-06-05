@@ -13,7 +13,7 @@ Tools
   count_signal_chunks   — Exact metadata count for signal-flagged chunks.
 
 Private implementation details (helpers, accumulator, signal maps) live in
-_tool_utils.py — not imported from outside app/agent/.
+utils/ — not imported from outside app/agent/.
 """
 
 import logging
@@ -27,7 +27,7 @@ from langgraph.prebuilt import InjectedState
 from app.core.retrieval import hybrid_retrieve
 from app.core.retrieval.reranker import rerank_documents
 from app.core.storage.db import get_raw_collection
-from ._tool_utils import (
+from .utils import (
     _SIGNAL_MAP,
     _HARD_SIGNAL_FILTERS,
     _SOFT_SIGNAL_FILTERS,
@@ -41,6 +41,7 @@ from ._tool_utils import (
     fmt_date,
     _resolve_speaker_name,
     _exhaustive_signal_search,
+    _expand_short_chunks_for_reranking,
     _expand_context,
     _apply_diversity_cap,
     reset_doc_accumulator,
@@ -189,6 +190,11 @@ def search_transcripts(
         if not docs:
             return "No relevant transcript chunks found for this query."
 
+    # Pre-rerank expansion: short fragments get their neighbors added to the
+    # candidate pool so the reranker scores the full conversational unit.
+    # See expansion.py → _expand_short_chunks_for_reranking for details.
+    docs = _expand_short_chunks_for_reranking(docs)
+
     # Rerank: score all hybrid results by true relevance to the query, then
     # trim to preset rerank_top_n before passing anything to the LLM.
     #
@@ -197,10 +203,11 @@ def search_transcripts(
     #   Doing it here lets us pass speaker_hint so the named speaker's chunks
     #   get a post-score boost even if they scored slightly lower on content alone.
     #
-    # Why before _expand_context:
-    #   Context expansion fetches neighbors for the top-5 RANKED chunks.
-    #   If we expand before reranking, we expand the wrong chunks (RRF top-5,
-    #   not relevance top-5). Rerank first → expand the right anchors.
+    # Two-stage expansion strategy:
+    #   Stage 1 (above): short chunks get neighbors added BEFORE reranking so the
+    #     reranker can score the full conversational unit, not a fragment.
+    #   Stage 2 (_expand_context below): top-5 RANKED chunks get neighbors added
+    #     AFTER reranking to give the LLM richer display context around best hits.
     #
     # The exhaustive signal path already returned above — no skip needed here.
     #

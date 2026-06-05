@@ -43,7 +43,8 @@ res_query = answer_query(
     # query="What was the impact on architecture after Redis implementation?",
     # query="Which AI approach we are decided to go with?",
     # query="What has Karan Middha contributed across all meetings?",
-    query="What did Harsh Vardhan say about the stress test implementation?",
+    # query="What did Harsh Vardhan say about the stress test implementation?",
+    query="What did Ashpreet say about AI architecture?",
     # query="What did the team decide about quantum computing implementation in the project?",
     project_id="proj_nolocode_001",
 )
