@@ -36,6 +36,22 @@ def chunk_to_document(chunk: dict[str, Any]) -> Document:
             f"Chunk text is empty after stripping whitespace. chunk_id={chunk.get('chunk_id', 'unknown')}"
         )
 
+    # Contextual prefix: prepend meeting + speaker context before embedding.
+    # This dramatically improves retrieval for short chunks (e.g. "Change in earnings."
+    # now embeds as a financial-meeting chunk, not just a generic phrase).
+    # Only applied to utterance chunks — summary chunks already have full context.
+    if chunk.get("segment_type") == "content":
+        meeting_title = chunk.get("meeting_title", "")
+        speaker_name  = chunk.get("speaker_name", "")
+        if meeting_title or speaker_name:
+            parts = []
+            if meeting_title:
+                parts.append(f"Meeting: {meeting_title}")
+            if speaker_name:
+                parts.append(f"Speaker: {speaker_name}")
+            prefix = "[" + " | ".join(parts) + "] "
+            text = prefix + text
+
     metadata = {}
 
     for key, value in chunk.items():

@@ -6,11 +6,25 @@ Used by hybrid.py, structured.py, and topic.py — not imported externally.
 """
 import json
 import logging
+from datetime import datetime, timezone
 from typing import Optional
 
 from langchain_core.documents import Document
 
 from app.core.storage.db import get_raw_collection
+
+
+def _fmt_date(val) -> str:
+    """Epoch-ms / epoch-s / ISO string → YYYY-MM-DD for log output."""
+    if val is None:
+        return ""
+    if isinstance(val, (int, float)) and val > 0:
+        ts = val / 1000 if val > 1e10 else val
+        try:
+            return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%d")
+        except (OSError, OverflowError, ValueError):
+            return str(val)
+    return str(val)
 
 logger = logging.getLogger(__name__)
 
@@ -172,13 +186,12 @@ def _log_chunk_list(label: str, docs: list[Document]) -> None:
         m   = doc.metadata
         txt = doc.page_content.replace("\n", " ").strip()
         logger.info("  [%d] speaker   : %s", i, m.get("speaker_name", "?"))
-        logger.info("       meeting   : %s  (%s)", m.get("meeting_title", "?"), m.get("meeting_date", "?"))
+        logger.info("       meeting   : %s  (%s)", m.get("meeting_title", "?"), _fmt_date(m.get("meeting_date")))
         logger.info(
             "       signals   : decision=%s | commitment=%s | question=%s",
             m.get("contains_decision",   "?"),
             m.get("contains_commitment", "?"),
             m.get("contains_question",   "?"),
         )
-        logger.info("       chunk_id  : %s", m.get("chunk_id", "?"))
         logger.info("       TEXT      : %s", txt)
         logger.info(_SEP)

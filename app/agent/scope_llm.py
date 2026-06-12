@@ -2,7 +2,7 @@
 scope_llm.py — Two-stage LLM-based meeting scope resolver for the agent pipeline.
 
 Replaces the regex-only parse_meeting_scope() in the agent path.
-The old regex function still lives in app/core/scope.py and is used by app/rag/.
+The old regex function still lives in app/core/scope.py.
 
 Two-stage design
 ----------------
@@ -293,8 +293,19 @@ def _build_result_from_stage1(stage1: dict, meetings: list[tuple[str, str]]) -> 
         return _make_result("meeting", scope_where, ids)
 
     if scope_type == "date_range":
-        cutoff      = stage1["date_cutoff"]
-        scope_where = {"meeting_date": {"$gte": cutoff}}
+        cutoff = stage1["date_cutoff"]
+        # meetings already has normalized ISO dates from get_project_meetings_sorted().
+        # Using meeting_id filter instead of meeting_date string comparison avoids a
+        # type mismatch in ChromaDB: older meetings store meeting_date as epoch int,
+        # newer ones as ISO string — "$gte ISO-string" silently skips epoch-int rows.
+        matching_ids = [mid for mid, d in meetings if d >= cutoff]
+        if not matching_ids:
+            return _make_result("project", None, None)
+        scope_where = (
+            {"meeting_id": {"$eq": matching_ids[0]}}
+            if len(matching_ids) == 1
+            else {"meeting_id": {"$in": matching_ids}}
+        )
         return _make_result("date_range", scope_where, None)
 
     # project-wide

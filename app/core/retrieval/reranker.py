@@ -8,27 +8,53 @@ from google.genai import types as genai_types
 from langchain_core.documents import Document
 
 from app.config import Config
+from .base import _fmt_date
 
 logger = logging.getLogger(__name__)
 
-_RERANK_MODEL = "gemini-2.5-flash"
-_MAX_PREVIEW_CHARS = 450  # 300 was too short — key statements mid-chunk were cut off
+_RERANK_MODEL      = "gemini-2.5-flash"
+_MAX_PREVIEW_CHARS = 450
+
+
+# ── Per-query rejected-doc accumulator ───────────────────────────────────────
+# Stores hard-dropped chunks (score ≤ 2) across all rerank calls in one query.
+# Reset by service.py before each new query via reset_rejected_docs().
+# Deduplicated by chunk_id so multi-tool-call queries don't repeat the same chunk.
+
+_rejected_docs: list[Document] = []
+_rejected_cids: set[str]       = set()
+
+
+def reset_rejected_docs() -> None:
+    """Clear per-request rejected-doc state. Called by service.py before graph.invoke()."""
+    _rejected_docs.clear()
+    _rejected_cids.clear()
+
+
+def get_rejected_docs() -> list[Document]:
+    """Return all hard-dropped docs accumulated across all rerank calls this query."""
+    return list(_rejected_docs)
 
 
 def rerank_documents(
-    query: str,
-    documents: list[Document],
-    topic_hint: str = "",
+    query:        str,
+    documents:    list[Document],
+    topic_hint:   str = "",
     speaker_hint: str = "",
-    top_n: Optional[int] = None,
+    top_n:        Optional[int] = None,
 ) -> list[Document]:
     """
     Re-rank retrieved documents by true relevance to query intent.
 
-    Uses a single Gemini Flash Lite call to score each chunk, then applies
-    a post-score speaker boost (+1.5) when speaker_hint is set — this ensures
-    the named speaker's chunks surface even if they scored slightly lower than
+    Uses a single Gemini Flash call to score each chunk 0-10, then applies
+    a post-score speaker boost (+1.5) when speaker_hint is set — ensures the
+    named speaker's chunks surface even if they scored slightly lower than
     context chunks from other speakers.
+
+    Tier logic (Gemini explicit 0-10 scale):
+      7-10 → 🟢 direct pass — clearly relevant, tagged _relevance="high"
+      3-6  → 🟡 soft pass  — tangential, tagged _relevance="low"
+      0-2  → 🔴 hard drop  — irrelevant, never reaches LLM
 
     Falls back to original order on any error so the pipeline never breaks.
     """
@@ -37,21 +63,18 @@ def rerank_documents(
 
     chunk_previews = []
     for i, doc in enumerate(documents):
-        m = doc.metadata
+        m       = doc.metadata
         speaker = m.get("speaker_name", "Unknown")
         meeting = m.get("meeting_title", "")[:40]
-        date_str = m.get("meeting_date", "")
+        date    = m.get("meeting_date", "")
         content = doc.page_content[:_MAX_PREVIEW_CHARS].replace("\n", " ")
         chunk_previews.append(
-            f"[{i}] Speaker: {speaker} | Meeting: {meeting} ({date_str})\n"
+            f"[{i}] Speaker: {speaker} | Meeting: {meeting} ({date})\n"
             f"    Content: {content}"
         )
 
     chunks_text = "\n\n".join(chunk_previews)
 
-    # topic_section: fires only when a clean keyword topic is provided.
-    # Adds the modifier-aware rule — "AI Architecture" means BOTH "AI" AND "architecture"
-    # must be the chunk's subject, not just either word in isolation.
     topic_section = (
         f"SEARCH TOPIC: \"{topic_hint}\"\n"
         f"This is the specific subject to find. "
@@ -60,7 +83,6 @@ def rerank_documents(
         f"A chunk about the same noun in a completely different context scores 3 or lower.\n\n"
     ) if topic_hint else ""
 
-    # speaker_section: fires only when a named speaker is being searched.
     speaker_section = (
         f"TARGET SPEAKER: \"{speaker_hint}\"\n"
         f"The question is specifically about what this speaker said. "
@@ -86,14 +108,19 @@ def rerank_documents(
         f"A chunk where the topic is a side mention (not the main point) must score 3-4.\n\n"
         f"--- RULE 2: CONFIDENCE THRESHOLD ---\n"
         f"Score 7+ only when you are CONFIDENT the chunk belongs in a focused answer. "
-        f"If uncertain — if the chunk is about something that merely AFFECTS or REFERENCES "
-        f"the topic rather than IS the topic — score it 5-6, not 7. "
+        f"If uncertain — score it 5-6, not 7. "
         f"Ask: 'Is this chunk primarily ABOUT the question subject, or about something else "
         f"that happens to mention or impact it?' If the latter, cap at 6.\n\n"
         f"--- RULE 3: ATTRIBUTION ---\n"
         f"For questions asking who raised / first mentioned / expressed something: "
-        f"score highest the chunk where the speaker states it directly themselves, "
-        f"not a chunk where someone else later references or describes what they said.\n\n"
+        f"score highest the chunk where the speaker states it directly themselves.\n\n"
+        f"--- RULE 4: ANSWER TYPE MATCH ---\n"
+        f"Read the question and determine what kind of answer it seeks — a confirmed outcome, "
+        f"a description of how something works, a commitment someone made, a summary, etc.\n"
+        f"Score 7+ ONLY for chunks that provide THAT TYPE of content.\n"
+        f"Example: if the question asks what was DECIDED or CHOSEN, a chunk that describes or "
+        f"explains an option scores 3-4 even if the topic keyword matches perfectly — "
+        f"unless the chunk also states the final outcome or confirmation.\n\n"
         f"Chunks:\n{chunks_text}\n\n"
         f"Respond with ONLY a JSON array, one object per chunk, no explanation:\n"
         f'[{{"index": 0, "score": 7}}, {{"index": 1, "score": 3}}, ...]\n\n'
@@ -104,7 +131,7 @@ def rerank_documents(
         if not Config.GEMINI_API_KEY:
             raise RuntimeError("GEMINI_API_KEY not set")
 
-        client = genai.Client(api_key=Config.GEMINI_API_KEY)
+        client   = genai.Client(api_key=Config.GEMINI_API_KEY)
         response = client.models.generate_content(
             model=_RERANK_MODEL,
             contents=prompt,
@@ -112,7 +139,6 @@ def rerank_documents(
         )
         raw = response.text.strip()
 
-        # Strip markdown code fence if Gemini wraps the JSON
         if raw.startswith("```"):
             raw = raw.split("```")[1]
             if raw.startswith("json"):
@@ -120,23 +146,17 @@ def rerank_documents(
             raw = raw.strip()
 
         scores_list = json.loads(raw)
-        score_map = {item["index"]: item["score"] for item in scores_list}
+        score_map   = {item["index"]: item["score"] for item in scores_list}
 
-        # Post-score speaker boost: chunks from the named speaker get +1.5
-        # Applied AFTER LLM scoring so LLM still scores on content quality alone.
+        # Post-score speaker boost: +1.5 for the named speaker's chunks.
+        # Applied AFTER LLM scoring so the model scores on content quality alone.
         if speaker_hint:
             def _norm(s: str) -> str:
                 return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode().lower()
             target = _norm(speaker_hint)
             for i, doc in enumerate(documents):
-                chunk_speaker = _norm(doc.metadata.get("speaker_name", ""))
-                if chunk_speaker == target:
+                if _norm(doc.metadata.get("speaker_name", "")) == target:
                     score_map[i] = score_map.get(i, 0) + 1.5
-
-        logger.info(
-            "  rerank     : raw scores %s",
-            {i: score_map.get(i, 0) for i in range(len(documents))},
-        )
 
         indexed = [
             (i, documents[i], score_map.get(i, 0))
@@ -144,17 +164,25 @@ def rerank_documents(
         ]
         indexed.sort(key=lambda x: x[2], reverse=True)
 
-        # 3-tier score filter
-        # 0-2  → hard drop : irrelevant, never reaches LLM
-        # 3-6  → soft pass : tangential/borderline, reaches LLM with _relevance="low" tag
-        # 7-10 → direct pass: clearly relevant, reaches LLM with _relevance="high" tag
-        #
-        # Threshold at 7 (not 6): score=6 means "relevant context" but not
-        # specifically about the query subject. Keeping 6s as soft forces the
-        # LLM to treat them as background only (rule 11 in system prompt),
-        # preventing feature-level chunks from polluting component-specific answers.
+        # Stamp score into every doc's metadata (used by RESULT log in service.py)
+        for _, doc, s in indexed:
+            doc.metadata["_rerank_score"] = s
+
+        # Similarity threshold: if no chunk scores ≥ 5, the query topic is not
+        # in the transcripts. Returning soft-pass chunks (score 3-4 = "passing
+        # mention") would cause the LLM to hallucinate an answer from unrelated
+        # context. Return empty so the agent reports "no information found."
+        max_score = indexed[0][2] if indexed else 0
+        if max_score < 5:
+            logger.info(
+                "  reranker: max_score=%.1f < 5 — topic not in transcripts, returning empty",
+                max_score,
+            )
+            return []
+
+        # 3-tier filter
         hard_drop   = [(i, doc, s) for i, doc, s in indexed if s <= 2]
-        soft_pass   = [(i, doc, s) for i, doc, s in indexed if 3 <= s <= 6]
+        soft_pass   = [(i, doc, s) for i, doc, s in indexed if 3 <= s < 7]
         direct_pass = [(i, doc, s) for i, doc, s in indexed if s >= 7]
 
         for _, doc, _ in soft_pass:
@@ -162,48 +190,39 @@ def rerank_documents(
         for _, doc, _ in direct_pass:
             doc.metadata["_relevance"] = "high"
 
+        # Accumulate hard-dropped docs for the RESULT log
+        for _, doc, _ in hard_drop:
+            cid = doc.metadata.get("chunk_id", str(id(doc)))
+            if cid not in _rejected_cids:
+                _rejected_cids.add(cid)
+                _rejected_docs.append(doc)
+
         logger.info(
-            "  rerank_tiers: hard_drop=%d | soft_pass=%d | direct_pass=%d",
-            len(hard_drop), len(soft_pass), len(direct_pass),
+            "🎯 RERANK  %d scored  |  🟢 direct=%d (7-10)  🟡 soft=%d (3-6)  🔴 drop=%d (0-2)",
+            len(indexed), len(direct_pass), len(soft_pass), len(hard_drop),
         )
-
-        for rank, (orig_idx, doc, score) in enumerate(direct_pass, 1):
-            m = doc.metadata
-            logger.info(
-                "  direct_pass[%d]: score=%.1f | orig_pos=%d | speaker=%s | meeting=%s | \"%s\"",
-                rank, score, orig_idx + 1,
-                m.get("speaker_name", "?"),
-                m.get("meeting_title", "?")[:40],
-                doc.page_content.replace("\n", " "),
-            )
-
+        logger.info("   " + "─" * 65)
         for rank, (orig_idx, doc, score) in enumerate(indexed, 1):
-            m      = doc.metadata
-            tier   = "DROP" if score <= 2 else ("LOW" if score <= 6 else "HIGH")
-            moved  = f"moved {orig_idx + 1}->{rank}" if orig_idx + 1 != rank else f"stayed #{rank}"
+            m       = doc.metadata
+            speaker = m.get("speaker_name", "?")
+            date    = _fmt_date(m.get("meeting_date"))
+            meeting = m.get("meeting_title", "?")[:35]
+            preview = doc.page_content.replace("\n", " ").strip()[:130]
+            move    = f"{orig_idx + 1}→{rank}" if orig_idx + 1 != rank else f"#{rank} (no change)"
+            if score >= 7:
+                icon, tier = "🟢", "PASS"
+            elif score >= 3:
+                icon, tier = "🟡", "SOFT"
+            else:
+                icon, tier = "🔴", "DROP"
             logger.info(
-                "  rerank[%d]  : score=%.1f | tier=%-4s | %s | %s | \"%s...\"",
-                rank, score, tier, moved,
-                m.get("speaker_name", "?"),
-                doc.page_content[:60].replace("\n", " "),
+                "   %s [%2d] score=%-4.1f %-4s  pos %s  |  👤 %-22s  📅 %s  🏢 %s",
+                icon, rank, score, tier, move, speaker, date, meeting,
             )
+            logger.info("         💬 %s", preview)
 
-        # Passing strategy:
-        #
-        # direct_pass (7-10) — never cut. top_n must not drop confirmed-relevant chunks.
-        #   Cutting a score-7+ chunk to honour a fixed top_n is the root cause of
-        #   missing facts on broad/speaker/contribution queries where many chunks
-        #   legitimately score high.
-        #
-        # soft_pass (3-6) — fills remaining slots up to top_n only. These are
-        #   borderline; limiting them protects context window without losing real answers.
-        #
-        # MAX_CHUNKS = 20: hard ceiling so LLM context never explodes regardless of
-        #   how many direct_pass chunks a very broad query produces.
-        #
-        # Fallback: fewer than 2 direct_pass → include at least 3 soft_pass so the
-        #   LLM always has enough context to work with.
-
+        # Passing strategy: keep all direct_pass; soft_pass fills remaining slots.
+        # MAX_CHUNKS=20 hard ceiling. Fallback: <2 direct → include at least 3 soft.
         MAX_CHUNKS = 20
         soft_slots = max(0, (top_n or MAX_CHUNKS) - len(direct_pass))
 

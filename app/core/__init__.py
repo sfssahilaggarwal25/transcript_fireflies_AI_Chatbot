@@ -7,7 +7,5 @@ Contains:
   embeddings/  — Gemini embedding model
   vector_store/ — Chroma store wrapper
   documents/   — LangChain Document mapper
-  scope.py     — Meeting scope / temporal filter resolution (shared by rag + agent)
-
-Both app.rag and app.agent import from here.
+  scope.py     — Meeting scope / temporal filter resolution
 """

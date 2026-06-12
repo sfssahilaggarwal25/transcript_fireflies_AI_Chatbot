@@ -1,7 +1,6 @@
 """app.agent — LangGraph-based agentic pipeline for AI Meeting Intelligence.
 
-Approach 2: The LLM decides what to retrieve via multi-hop tool calling.
-For the deterministic RAG pipeline (Approach 1), see app.rag.
+The LLM decides what to retrieve via multi-hop tool calling.
 """
 from .graph import get_graph
 from .state import AgentState

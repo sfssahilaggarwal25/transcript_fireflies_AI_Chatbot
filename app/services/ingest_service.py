@@ -182,6 +182,61 @@ def _ms(start: float) -> str:
 
 # ── Public entry point ────────────────────────────────────────────────────────
 
+def ingest_from_data(transcript_data: dict, project_id: str, meeting_number: int) -> dict:
+    """
+    Run the full ingest pipeline from already-fetched transcript data.
+
+    Used by reingest_all.py when data is loaded from local cache — no Fireflies
+    API call needed. The caller is responsible for deleting old ChromaDB chunks
+    before calling this so the duplicate check passes.
+
+    transcript_data: raw dict in the same shape fetch_transcript() returns, i.e.
+        {"data": {"transcript": {id, title, date, sentences, summary}}}
+    """
+    t_start = time.time()
+
+    raw = transcript_data.get("data", {}).get("transcript", {})
+    meeting_id = raw.get("id", "unknown")
+
+    logger.info("ingest_from_data | meeting_id=%s | project=%s", meeting_id, project_id)
+
+    # Register in projects.json if not already present
+    register_meeting_in_project(project_id, meeting_id)
+
+    normalized_data = normalize_transcript(transcript_data)
+    logger.info("Normalize → %d sentences", len(normalized_data["sentences"]))
+
+    meeting_metadata = build_meeting_metadata(normalized_data)
+    meeting_metadata["meeting_number"] = meeting_number
+
+    chunks = create_chunks(normalized_data["sentences"], meeting_metadata)
+    logger.info("Chunking → %d chunks", len(chunks))
+
+    summary_text = _resolve_summary(normalized_data, chunks, meeting_metadata["title"])
+    if summary_text:
+        chunks.append(build_summary_chunk(summary_text, meeting_metadata, len(chunks) + 1))
+
+    if not _stamp_project_and_roles(chunks, meeting_id):
+        raise IngestError(f"Project stamping failed for {meeting_id}")
+
+    documents = chunks_to_documents(chunks)
+    if not documents:
+        raise IngestError("No valid documents produced")
+
+    stored = store_documents(documents)
+    reset_vectorstore()
+
+    return {
+        "status":         "success",
+        "meeting_id":     meeting_id,
+        "meeting_title":  meeting_metadata["title"],
+        "meeting_number": meeting_number,
+        "chunks_stored":  stored,
+        "project_id":     project_id,
+        "elapsed_ms":     int((time.time() - t_start) * 1000),
+    }
+
+
 def ingest_from_url(url: str, project_id: str) -> dict:
     """
     Full ingestion pipeline triggered by a Fireflies meeting URL.

@@ -63,6 +63,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from app.core.storage.db import get_raw_collection
+from app.agent.utils.constants import fmt_date as _fmt_date_iso
 
 _PROJECT_ID = "proj_nolocode_001"
 
@@ -159,7 +160,7 @@ def cmd_signal(args):
         ts      = _fmt_ts(meta.get("start_time"))
         speaker = meta.get("speaker_name", "Unknown")
         meeting = meta.get("meeting_title", "Unknown")
-        date    = meta.get("meeting_date", "")
+        date    = _fmt_date_iso(meta.get("meeting_date", ""))
         text    = doc.strip()
 
         # Flag likely false positives — short or vague chunks
@@ -295,7 +296,7 @@ def cmd_speaker(args):
     for i, (meta, doc) in enumerate(pairs, 1):
         ts      = _fmt_ts(meta.get("start_time"))
         meeting = meta.get("meeting_title", "Unknown")
-        date    = meta.get("meeting_date", "")
+        date    = _fmt_date_iso(meta.get("meeting_date", ""))
         signals = [s for s, f in _SIGNAL_MAP.items() if meta.get(f)]
         sig_str = f"  [{', '.join(signals)}]" if signals else ""
         print(f"  [{i:03d}] ({ts})  —  {meeting} ({date}){sig_str}")
@@ -309,7 +310,7 @@ def cmd_speaker(args):
     print(f"  Use the EXACT stored name: \"{exact_name}\"")
     print(f"  → Sentence: \"The name {exact_name} appears in the answer.\"")
     if metas:
-        dates_seen = sorted(set(str(m.get("meeting_date", "")) for m in metas))
+        dates_seen = sorted(set(_fmt_date_iso(m.get("meeting_date", "")) for m in metas))
         print(f"  → Meetings where they appear: {dates_seen}")
     print(f"{'═'*65}\n")
 
@@ -367,7 +368,7 @@ def cmd_keyword(args):
             for m, d in partial[:5]:
                 ts  = _fmt_ts(m.get("start_time"))
                 spk = m.get("speaker_name","?")
-                dt  = m.get("meeting_date","")
+                dt  = _fmt_date_iso(m.get("meeting_date",""))
                 print(f"    ({ts}) {spk} — {dt}")
                 print(f"    \"{d.strip()[:150]}…\"")
                 print()
@@ -376,7 +377,7 @@ def cmd_keyword(args):
             ts      = _fmt_ts(meta.get("start_time"))
             speaker = meta.get("speaker_name","Unknown")
             meeting = meta.get("meeting_title","Unknown")
-            date    = meta.get("meeting_date","")
+            date    = _fmt_date_iso(meta.get("meeting_date",""))
             signals = [s for s, f in _SIGNAL_MAP.items() if meta.get(f)]
             sig_str = f"  [{', '.join(signals)}]" if signals else ""
             print(f"  [{i:03d}] {speaker} ({ts})  —  {meeting} ({date}){sig_str}")
@@ -576,7 +577,7 @@ def cmd_meetings(args):
         if mid not in meetings:
             meetings[mid] = {
                 "title":   m.get("meeting_title", "?"),
-                "date":    m.get("meeting_date", "?"),
+                "date":    _fmt_date_iso(m.get("meeting_date", "?")),
                 "number":  m.get("meeting_number", "?"),
                 "total":   0,
                 **{s: 0 for s in _SIGNAL_MAP},
@@ -638,7 +639,7 @@ def cmd_speakers(args):
         if name not in speakers:
             speakers[name] = {"role": m.get("speaker_role","?"), "count": 0, "meetings": set()}
         speakers[name]["count"] += 1
-        speakers[name]["meetings"].add(m.get("meeting_date","?"))
+        speakers[name]["meetings"].add(_fmt_date_iso(m.get("meeting_date","?")))
 
     scope_label = f" in meeting {args.meeting_date}" if args.meeting_date else " across all meetings"
 

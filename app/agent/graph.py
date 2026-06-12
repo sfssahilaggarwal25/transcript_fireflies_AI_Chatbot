@@ -61,6 +61,7 @@ from .prompts import SYSTEM_PROMPT
 from .state import AgentState
 from .tools import TOOLS
 from .query_scope import query_scope_node
+from .utils.constants import fmt_date
 from app.core.storage.db import get_raw_collection
 
 logger = logging.getLogger(__name__)
@@ -97,7 +98,7 @@ def _resolve_scope_labels(project_id: str, scope_ids: list) -> str:
             metas = res.get("metadatas", [])
             if metas:
                 title = metas[0].get("meeting_title", mid)
-                date  = metas[0].get("meeting_date", "")
+                date  = fmt_date(metas[0].get("meeting_date", ""))
                 labels.append(f"'{title}' ({date})")
             else:
                 labels.append(mid)
@@ -119,8 +120,13 @@ def _get_llm_model() -> ChatGoogleGenerativeAI:
     )
 
 
-def _make_call_llm(llm_with_tools):
-    """Return a node function that calls the LLM (with tools bound)."""
+def _make_call_llm(llm_with_tools, llm_with_tools_forced):
+    """Return a node function that calls the LLM (with tools bound).
+
+    Round 1 uses llm_with_tools_forced (tool_choice="any") to guarantee at
+    least one tool call. Subsequent rounds use llm_with_tools (auto) so the
+    model can return a final answer once it has gathered enough context.
+    """
 
     def call_llm(state: AgentState) -> dict:
         scope_type = state.get("scope_type", "project")
@@ -155,10 +161,14 @@ def _make_call_llm(llm_with_tools):
         messages = [system] + list(state["messages"])
 
         from langchain_core.messages import ToolMessage
-        round_num = sum(1 for m in state["messages"] if isinstance(m, ToolMessage)) + 1
+        completed_tool_rounds = sum(1 for m in state["messages"] if isinstance(m, ToolMessage))
+        round_num = completed_tool_rounds + 1
         logger.info("[3] AGENT    — round %d | scope=%s | messages=%d", round_num, scope_type, len(messages))
 
-        response = llm_with_tools.invoke(messages)
+        # Round 1: force a tool call so the model always searches before answering.
+        # Round 2+: let the model decide (it may return final answer or call more tools).
+        llm = llm_with_tools_forced if completed_tool_rounds == 0 else llm_with_tools
+        response = llm.invoke(messages)
 
         tool_calls = getattr(response, "tool_calls", [])
         if tool_calls:
@@ -207,9 +217,10 @@ def get_graph():
     lru_cache ensures we don't re-initialize the LLM or rebuild the graph
     on every request.
     """
-    llm         = _get_llm_model()
-    llm_w_tools = llm.bind_tools(TOOLS)
-    call_llm    = _make_call_llm(llm_w_tools)
+    llm                  = _get_llm_model()
+    llm_w_tools          = llm.bind_tools(TOOLS)
+    llm_w_tools_forced   = llm.bind_tools(TOOLS, tool_choice="any")
+    call_llm             = _make_call_llm(llm_w_tools, llm_w_tools_forced)
     tools_node  = ToolNode(TOOLS)   # handles InjectedState automatically
 
     builder = StateGraph(AgentState)

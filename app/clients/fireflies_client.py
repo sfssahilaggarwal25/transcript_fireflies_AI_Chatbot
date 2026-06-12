@@ -103,6 +103,79 @@ def fetch_transcript(transcript_id: str) -> Dict[str, Any]:
         raise FirefliesAPIError(f"Unexpected error: {str(e)}")
 
 
+def fetch_all_transcripts(limit: int = 100) -> list[dict]:
+    """
+    Fetch all transcripts in one API call using the bulk `transcripts` query.
+
+    Returns a list of raw transcript dicts, each in the same shape as the
+    `transcript` field returned by fetch_transcript() — so the rest of the
+    pipeline (normalize → chunk → store) works unchanged.
+
+    limit: max meetings to return (Fireflies free tier has ~100 total).
+    Raises FirefliesAPIError on any API failure.
+    """
+    if not Config.API_KEY:
+        raise FirefliesAPIError("Fireflies API key not configured")
+
+    query = """
+    query Transcripts($limit: Int) {
+      transcripts(limit: $limit) {
+        id
+        title
+        date
+        sentences {
+          text
+          speaker_name
+          start_time
+          end_time
+        }
+        summary {
+          overview
+          action_items
+        }
+      }
+    }
+    """
+
+    try:
+        response = requests.post(
+            Config.FIREFLIES_API_URL,
+            headers={
+                "Authorization": f"Bearer {Config.API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={"query": query, "variables": {"limit": limit}},
+            timeout=60,
+        )
+
+        if not response.ok:
+            try:
+                error_body = response.json()
+            except Exception:
+                error_body = response.text[:500]
+            raise FirefliesAPIError(
+                f"Fireflies bulk fetch HTTP {response.status_code}: {error_body}"
+            )
+
+        data = response.json()
+
+        if "errors" in data:
+            error_msg = data["errors"][0].get("message", "Unknown API error")
+            logger.error("Fireflies bulk query error: %s", error_msg)
+            raise FirefliesAPIError(f"Fireflies API error: {error_msg}")
+
+        transcripts = data.get("data", {}).get("transcripts", [])
+        logger.info("Bulk fetch returned %d transcripts", len(transcripts))
+        return transcripts
+
+    except FirefliesAPIError:
+        raise
+    except requests.exceptions.Timeout:
+        raise FirefliesAPIError("Bulk fetch timed out")
+    except requests.exceptions.RequestException as e:
+        raise FirefliesAPIError(f"Network error during bulk fetch: {e}")
+
+
 def validate_api_config() -> bool:
     """Validate that API configuration is properly set up"""
     return bool(Config.FIREFLIES_API_URL and Config.API_KEY)

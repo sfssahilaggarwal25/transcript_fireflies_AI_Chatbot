@@ -30,17 +30,11 @@ When the user says **"update files"** or **"session done"**, immediately update 
 
 ---
 
-## Active vs Deprecated Code — CRITICAL
+## Active Implementation
 
 **`app/agent/`** is the ACTIVE implementation. All new work, bug fixes, and suggestions go here.
 
-**`app/rag/`** is the OLD/DEPRECATED implementation. Do NOT:
-- Suggest edits to files in `app/rag/`
-- Read `app/rag/` files as reference for new work
-- Confuse `app/rag/prompts.py` with `app/agent/prompts.py`
-- Confuse `app/rag/streamlit_app.py` with `app/agent/streamlit_app.py`
-
-If asked something ambiguous (e.g. "fix the prompts" or "update the tests"), always default to `app/agent/`. Only touch `app/rag/` if the user explicitly names that path.
+If asked something ambiguous (e.g. "fix the prompts" or "update the tests"), always default to `app/agent/`.
 
 ---
 
@@ -66,10 +60,10 @@ This is an AI Meeting Intelligence POC for Project Managers. It answers question
 | `docs/TODO.md` | Remaining work, ordered by phase |
 | `docs/DISCUSSION.md` | Design decisions, open questions, session log |
 | `docs/DEVELOPMENT_GUIDE.md` | Architecture, data flow, env setup |
-| `app/rag/tests/TESTING_GUIDE.md` | Test suite commands, Mermaid flowchart, how to read reports |
-| `app/rag/tests/query_bank/easy.json` | Easy-level test queries (12 queries, 5 intents) |
-| `app/rag/answer/pipeline.py` | Full 5-step RAG pipeline — understand → retrieve → rerank → prompt → LLM |
-| `app/core/retrieval/retriever.py` | Hybrid retrieval (dense + BM25 + RRF) compat shim |
+| `app/agent/service.py` | Main entry point — `answer_query()` runs the LangGraph agent |
+| `app/agent/tools.py` | Tool definitions for the LangGraph agent |
+| `app/core/retrieval/hybrid.py` | Hybrid retrieval (dense + BM25 + RRF) |
+| `app/services/ingest_service.py` | On-demand ingestion pipeline (called by POST /ingest) |
 
 ---
 

@@ -59,6 +59,7 @@ def search_transcripts(
     k: int = 15,
     speaker_name: Optional[str] = None,
     signal_filter: Optional[str] = None,
+    dense_query: Optional[str] = None,
     state: Annotated[dict, InjectedState] = None,
 ) -> str:
     """Search meeting transcript chunks using hybrid semantic + keyword search.
@@ -68,7 +69,7 @@ def search_transcripts(
     - Specific topics, technical decisions, features, or blockers
     - Speaker contributions (use speaker_name to scope to one person)
     - Decisions made (signal_filter='decision')
-    - Action items / commitments (signal_filter='commitment')   
+    - Action items / commitments (signal_filter='commitment')
     - Questions that were raised (signal_filter='question')
     - Open issues / blockers (signal_filter='open_issue')
     - Documents / files shared by participants (signal_filter='document_share')
@@ -92,6 +93,17 @@ def search_transcripts(
         Restrict results to chunks containing a specific signal type.
         One of: 'decision', 'commitment', 'question', 'open_issue', 'document_share'.
         If this filter returns 0 results, retry the call WITHOUT this filter.
+    dense_query : str, optional
+        Topic-only keywords for the vector (semantic) search stage.
+        Use this when speaker_name is set — the speaker is already filtered via
+        hard_filters, so encoding the speaker name in the embedding only dilutes
+        the topical signal. Also use to replace ambiguous umbrella terms with
+        specific technical keywords.
+        Examples:
+          query="AI architecture",   dense_query="multi-agent LangGraph subgraph node tool embedding vector chunking"
+          query="forecasting",       dense_query="forecast formula retained earnings accruals calculation"
+          query="Redis decisions",   dense_query="Redis cache session storage decision implementation"
+        If omitted, the query value is used for both BM25 and dense search.
     """
     if not query or not query.strip():
         return (
@@ -162,6 +174,36 @@ def search_transcripts(
         "search_transcripts | preset=%s | k=%d | rerank_top_n=%d | floor=%d | sort=%s | trigger=%r",
         preset_name, effective_k, rerank_top_n, diversity_cap_floor, sort_by, original_user_query[:60],
     )
+    if resolved_speaker:
+        logger.info(
+            "search_transcripts | speaker query: dense=%r  (was: %r)",
+            effective_query, original_user_query,
+        )
+
+    # Determine dense query for the vector search stage.
+    #
+    # Priority order:
+    #   1. Caller-supplied dense_query (most specific — LLM provided topic keywords)
+    #   2. effective_query when speaker is filtered (speaker name already handled
+    #      by hard_filters — don't encode it into the embedding too)
+    #   3. original_user_query as fallback (preserves full intent for topic queries)
+    #
+    # This separation matters most for speaker+topic queries where the topic term
+    # is ambiguous (e.g. "AI architecture" matches both software architecture and
+    # AI/ML system design). The LLM can resolve the ambiguity by providing a
+    # specific dense_query; the fallback at least strips the speaker name.
+    if dense_query:
+        dense_for_hybrid = dense_query
+    elif resolved_speaker:
+        dense_for_hybrid = effective_query
+    else:
+        dense_for_hybrid = original_user_query
+
+    if dense_query and resolved_speaker:
+        logger.info(
+            "search_transcripts | dense_query decoupled | bm25=%r | dense=%r | speaker=%r",
+            effective_query, dense_for_hybrid, resolved_speaker,
+        )
 
     try:
         docs = hybrid_retrieve(
@@ -170,7 +212,7 @@ def search_transcripts(
             hard_filters=filters if filters else None,
             date_where=scope_where,
             k=effective_k,
-            dense_query=original_user_query,
+            dense_query=dense_for_hybrid,
         )
     except Exception as exc:
         logger.warning("search_transcripts error: %s", exc)
@@ -190,43 +232,46 @@ def search_transcripts(
         if not docs:
             return "No relevant transcript chunks found for this query."
 
-    # Pre-rerank expansion: short fragments get their neighbors added to the
-    # candidate pool so the reranker scores the full conversational unit.
-    # See expansion.py → _expand_short_chunks_for_reranking for details.
-    docs = _expand_short_chunks_for_reranking(docs)
-
-    # Rerank: score all hybrid results by true relevance to the query, then
-    # trim to preset rerank_top_n before passing anything to the LLM.
+    # Pre-rerank expansion + reranking.
     #
-    # Why here and not inside hybrid_retrieve:
-    #   Reranking needs the full query intent — hybrid_retrieve only knows keywords.
-    #   Doing it here lets us pass speaker_hint so the named speaker's chunks
-    #   get a post-score boost even if they scored slightly lower on content alone.
+    # Reranking is DISABLED by default (RERANK_ENABLED=0).
     #
-    # Two-stage expansion strategy:
-    #   Stage 1 (above): short chunks get neighbors added BEFORE reranking so the
-    #     reranker can score the full conversational unit, not a fragment.
-    #   Stage 2 (_expand_context below): all direct_pass (score 7+) chunks get
-    #     neighbors added AFTER reranking to give the LLM richer display context.
+    # Eval results (2026-06-08):
+    #   No rerank:            0.792 avg, ~10s latency
+    #   gemini-2.5-flash-lite: 0.795 avg, ~12s latency  → +0.004 delta, 4 queries hurt
+    #   gemini-2.5-flash:     0.831 avg, ~50s latency  → +0.039 delta, 1 query hurt
     #
-    # The exhaustive signal path already returned above — no skip needed here.
-    #
-    # Query decoupling: retrieval uses effective_query (LLM-simplified keywords,
-    # better for vector/BM25 matching). Reranker uses original_user_query
-    # (full natural language, preserves intent for the LLM scorer).
-    if original_user_query != effective_query:
-        logger.info(
-            "search_transcripts | rerank query decoupled | retrieval=%r | rerank=%r",
-            effective_query, original_user_query,
+    # Production upgrade path: deploy to Linux, add sentence-transformers, set
+    # RERANK_MODEL=local → cross-encoder/ms-marco-MiniLM-L-6-v2 (~100ms, $0/query).
+    import os as _os
+    if _os.getenv("RERANK_ENABLED", "0") != "0":
+        # Stage 1: expand short fragments before reranking so the reranker
+        # scores full conversational units, not cut-off fragments.
+        docs = _expand_short_chunks_for_reranking(docs)
+        # Stage 2: rerank by true relevance to the full user query.
+        # Query decoupling: retrieval used effective_query (clean keywords),
+        # reranker uses original_user_query (full intent).
+        if original_user_query != effective_query:
+            logger.info(
+                "search_transcripts | rerank query decoupled | retrieval=%r | rerank=%r",
+                effective_query, original_user_query,
+            )
+        docs = rerank_documents(
+            query=original_user_query,
+            documents=docs,
+            # topic_hint rule:
+            #   Speaker query  → dense_query strips the speaker name so the reranker
+            #     focuses on the specific topic, not just "someone said something about X".
+            #   No-speaker query → "" so the original question drives scoring alone.
+            #     Using dense_query as topic_hint for no-speaker queries causes discussion
+            #     chunks (describe the topic) to score as high as decision/confirmation
+            #     chunks (confirm the outcome), because vocabulary overlap outweighs intent.
+            topic_hint=dense_query if resolved_speaker else "",
+            speaker_hint=resolved_speaker or "",
+            top_n=rerank_top_n,
         )
-
-    docs = rerank_documents(
-        query=original_user_query,  # full user intent → reranker understands scope
-        documents=docs,
-        topic_hint=effective_query, # clean keyword topic → modifier-aware rule fires correctly
-        speaker_hint=resolved_speaker or "",
-        top_n=rerank_top_n,
-    )
+    else:
+        docs = docs[:rerank_top_n]
 
     # Temporal sort: after reranking filters irrelevant chunks, re-sort by date so
     # the LLM sees chronological evolution rather than relevance-ranked order.
@@ -336,7 +381,7 @@ def get_meeting_summaries(
         if not docs:
             return f"No summary found matching '{meeting_title}'."
 
-    sorted_docs   = sorted(docs, key=lambda d: str(d.metadata.get("meeting_date", "")))
+    sorted_docs   = sorted(docs, key=lambda d: fmt_date(d.metadata.get("meeting_date", "")))
     chunk_numbers = _append_docs(sorted_docs)
 
     lines: list[str] = [f"Found {len(sorted_docs)} meeting summary/summaries:\n"]
@@ -503,7 +548,7 @@ def count_signal_chunks(
         raw_metas = results.get("metadatas", [])
         if raw_docs:
             docs = [Document(page_content=t, metadata=m) for t, m in zip(raw_docs, raw_metas)]
-            docs.sort(key=lambda d: (str(d.metadata.get("meeting_date", "")), d.metadata.get("start_time", 0) or 0))
+            docs.sort(key=lambda d: (fmt_date(d.metadata.get("meeting_date", "")), d.metadata.get("start_time", 0) or 0))
             _append_docs(docs)
     except Exception as exc:
         logger.warning("count_signal_chunks error: %s", exc)

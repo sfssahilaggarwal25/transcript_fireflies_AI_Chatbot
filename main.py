@@ -2,7 +2,7 @@ import os
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from app.handlers.webhook_handler import handle_fireflies_webhook
-from app.services.answer_service import answer_question
+from app.agent.service import answer_query
 from app.services.ingest_service import ingest_from_url, IngestError
 from app.config import Config
 from app.logger import get_logger
@@ -46,7 +46,7 @@ async def query_endpoint(request: QueryRequest):
     log.info("POST /query | project_id=%s | question='%s'", request.project_id, request.question)
 
     try:
-        result = answer_question(query=request.question, project_id=request.project_id)
+        result = answer_query(query=request.question, project_id=request.project_id)
         return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

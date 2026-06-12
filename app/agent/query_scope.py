@@ -7,8 +7,7 @@ Runs ONCE before the agent node. Writes scope fields into AgentState:
 REPLACED: the old regex-only parse_meeting_scope() approach.
 NOW USES:  two-stage LLM resolver (app/agent/scope_llm.py).
 
-The old regex function (parse_meeting_scope) still lives in app/core/scope.py
-and is used by the deprecated app/rag/ pipeline — it is NOT touched here.
+The old regex function (parse_meeting_scope) still lives in app/core/scope.py.
 
 Key fixes applied here
 ----------------------

@@ -29,7 +29,8 @@ _COMMITMENT_RE = re.compile(
 # Keep _FALSE_COMMITMENT_RE but add more exclusions:
 _FALSE_COMMITMENT_RE = re.compile(
     r"\b(i will say|i'?ll say|i will note|we will see|we'?ll see|"
-    r"that will|this will|it will|would be|will be able)\b",
+    r"that will|this will|it will|would be|will be able|"
+    r"i'?ll be back|i will be back|i'?ll be there|i will be there)\b",
     re.IGNORECASE
 )
 
@@ -199,6 +200,7 @@ def build_summary_chunk(summary_text: str, meeting_meta: dict, chunk_index: int)
         "chunk_index":        chunk_index,
         "chunk_type":         "summary",
         "is_meeting_summary": True,
+        "segment_type":       "summary",
         "start_time":         None,
         "end_time":           None,
         "prev_chunk_id":      None,
@@ -222,22 +224,29 @@ def _make_speaker_id(speaker_name: str) -> str:
 
 def create_chunks(sentences, meeting_meta):
     """
-    Utterance-based chunking: one chunk = one speaker block.
-    Chunk metadata follows the full 5-level schema.
+    Production-level chunking: accumulate same-speaker sentences until MIN_CHARS.
 
-    Tier 2a additions: start_time / end_time (seconds, pre-converted by normalize.py),
-    prev_chunk_id / next_chunk_id.
-    Tier 2b additions: MAX_CHARS raised to 500, junk detection, topic-shift splits.
+    Key changes from v1 (utterance-based):
+    - MIN_CHARS raised 80 → 200: same-speaker sentences now accumulate until the
+      buffer reaches 200 chars before being eligible to flush at a topic-shift.
+      Previously MIN_CHARS was dead code (all flush calls used force=True).
+    - Topic-shift flush now uses force=False: "Moving on..." within the same
+      speaker's turn no longer splits a buffer that hasn't reached 200 chars yet.
+    - Speaker-change flush stays force=True: content fragments at speaker
+      boundaries are real data (financial terms, short answers) and must be kept.
+    - Signal detection runs on all chunks. False positives fixed in
+      _FALSE_COMMITMENT_RE (added "i'll be back" etc.) not by size threshold.
+    - segment_type field added: "content" for all utterance chunks.
     """
     chunks = []
     current_chunk = []
-    current_times = []   # list of (start_sec, end_sec) per sentence
+    current_times = []
     current_speaker = None
     chunk_index = 1
 
-    MAX_CHARS = 500   # raised from 250 — reduces semantic splits at utterance boundaries
-    MIN_CHARS = 80
-    HARD_MIN = 15
+    MAX_CHARS = 500   # hard ceiling — flush immediately if exceeded
+    MIN_CHARS = 200   # merge target — don't split topic-shifts below this
+    HARD_MIN  = 15    # absolute floor — drop anything shorter
 
     def flush_chunk(force=False):
         nonlocal current_chunk, current_times, chunk_index
@@ -252,19 +261,15 @@ def create_chunks(sentences, meeting_meta):
             current_times = []
             return
 
+        # force=False means "only flush if ready" — used for topic-shift splits
+        # within a same-speaker turn so short buffers keep accumulating.
         if len(chunk_text) < MIN_CHARS and not force:
             return
 
-        # Detect signals first — chunks containing a decision, commitment, or question
-        # bypass the quality filter entirely. A short commitment like "I'll do it."
-        # must survive even if it has few meaningful words.
         signals = _detect_signals(chunk_text)
+
         has_signal = (
-            signals["contains_decision"]
-            or signals["contains_commitment"]
-            or signals["contains_question"]
-            or signals["contains_document_share"]
-            or signals["contains_open_issue"]
+            any(signals.values())
             or bool(_CONFIRMATION_RE.search(chunk_text))
         )
 
@@ -279,41 +284,27 @@ def create_chunks(sentences, meeting_meta):
         end_time   = max(valid_ends)   if valid_ends   else None
 
         chunks.append({
-            # Identity
-            "chunk_id": f"{meeting_meta['meeting_id']}_{chunk_index}",
-
-            # Level 2 — Meeting
-            "meeting_id":     meeting_meta["meeting_id"],
-            "meeting_title":  meeting_meta["title"],
-            "meeting_date":   meeting_meta["date"],
-            "meeting_number": meeting_meta.get("meeting_number", 0),
-            "meeting_type":   "unknown",
-
-            # Level 3 — Speaker
-            "speaker_name": current_speaker,
-            "speaker_id":   _make_speaker_id(current_speaker),
-            "speaker_role": "unknown",    # overridden by _stamp_project_and_roles()
-
-            # Level 4 — Chunk position
-            "chunk_index":        chunk_index,
-            "chunk_type":         "utterance",
+            "chunk_id":          f"{meeting_meta['meeting_id']}_{chunk_index}",
+            "meeting_id":        meeting_meta["meeting_id"],
+            "meeting_title":     meeting_meta["title"],
+            "meeting_date":      meeting_meta["date"],
+            "meeting_number":    meeting_meta.get("meeting_number", 0),
+            "meeting_type":      "unknown",
+            "speaker_name":      current_speaker,
+            "speaker_id":        _make_speaker_id(current_speaker),
+            "speaker_role":      "unknown",
+            "chunk_index":       chunk_index,
+            "chunk_type":        "utterance",
             "is_meeting_summary": False,
-
-            # Tier 2a: timing (ms from meeting start; None when API doesn't provide it)
-            "start_time": start_time,
-            "end_time":   end_time,
-
-            # Tier 2a: adjacency links (filled in post-loop pass below)
-            "prev_chunk_id": None,
-            "next_chunk_id": None,
-
-            # Level 5 — Content signals (pre-computed above)
+            "segment_type":      "content",
+            "start_time":        start_time,
+            "end_time":          end_time,
+            "prev_chunk_id":     None,
+            "next_chunk_id":     None,
             **signals,
-            "sentiment": "neutral",
-
-            # Content
-            "text":        chunk_text,
-            "text_length": len(chunk_text),
+            "sentiment":         "neutral",
+            "text":              chunk_text,
+            "text_length":       len(chunk_text),
         })
 
         chunk_index += 1
@@ -321,22 +312,27 @@ def create_chunks(sentences, meeting_meta):
         current_times = []
 
     for s in sentences:
-        text       = s["text"].strip()
-        speaker    = s["speaker_name"]
-        start_sec  = s.get("start_time")
-        end_sec    = s.get("end_time")
+        text      = s["text"].strip()
+        speaker   = s["speaker_name"]
+        start_sec = s.get("start_time")
+        end_sec   = s.get("end_time")
 
         if len(text) < 8:
             continue
 
         if speaker != current_speaker:
+            # Speaker changed — flush whatever the previous speaker accumulated.
+            # force=True: content fragments at speaker boundaries are real data
+            # (short answers, financial terms) and must be preserved.
             flush_chunk(force=True)
             current_chunk = []
             current_times = []
             current_speaker = speaker
         elif current_chunk and _TOPIC_SHIFT_RE.match(text):
-            # Same speaker but sentence opens a new topic — split here
-            flush_chunk(force=True)
+            # Same speaker opens a new topic — only split if buffer is large enough.
+            # force=False: if the buffer hasn't reached MIN_CHARS yet, keep accumulating
+            # rather than creating another tiny chunk.
+            flush_chunk(force=False)
 
         projected = " ".join(current_chunk + [text])
         if len(projected) > MAX_CHARS:
@@ -347,8 +343,6 @@ def create_chunks(sentences, meeting_meta):
 
     flush_chunk(force=True)
 
-    # ── Post-loop adjacency linking pass ──────────────────────────────────────
-    # Only utterance chunks are linked — summary chunk is separate.
     for i, chunk in enumerate(chunks):
         chunk["prev_chunk_id"] = chunks[i - 1]["chunk_id"] if i > 0 else None
         chunk["next_chunk_id"] = chunks[i + 1]["chunk_id"] if i < len(chunks) - 1 else None

@@ -21,6 +21,7 @@ from .base import (
     _build_filter,
     _fetch_project_corpus,
     _log_chunk_list,
+    _fmt_date,
     DEFAULT_TOP_K,
 )
 
@@ -71,9 +72,19 @@ def _normalize_for_bm25(text: str) -> str:
 
 
 def _tokenize(text: str) -> list[str]:
-    """Tokenize and remove stopwords. Single-char tokens also dropped."""
-    tokens = _normalize_for_bm25(text).split()
-    return [t for t in tokens if t not in _BM25_STOPWORDS and len(t) > 1]
+    """Tokenize and remove stopwords, then add adjacent-word bigrams.
+
+    Bigrams (e.g. "ai_architecture", "harsh_vardhan") give BM25 a co-location
+    signal that is absent from unigrams alone — a chunk where "AI" and
+    "architecture" appear in separate sentences scores the same as one where
+    the speaker said "AI architecture" as a phrase. Bigrams fix that.
+    Their IDF is naturally high (rare compound tokens) so BM25 weights them
+    strongly without any manual tuning.
+    """
+    tokens   = _normalize_for_bm25(text).split()
+    unigrams = [t for t in tokens if t not in _BM25_STOPWORDS and len(t) > 1]
+    bigrams  = [f"{a}_{b}" for a, b in zip(unigrams, unigrams[1:])]
+    return unigrams + bigrams
 
 
 def _bm25_search(query: str, corpus: list[Document], k: int) -> list[Document]:
@@ -184,6 +195,149 @@ def retrieve_documents(
         raise RuntimeError(f"Document retrieval failed: {e}") from e
 
 
+# ── Side-by-side Dense vs BM25 comparison table ───────────────────────────────
+
+def _log_side_by_side(
+    dense_docs:  list,
+    bm25_docs:   list,
+    bm25_tokens: list,
+    dense_query: str,
+) -> None:
+    """
+    Log Dense and BM25 results in two parallel columns so you can read both
+    lists at the same time and immediately see overlaps vs misses.
+
+    Column layout (113 chars wide):
+      #rank  Dense: speaker · meeting · date / status / text   │  #rank  BM25: same fields
+
+    Status indicators (Dense column):
+      🟣 OVERLAP  — this chunk also appears in BM25 at rank N
+      ❌ BM25 miss — BM25 never found it; shows which query tokens are absent
+
+    Status indicators (BM25 column):
+      🎯 matched   — which query tokens triggered BM25 to return this chunk
+      🟣 in dense  — this BM25 chunk also appears in the Dense list
+      🟠 BM25-only — BM25 found it but Dense did not
+    """
+    C = 46  # content chars per column (after rank prefix)
+    R = 4   # rank prefix width
+
+    # ── Pre-compute per-chunk lookups ────────────────────────────────────────
+    bm25_rank_of: dict = {}
+    bm25_matched: dict = {}
+    for i, doc in enumerate(bm25_docs):
+        cid = doc.metadata.get("chunk_id", str(id(doc)))
+        bm25_rank_of[cid] = i + 1
+        ctoks = set(_tokenize(doc.page_content))
+        bm25_matched[cid] = [t for t in bm25_tokens if t in ctoks]
+
+    dense_cid_set = {d.metadata.get("chunk_id", str(id(d))) for d in dense_docs}
+
+    # ── Cell formatter ───────────────────────────────────────────────────────
+    def _fit(s, n: int = C) -> str:
+        s = str(s)
+        return (s[: n - 1] + "…") if len(s) > n else s.ljust(n)
+
+    # ── Entry builders — return exactly 3 lines each ─────────────────────────
+    def _dense_entry(doc) -> tuple:
+        m       = doc.metadata
+        cid     = m.get("chunk_id", str(id(doc)))
+        speaker = m.get("speaker_name", "?")[:18]
+        date    = _fmt_date(m.get("meeting_date"))
+        mtg     = m.get("meeting_title", "?")[:18]
+        preview = doc.page_content.replace("\n", " ").strip()
+
+        if cid in bm25_rank_of:
+            toks   = bm25_matched.get(cid, [])
+            status = "🟣 OVERLAP  BM25 #%-2d  tokens:%s" % (bm25_rank_of[cid], toks[:3])
+        else:
+            ctoks  = set(_tokenize(doc.page_content))
+            miss   = [t for t in bm25_tokens if t not in ctoks]
+            status = ("❌ miss  no tokens: %s" % miss[:3]) if miss else "❌ miss  low IDF (tokens present)"
+
+        return (
+            _fit("%s  ·  %s  (%s)" % (speaker, mtg, date)),
+            _fit(status),
+            _fit('"%s"' % preview[:C - 3]),
+        )
+
+    def _bm25_entry(doc) -> tuple:
+        m       = doc.metadata
+        cid     = m.get("chunk_id", str(id(doc)))
+        speaker = m.get("speaker_name", "?")[:18]
+        date    = _fmt_date(m.get("meeting_date"))
+        mtg     = m.get("meeting_title", "?")[:18]
+        toks    = bm25_matched.get(cid, [])
+        flag    = "🟣 in dense" if cid in dense_cid_set else "🟠 BM25-only"
+        status  = "🎯 matched:%s  %s" % (toks[:4], flag)
+        preview = doc.page_content.replace("\n", " ").strip()
+
+        return (
+            _fit("%s  ·  %s  (%s)" % (speaker, mtg, date)),
+            _fit(status),
+            _fit('"%s"' % preview[:C - 3]),
+        )
+
+    def _blank_entry() -> tuple:
+        return (_fit(""), _fit("(no chunk at this rank)"), _fit(""))
+
+    # ── Table structure ───────────────────────────────────────────────────────
+    W       = R + 2 + C           # one column width
+    BAR     = "═" * W
+    THIN    = "─" * W
+    HDR_SEP = "  " + BAR + "═╪═" + BAR
+    ROW_SEP = "  " + THIN + "─┼─" + THIN
+
+    def _line(rk_d, dl, rk_b, bl):
+        return "  %-*s  %s  │  %-*s  %s" % (R, rk_d, dl, R, rk_b, bl)
+
+    # ── Emit header ──────────────────────────────────────────────────────────
+    logger.info(HDR_SEP)
+    logger.info(_line(
+        "🔵",
+        _fit("DENSE  [%d chunks]   query: %r" % (len(dense_docs), dense_query[:34])),
+        "🟠",
+        _fit("BM25   [%d chunks]" % len(bm25_docs)),
+    ))
+    logger.info(_line(
+        "",
+        _fit("semantic — finds conceptually related text"),
+        "",
+        _fit("tokens: %s" % bm25_tokens[:6]),
+    ))
+    logger.info(HDR_SEP)
+    logger.info(_line(
+        "#",
+        _fit("Speaker  ·  Meeting  (Date)  /  Status  /  Text"),
+        "#",
+        _fit("Speaker  ·  Meeting  (Date)  /  Tokens  /  Text"),
+    ))
+    logger.info(ROW_SEP)
+
+    # ── One row per rank position ─────────────────────────────────────────────
+    n_rows = max(len(dense_docs), len(bm25_docs))
+    for i in range(n_rows):
+        d_doc = dense_docs[i] if i < len(dense_docs) else None
+        b_doc = bm25_docs[i]  if i < len(bm25_docs)  else None
+
+        d_lines = _dense_entry(d_doc) if d_doc else _blank_entry()
+        b_lines = _bm25_entry(b_doc)  if b_doc else _blank_entry()
+
+        d_rank = "#%d" % (i + 1) if d_doc else ""
+        b_rank = "#%d" % (i + 1) if b_doc else ""
+
+        for li in range(3):
+            rk_d = d_rank if li == 0 else ""
+            rk_b = b_rank if li == 0 else ""
+            logger.info(_line(rk_d, d_lines[li], rk_b, b_lines[li]))
+
+        logger.info(_line("", _fit(""), "", _fit("")))
+        if i < n_rows - 1:
+            logger.info(ROW_SEP)
+
+    logger.info(HDR_SEP)
+
+
 def hybrid_retrieve(
     query: str,
     project_id: str,
@@ -207,68 +361,118 @@ def hybrid_retrieve(
     project_id = _validate_project_id(project_id)
     _dense_q   = dense_query.strip() if dense_query and dense_query.strip() else query
 
-    logger.debug("HYBRID RETRIEVAL | bm25_query=%r | dense_query=%r | project=%s", query, _dense_q, project_id)
-    # Stage 1a: dense — uses _dense_q (original PM query when provided, richer semantic signal)
+    # ── Stage 1a: dense vector search ────────────────────────────────────────
+    import os as _os
+    _DENSE_MIN_SCORE = float(_os.getenv("DENSE_MIN_SCORE", "0.0"))
+
     dense_filter = _build_filter(project_id, hard_filters, date_where)
     vectorstore  = get_vectorstore()
-    raw_dense    = vectorstore.similarity_search(query=_dense_q, k=k, filter=dense_filter)
-    dense_docs   = [d for d in raw_dense if not d.metadata.get("is_meeting_summary")]
-    logger.info("  dense      : %d results (summaries dropped)", len(dense_docs))
-    logger.debug("  filter     : %s", dense_filter)
-    if len(raw_dense) != len(dense_docs):
-        logger.info("  dense      : dropped %d summary chunk(s)", len(raw_dense) - len(dense_docs))
+    scored       = vectorstore.similarity_search_with_relevance_scores(
+        query=_dense_q, k=k, filter=dense_filter
+    )
+    # Stamp each doc with its cosine similarity score for logging + filtering
+    for doc, score in scored:
+        doc.metadata["_dense_score"] = round(score, 3)
 
-    logger.info("=" * 64)
-    logger.info("  DENSE CHUNKS — accuracy check [%d total]", len(dense_docs))
-    logger.info("=" * 64)
-    for i, doc in enumerate(dense_docs, 1):
-        m   = doc.metadata
-        txt = doc.page_content.replace("\n", " ").strip()
-        logger.info("  [%d/%d] speaker  : %s", i, len(dense_docs), m.get("speaker_name", "?"))
-        logger.info("         meeting  : %s  (%s)", m.get("meeting_title", "?"), m.get("meeting_date", "?"))
-        logger.info("         chunk_id : %s", m.get("chunk_id", "?"))
+    # Log full score distribution BEFORE any filtering — shows where all k chunks sit
+    if scored:
+        all_scores = [s for _, s in scored]
+        s_min    = min(all_scores)
+        s_max    = max(all_scores)
+        s_avg    = sum(all_scores) / len(all_scores)
+        above_55 = sum(1 for s in all_scores if s >= 0.55)
+        above_50 = sum(1 for s in all_scores if s >= 0.50)
+        above_45 = sum(1 for s in all_scores if s >= 0.45)
+        above_40 = sum(1 for s in all_scores if s >= 0.40)
         logger.info(
-            "         signals  : decision=%s | commitment=%s | question=%s",
-            m.get("contains_decision",   False),
-            m.get("contains_commitment", False),
-            m.get("contains_question",   False),
+            "   📊 ALL %d chunks — min=%.3f  max=%.3f  avg=%.3f  | ≥0.55:%d  ≥0.50:%d  ≥0.45:%d  ≥0.40:%d",
+            len(all_scores), s_min, s_max, s_avg, above_55, above_50, above_45, above_40,
         )
-        logger.info("         TEXT     : %s", txt[:300])
-        logger.info("-" * 64)
-    _log_chunk_list("STAGE 1a — DENSE", dense_docs)
+        # Per-chunk score ladder so you can see exactly where each chunk sits
+        logger.info("   📈 scores: %s", "  ".join("%.3f" % s for s in all_scores))
 
-    # Stage 1b: BM25 (corpus already excludes summaries via _fetch_project_corpus)
-    corpus    = _fetch_project_corpus(project_id, hard_filters, date_where)
-    bm25_docs = _bm25_search(query, corpus, k=k)
-    logger.info("  corpus size: %d transcript docs (summaries excluded)", len(corpus))
-    # logger.info("  BM25 CHUNKS — accuracy check [%d total]", len(bm25_docs))
-    # logger.info("=" * 64)
-    # for i, doc in enumerate(bm25_docs, 1):
-    #     m   = doc.metadata
-    #     txt = doc.page_content.replace("\n", " ").strip()
-    #     logger.info("  [%d/%d] speaker  : %s", i, len(bm25_docs), m.get("speaker_name", "?"))
-    #     logger.info("         meeting  : %s  (%s)", m.get("meeting_title", "?"), m.get("meeting_date", "?"))
-    #     logger.info("         chunk_id : %s", m.get("chunk_id", "?"))
-    #     logger.info(
-    #         "         signals  : decision=%s | commitment=%s | question=%s",
-    #         m.get("contains_decision",   False),
-    #         m.get("contains_commitment", False),
-    #         m.get("contains_question",   False),
-    #     )
-    #     logger.info("         TEXT     : %s", txt[:300])
-    #     logger.info("-" * 64)
-    _log_chunk_list("STAGE 1b — BM25", bm25_docs)
+    # Apply minimum score threshold when set (env DENSE_MIN_SCORE > 0).
+    # Without a threshold, k=40 guarantees noise — chunks 35-40 have cosine
+    # similarity ≈0.3 with the query topic, the same as a barely-related sentence.
+    if _DENSE_MIN_SCORE > 0:
+        before  = len(scored)
+        scored  = [(d, s) for d, s in scored if s >= _DENSE_MIN_SCORE]
+        dropped = before - len(scored)
+        if dropped:
+            logger.info(
+                "  dense: threshold=%.2f kept %d/%d chunks (dropped %d)",
+                _DENSE_MIN_SCORE, len(scored), before, dropped,
+            )
 
-    # Stage 2: RRF merge
+    raw_dense  = [d for d, _ in scored]
+    dense_docs = [d for d in raw_dense if not d.metadata.get("is_meeting_summary")]
+    if len(raw_dense) != len(dense_docs):
+        logger.info("  dense: dropped %d summary chunk(s)", len(raw_dense) - len(dense_docs))
+
+    logger.info("🔵 DENSE  [%d chunks]  query: %r", len(dense_docs), _dense_q[:80])
+    logger.info("   " + "─" * 65)
+    for i, doc in enumerate(dense_docs, 1):
+        m     = doc.metadata
+        txt   = doc.page_content.replace("\n", " ").strip()
+        score = m.get("_dense_score", 0.0)
+        sigs  = "  ".join(
+            f"✅{s}" for s, k_ in [
+                ("decision",   "contains_decision"),
+                ("commit",     "contains_commitment"),
+                ("question",   "contains_question"),
+            ] if m.get(k_)
+        ) or "—"
+        logger.info(
+            "   [%d/%d] 👤 %-22s  📅 %s  🏢 %-38s  🎯 score=%.3f",
+            i, len(dense_docs),
+            m.get("speaker_name", "?"),
+            _fmt_date(m.get("meeting_date")),
+            m.get("meeting_title", "?")[:38],
+            score,
+        )
+        logger.info("          🔖 %s", sigs)
+        logger.info("          💬 %s", txt[:280])
+        logger.info("          " + "·" * 58)
+
+    # ── Stage 1b: BM25 keyword search ────────────────────────────────────────
+    bm25_tokens = _tokenize(query)
+    corpus      = _fetch_project_corpus(project_id, hard_filters, date_where)
+    bm25_docs   = _bm25_search(query, corpus, k=k)
+
+    logger.info("🟠 BM25   [%d chunks]  corpus: %d docs", len(bm25_docs), len(corpus))
+    logger.info("   📌 BM25 query tokens: %s", bm25_tokens)
+    if not bm25_docs:
+        logger.info("   ⚠️  BM25 returned 0 results — none of the tokens above appear in any chunk")
+    logger.info("   " + "─" * 65)
+    for i, doc in enumerate(bm25_docs, 1):
+        m           = doc.metadata
+        txt         = doc.page_content.replace("\n", " ").strip()
+        chunk_toks  = set(_tokenize(doc.page_content))
+        matched     = [t for t in bm25_tokens if t in chunk_toks]
+        logger.info(
+            "   [%d/%d] 👤 %-22s  📅 %s  🏢 %s",
+            i, len(bm25_docs),
+            m.get("speaker_name", "?"),
+            _fmt_date(m.get("meeting_date")),
+            m.get("meeting_title", "?")[:38],
+        )
+        logger.info("          🎯 matched tokens: %s", matched)
+        logger.info("          💬 %s", txt[:280])
+        logger.info("          " + "·" * 58)
+
+    # ── Side-by-side comparison table ────────────────────────────────────────
+    _log_side_by_side(dense_docs, bm25_docs, bm25_tokens, _dense_q)
+
+    # ── Stage 2: RRF merge ────────────────────────────────────────────────────
     merged, stats = _rrf_merge(dense_docs, bm25_docs)
     logger.info(
-        "  rrf stats  : dense_only=%d | bm25_only=%d | overlap=%d | total=%d | w=%.2f/%.2f | k=%d",
-        stats["dense_only"], stats["bm25_only"], stats["overlap"], len(merged),
-        stats["dense_weight"], stats["bm25_weight"], stats["rrf_k"],
+        "⚗️  RRF MERGE  total=%d | 🔵 dense_only=%d | 🟠 bm25_only=%d | 🟣 overlap=%d | weights=%.2f/%.2f",
+        len(merged), stats["dense_only"], stats["bm25_only"], stats["overlap"],
+        stats["dense_weight"], stats["bm25_weight"],
     )
 
     result = merged[:k]
-    _log_chunk_list("STAGE 2 — HYBRID (after RRF, top %d)" % k, result)
+    _log_chunk_list("🏆 HYBRID RESULT (top %d after RRF)" % k, result)
     return result
 
 

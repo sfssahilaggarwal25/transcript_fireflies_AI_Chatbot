@@ -48,6 +48,7 @@ Thumbs.db
 # Logs
 *.log
 logs/
+!logs/.gitkeep
 
 # Database (generic — sqlite files outside chroma_db/ are excluded)
 *.db
@@ -71,11 +72,12 @@ htmlcov/
 # Generated test outputs
 chunks_output.json
 test_output.txt
+eval_results.csv
+data/.test_run.lock
+data/test_run_*.json
 
 # Python version management
 .python-version
-
-reingest.py
 
 # Temporary files
 *.tmp
@@ -85,10 +87,6 @@ reingest.py
 *.swp
 *.swo
 
-find_gaps.py
-
-app/rag/tests/test_results/
-app/rag/tests/deepeval_tests/
 app/agent/tests/test_context_expansion.py
 app/agent/tests/test_corpus_cache.py
 app/agent/tests/test_reranker_integration.py

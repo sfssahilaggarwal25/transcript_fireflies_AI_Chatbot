@@ -35,6 +35,7 @@ from app.agent import (
 from app.agent.chat_store import get_chat_store
 from app.agent._tool_utils import fmt_date
 from app.core.retrieval import reset_corpus_cache
+from app.core.retrieval.reranker import reset_rejected_docs, get_rejected_docs
 
 logger = logging.getLogger(__name__)
 
@@ -161,6 +162,7 @@ def answer_query(
 
     reset_doc_accumulator()
     reset_corpus_cache()
+    reset_rejected_docs()
 
     logger.info("═══============================= Starting production agent query ═══=============================")
     logger.info(
@@ -253,6 +255,95 @@ def answer_query(
         elapsed_ms, len(tool_calls), len(docs), len(answer),
         project_id, session_id or "stateless",
     )
+
+    # ── Log the full result so it appears in the per-query log file ───────────
+    import os as _os
+    _rerank_on = _os.getenv("RERANK_ENABLED", "0") != "0"
+    _SEP  = "─" * 72
+    _SEP2 = "═" * 72
+
+    # ── Tool calls ────────────────────────────────────────────────────────────
+    logger.info(_SEP2)
+    logger.info("RESULT — TOOL CALLS  (%d)", len(tool_calls))
+    logger.info(_SEP2)
+    if tool_calls:
+        for i, tc in enumerate(tool_calls, 1):
+            logger.info("  %d. %s", i, tc["tool"])
+            for k, v in tc["args"].items():
+                logger.info("       %-18s: %s", k, v)
+    else:
+        logger.info("  (no tool calls)")
+
+    # ── Selected chunks (full text + rerank score) ────────────────────────────
+    logger.info(_SEP2)
+    logger.info(
+        "RESULT — SELECTED CHUNKS  (%d)%s",
+        len(docs),
+        "  [rerank OFF — order = RRF rank]" if not _rerank_on else "  [rerank ON]",
+    )
+    logger.info(_SEP2)
+    for doc in docs:
+        m       = doc.metadata
+        num     = m.get("_global_chunk_num", "?")
+        score   = m.get("_rerank_score")
+        rel     = m.get("_relevance", "")
+        speaker = "Meeting Summary" if m.get("is_meeting_summary") else m.get("speaker_name", "?")
+        meeting = m.get("meeting_title", "?")
+        date    = fmt_date(m.get("meeting_date", ""))
+        ts      = format_timestamp(m.get("start_time"))
+        ts_str  = f"  [{ts}]" if ts else ""
+
+        if score is not None:
+            relevance = m.get("_relevance", "")
+            icon = "🟢" if relevance == "high" else ("🟡" if relevance == "low" else "⚪")
+            score_str = f"score={score:.1f} {icon}"
+        else:
+            score_str = "score=—  (rerank off)"
+
+        low_tag = "  ⚠️ LOW RELEVANCE" if rel == "low" else ""
+        logger.info(_SEP)
+        logger.info(
+            "  [%s]  %s  |  %-25s  |  %-32s  |  %s%s%s",
+            num, score_str, speaker, meeting, date, ts_str, low_tag,
+        )
+        logger.info("  TEXT:")
+        for line in doc.page_content.strip().splitlines():
+            logger.info("    %s", line.strip())
+
+    # ── Rejected chunks (hard-dropped by reranker) ────────────────────────────
+    rejected = get_rejected_docs()
+    logger.info(_SEP2)
+    if not _rerank_on:
+        logger.info("RESULT — REJECTED CHUNKS  (rerank is OFF — no chunks were scored/dropped)")
+    elif rejected:
+        logger.info("RESULT — REJECTED CHUNKS  (%d hard-dropped, score ≤ 2)", len(rejected))
+        logger.info(_SEP2)
+        for doc in rejected:
+            m       = doc.metadata
+            score   = m.get("_rerank_score", 0)
+            speaker = m.get("speaker_name", "?")
+            meeting = m.get("meeting_title", "?")
+            date    = fmt_date(m.get("meeting_date", ""))
+            ts      = format_timestamp(m.get("start_time"))
+            ts_str  = f"  [{ts}]" if ts else ""
+            logger.info(_SEP)
+            logger.info(
+                "  🔴 score=%-3.1f  |  %-25s  |  %-32s  |  %s%s",
+                score, speaker, meeting, date, ts_str,
+            )
+            logger.info("  TEXT:")
+            for line in doc.page_content.strip().splitlines():
+                logger.info("    %s", line.strip())
+    else:
+        logger.info("RESULT — REJECTED CHUNKS  (0 hard-dropped — all scored chunks passed)")
+
+    # ── Final answer ──────────────────────────────────────────────────────────
+    logger.info(_SEP2)
+    logger.info("RESULT — ANSWER")
+    logger.info(_SEP2)
+    for line in answer.splitlines():
+        logger.info("  %s", line)
+    logger.info(_SEP2)
 
     return {
         "answer":             answer,
