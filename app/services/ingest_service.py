@@ -35,7 +35,12 @@ from app.core.storage.project_store import (
     get_speaker_role,
     reload_projects_cache,
 )
-from app.core.transcript.chunking import create_chunks, build_summary_chunk
+from app.core.transcript.chunking import (
+    create_chunks,
+    build_summary_chunk,
+    create_dialogue_groups,
+    generate_hypothetical_questions_batch,
+)
 from app.core.transcript.metadata import build_meeting_metadata
 from app.core.transcript.normalize import normalize_transcript
 
@@ -171,7 +176,10 @@ def _stamp_project_and_roles(chunks: list, meeting_id: str) -> bool:
         return False
     for chunk in chunks:
         chunk.update(project_info)
-        chunk["speaker_role"] = get_speaker_role(meeting_id, chunk["speaker_name"])
+        # dialogue_group chunks have speaker_name="" (placeholder); get_speaker_role
+        # returns "unknown" for empty/missing names — safe to call regardless.
+        speaker = chunk.get("speaker_name", "")
+        chunk["speaker_role"] = get_speaker_role(meeting_id, speaker) if speaker else "unknown"
     logger.info("Stamped → project_id=%s", project_info["project_id"])
     return True
 
@@ -209,17 +217,31 @@ def ingest_from_data(transcript_data: dict, project_id: str, meeting_number: int
     meeting_metadata = build_meeting_metadata(normalized_data)
     meeting_metadata["meeting_number"] = meeting_number
 
-    chunks = create_chunks(normalized_data["sentences"], meeting_metadata)
-    logger.info("Chunking → %d chunks", len(chunks))
+    # Pass 1 — atomic chunks (speaker-boundary accumulation)
+    atomic_chunks = create_chunks(normalized_data["sentences"], meeting_metadata)
+    logger.info("Atomic chunks → %d", len(atomic_chunks))
 
-    summary_text = _resolve_summary(normalized_data, chunks, meeting_metadata["title"])
+    # Resolve summary from atomic chunks BEFORE HQ generation overwrites text context
+    summary_text = _resolve_summary(normalized_data, atomic_chunks, meeting_metadata["title"])
+
+    # Pass 2 — dialogue group chunks (TF-IDF + rule-based merging)
+    dialogue_chunks = create_dialogue_groups(atomic_chunks, meeting_metadata)
+    logger.info("Dialogue groups → %d", len(dialogue_chunks))
+
+    # HQ batch — all atomic + dialogue chunks in one pass (LLM call #1)
+    all_content_chunks = atomic_chunks + dialogue_chunks
+    generate_hypothetical_questions_batch(all_content_chunks)
+
+    # Append summary chunk AFTER HQ generation (summary has no hypothetical_q)
     if summary_text:
-        chunks.append(build_summary_chunk(summary_text, meeting_metadata, len(chunks) + 1))
+        all_content_chunks.append(
+            build_summary_chunk(summary_text, meeting_metadata, len(all_content_chunks) + 1)
+        )
 
-    if not _stamp_project_and_roles(chunks, meeting_id):
+    if not _stamp_project_and_roles(all_content_chunks, meeting_id):
         raise IngestError(f"Project stamping failed for {meeting_id}")
 
-    documents = chunks_to_documents(chunks)
+    documents = chunks_to_documents(all_content_chunks)
     if not documents:
         raise IngestError("No valid documents produced")
 
@@ -327,35 +349,56 @@ def ingest_from_url(url: str, project_id: str) -> dict:
         meeting_metadata["date"], meeting_metadata["meeting_number"], _ms(t),
     )
 
-    # ── Step 8: Chunk ─────────────────────────────────────────────────────────
+    # ── Step 8: Pass 1 — atomic chunks ───────────────────────────────────────
     t = time.time()
-    chunks = create_chunks(normalized_data["sentences"], meeting_metadata)
-    speakers = {c["speaker_name"] for c in chunks}
+    atomic_chunks = create_chunks(normalized_data["sentences"], meeting_metadata)
+    speakers = {c["speaker_name"] for c in atomic_chunks}
     logger.info(
-        "[4/6] Chunking    → %d chunks  %d speakers  (%s)",
-        len(chunks), len(speakers), _ms(t),
+        "[4/6] Atomic      → %d chunks  %d speakers  (%s)",
+        len(atomic_chunks), len(speakers), _ms(t),
     )
 
-    # ── Step 9: Summary chunk ─────────────────────────────────────────────────
+    # ── Step 9: Resolve summary from atomic chunks ────────────────────────────
+    # Called here — before HQ generation — because generate_meeting_summary()
+    # reads chunk["text"] which must still contain the original transcript text.
     t = time.time()
-    summary_text = _resolve_summary(normalized_data, chunks, meeting_metadata["title"])
+    summary_text = _resolve_summary(normalized_data, atomic_chunks, meeting_metadata["title"])
+
+    # ── Step 10: Pass 2 — dialogue group chunks ───────────────────────────────
+    t = time.time()
+    dialogue_chunks = create_dialogue_groups(atomic_chunks, meeting_metadata)
+    logger.info("[4/6] Dialogue    → %d groups  (%s)", len(dialogue_chunks), _ms(t))
+
+    # ── Step 11: Hypothetical question batch (LLM call #1) ───────────────────
+    # One batch call for ALL atomic + dialogue chunks. Summary chunk excluded.
+    t = time.time()
+    all_content_chunks = atomic_chunks + dialogue_chunks
+    generate_hypothetical_questions_batch(all_content_chunks)
+    logger.info(
+        "[4/6] HQ batch    → %d chunks annotated  (%s)",
+        len(all_content_chunks), _ms(t),
+    )
+
+    # ── Step 12: Append summary chunk ─────────────────────────────────────────
     if summary_text:
-        chunks.append(build_summary_chunk(summary_text, meeting_metadata, len(chunks) + 1))
-        logger.info("[4/6] Summary chunk added  (%s)", _ms(t))
+        all_content_chunks.append(
+            build_summary_chunk(summary_text, meeting_metadata, len(all_content_chunks) + 1)
+        )
+        logger.info("[4/6] Summary chunk added")
     else:
         logger.warning("[4/6] No summary — meeting stored without summary chunk")
 
-    # ── Step 10: Stamp project + roles ────────────────────────────────────────
+    # ── Step 13: Stamp project + roles ────────────────────────────────────────
     t = time.time()
-    if not _stamp_project_and_roles(chunks, meeting_id):
+    if not _stamp_project_and_roles(all_content_chunks, meeting_id):
         raise IngestError(
             f"Project stamping failed for meeting {meeting_id} — check projects.json"
         )
     logger.info("[5/6] Stamp roles  (%s)", _ms(t))
 
-    # ── Step 11: Embed + store ────────────────────────────────────────────────
+    # ── Step 14: Embed + store ────────────────────────────────────────────────
     t = time.time()
-    documents = chunks_to_documents(chunks)
+    documents = chunks_to_documents(all_content_chunks)
     if not documents:
         raise IngestError("No valid documents produced from chunks — pipeline aborted")
 
@@ -365,14 +408,19 @@ def ingest_from_url(url: str, project_id: str) -> dict:
     reset_vectorstore()
 
     elapsed_ms = int((time.time() - t_start) * 1000)
-    logger.info("ingest_from_url complete ✓  elapsed=%dms  chunks=%d", elapsed_ms, stored)
+    logger.info(
+        "ingest_from_url complete ✓  elapsed=%dms  chunks=%d  (atomic=%d  dialogue=%d)",
+        elapsed_ms, stored, len(atomic_chunks), len(dialogue_chunks),
+    )
 
     return {
-        "status":         "success",
-        "meeting_id":     meeting_id,
-        "meeting_title":  meeting_metadata["title"],
-        "meeting_number": meeting_metadata["meeting_number"],
-        "chunks_stored":  stored,
-        "project_id":     project_id,
-        "elapsed_ms":     elapsed_ms,
+        "status":          "success",
+        "meeting_id":      meeting_id,
+        "meeting_title":   meeting_metadata["title"],
+        "meeting_number":  meeting_metadata["meeting_number"],
+        "chunks_stored":   stored,
+        "atomic_chunks":   len(atomic_chunks),
+        "dialogue_groups": len(dialogue_chunks),
+        "project_id":      project_id,
+        "elapsed_ms":      elapsed_ms,
     }
