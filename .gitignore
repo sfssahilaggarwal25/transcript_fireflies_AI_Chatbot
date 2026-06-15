@@ -91,4 +91,6 @@ app/agent/tests/test_context_expansion.py
 app/agent/tests/test_corpus_cache.py
 app/agent/tests/test_reranker_integration.py
 
+data/transcripts/
+
 .deepeval/

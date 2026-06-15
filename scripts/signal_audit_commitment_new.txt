@@ -1,0 +1,3765 @@
+COMMITMENT SIGNAL AUDIT — NEW CLASSIFIER
+Generated : 2026-06-04 23:12:48
+Total non-summary chunks : 2667
+Commitment chunks (new)  : 392  (14.7%)
+
+[1/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 180.79
+    I'll just remind them.
+  ------------------------------------------------------------------
+
+[2/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 280.29
+    So this. You're not going to have that because basically the scenario modeling i
+    s utilizing existing data points but we're simulating certain conditions in the.
+     So we're modeling different scenarios. So there's no real way for us to show yo
+    u the numbers to measure because the numbers can be anything.
+  ------------------------------------------------------------------
+
+[3/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 489.77
+    I'll do it. Yeah, if you can do that. So I don't know why this is grayed out. I 
+    can't click anything on this page. Do you guys have a working app that I can. We
+     can refer to.
+  ------------------------------------------------------------------
+
+[4/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 673.8
+    you can see this. So you can see the dummy data and the calculations. Okay, so t
+    hese are some of the calculations we needed to calculate in order to generate th
+    e P L balance sheet the other one that we needed to do. I'm not sure if you guys
+     have, have you guys calculated this at all? This one, there's these revenue sub
+     accounts, this file and this one actually now this one we've done already have.
+     Have you guys, have you guys calculated these as well in your calculations? Cal
+    culations?
+  ------------------------------------------------------------------
+
+[5/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 798.49
+    We will look into it. Okay, sure. Yeah, look into it and let me know if there's 
+    any questions. We'll raise it. But just for the forecast summary, these are the 
+    performance using the forecasted data points all in one table. And see the reven
+    ue forecast for the year that we've calculated before, the COGS, the OPEX bit, e
+    tc.
+  ------------------------------------------------------------------
+
+[6/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 865.78
+    Okay so these points I'll get you clarification on how to calculate this. But as
+     you can see this on track statement comes from the previous pages. Cash flow Ru
+    nway. I think it's this one. Okay, so just, just not to waste time, what I'll do
+     is I'll get you some on how the those populated.
+  ------------------------------------------------------------------
+
+[7/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 895.62
+    So we will test in ones and as you mentioned that these are as per the financial
+    s drop down values. So we will check that to get how these are populating and th
+    en we'll let if we have any kind of queries for the same.
+  ------------------------------------------------------------------
+
+[8/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 913.9
+    So yeah, we have started with this and we will try to complete this within this 
+    week. Scenario
+  ------------------------------------------------------------------
+
+[9/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 1047.119
+    As for the development and as you have mentioned that UAT is also needs to be in
+    cluded in this. So the dev team includes or requires at least to three weeks. So
+     apart from that we will require one week, a complete one week to do the UAT tes
+    ting for all the modules.
+  ------------------------------------------------------------------
+
+[10/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 1190.91
+    But you have to be 100% sure that this is where you completely conclude module 2
+    , 3 and 4. Okay, so quick question from my side guys. Are you guys going through
+     the whole development phase and then you're coming back to security and testing
+     or are you going to do each module will. Will be developed and then security te
+    sted and then finalized. Are we going to find
+  ------------------------------------------------------------------
+
+[11/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 1222.85
+    security testing have not done me because that was been considering after 26. So
+     I have a discussion with my DevOps person and he can start now so you can let h
+    im know that what kind of security testing you want to have. As I have informed 
+    you that we can use sonar for the code testing and if you want to have any kind 
+    of and something else, then we can do it as well.
+  ------------------------------------------------------------------
+
+[12/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 1329.05
+    So before I can answer that question from my side and Raheel, add your view as w
+    ell, how are you splitting your team to work on this? If we were to go for the o
+    ption of we want to do each module sequentially, will all your team be to the mo
+    dule to that single module or is it more effective to split work between modules
+    ? How are you assigning the work in your team?
+  ------------------------------------------------------------------
+
+[13/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 1601.79
+    Okay, all right, I'll create a document for the same.
+  ------------------------------------------------------------------
+
+[14/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 1620.99
+    But as Raheel said that we have to update everything on JIRA as per the timeline
+     document. And so I'll update there and then I'll let ping.
+  ------------------------------------------------------------------
+
+[15/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 1637.52
+    All right, then sure, I'll do.
+  ------------------------------------------------------------------
+
+[16/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 1664.82
+    So it'll be sequential build development, security testing, and then handover fo
+    r UAT and then any minor fixes that need to be done. And then we will transfer c
+    ode, sign off and transfer. If you can just summarize those for each modules. I 
+    know you've got an AI guy, so it makes sense that working in parallel on the AI 
+    pieces. But we can finalize the AI part with Karen and the rest of the team afte
+    r forecasting and scenario modeling.
+  ------------------------------------------------------------------
+
+[17/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 1819.25
+    But the thing is we won't be able to access it using the AI that the car that th
+    e client wants if it's not in the back end, it's not in the database. Can I pull
+     up this architecture diagram once again? The document you guys have given for t
+    he AI bit Just one second. So first of all this is a service. This is the docume
+    nt I think Harsh created this. Right Clint? Okay, so one thing is I've added the
+     comments here. We're only going to use a single provider by default GPT 5.1 via
+     Gateway.
+  ------------------------------------------------------------------
+
+[18/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 1859.46
+    So that's what I've added. Secondly the mention of guardrails is not here and th
+    e rag architecture so just add those points as well please. Okay, second thing i
+    s on the diagram whenever you guys have time to just take us through what is you
+    r understanding here? Because one thing I'm not understanding is in this box of 
+    stress test flow what is happening once the LLM is parsing inputs and the all in
+    puts are present the API is being called, recommendations
+  ------------------------------------------------------------------
+
+[19/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 2077.17
+    Perfect. That's how we want it. Okay, sounds good. Okay, so that's fine. I think
+     the other last thing I wanted to discuss was your git branching strategy here. 
+    Because what we want to do is once we hand over the code, once the final section
+     is completed, we just want to submit the branch, not all of the code that you g
+    uys are developing. Anything that's final, we will merge with the main branch. A
+    re you guys following those feature branches?
+  ------------------------------------------------------------------
+
+[20/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 2314.78
+    So we suppose we'll create two different branches from here from the development
+     branch. One is forecasting and one is the scenario modeling. And we'll push the
+     respective code to their both branch. Once you like. But if you want to see the
+     code on live. Net because like a development branch is the one like which is co
+    nnected with the railway. Like when we do push the code to here like then at tha
+    t time only you can you are able to see. So we cannot create a three different l
+    ike URLs.
+  ------------------------------------------------------------------
+
+[21/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 2617.23
+    Let's see new Z login. And then as we keep completing and signing off module 2, 
+    3 and so on, they just change it to release version 4, 5 and so on and take pull
+     from our repo or merge from our reference on whatever that happens. Okay, yeah,
+     we can follow that. If there is any better way that you guys think come up, jus
+    t let us know for now we'll try and manage it but I guess zero is complete that 
+    we can hand them over right. All the testing is done on that.
+  ------------------------------------------------------------------
+
+[22/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 2875.03
+    There were more of the Ashpries command. Okay, I will check it. I don't know. Ca
+    n you go to the.
+  ------------------------------------------------------------------
+
+[23/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 3088.94
+    But like what we'll do one thing is Manish, do one thing. Take note of all these
+     comments provided by Ashpreet and provide a time estimation to me and Simon. Ma
+    ', am, like how much time do you require? And let me know and we'll then share t
+    hat sheet with like after discussing internal we'll share that sheet with you an
+    d you can let us know which part to cover or which. No, not to. Yeah and we'll a
+    lso. I will also mark if there is any high priority, medium priority and low pri
+    ority.
+  ------------------------------------------------------------------
+
+[24/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 3416.51
+    Yeah, no I agree with what you're saying. Even on his comments he's mentioned th
+    at he wants an integration service ingestion layer which includes Xero as well a
+    s CSV Excel which on your part you confirm Excel is also not a microservice. You
+     just followed the same pattern as how they did Excel and we gave them zero. Oka
+    y, we need to take, we need to discuss this internally Akash with them and then 
+    come back to you guys.
+  ------------------------------------------------------------------
+
+[25/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 3512.77
+    So I can, I can come up with like some basic pros and cons. But if Ashpeed wants
+     to go that way we can build it. But as well as I'm suggesting that I think this
+     is the best way like that we have built now.
+  ------------------------------------------------------------------
+
+[26/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 3643.08
+    No, they've said yeah, yeah, we can ask them and I think they've answered that, 
+    saying that they want a general ingestion service as a microservice that include
+    s zeros, Excel and everything. But then we're not going to touch Excel. So that'
+    s what we need to understand. We're already building a microservice in the merge
+     conflicts that happened and they wanted us to give them zero as part of that. I
+    t's a discussion we should have. Karan, with Ashby, I think, I think
+  ------------------------------------------------------------------
+
+[27/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 3707.03
+    Many microservices are required for like each ingestion and each thing. So maybe
+     we need to discuss with him, like, what, what, what do you want to get out of? 
+    Like, why, why not? So we'll build a different microservice. Maybe the client is
+     also not clear, like, like how these things work. So we need to like, connect w
+    ith him and we need to ask, like, what is the main reason behind this?
+  ------------------------------------------------------------------
+
+[28/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 3734.09
+    Okay, so we'll raise the initial discussion today and if required, we'll set up 
+    a call with you at some point tomorrow or the day after and then we can clear th
+    is matter up. Can I just share this quickly if you have two minutes? I just ran 
+    it through some internal AI agent that we have and I wanted to understand how yo
+    u guys have implemented it. So, one second.
+  ------------------------------------------------------------------
+
+[29/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 3909.64
+    That's fine. I'll give it to you. Yeah sure.
+  ------------------------------------------------------------------
+
+[30/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 3914.68
+    If it is required then we'll build it. We'll give you just give you a time estim
+    ation and we'll start building it.
+  ------------------------------------------------------------------
+
+[31/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 3925.44
+    If it can be decoupled then we'll do the decoupling part. They're like in the ba
+    ck end also there are like apart from the main threads there is an event loop. S
+    o if you can make use of that like then also like we'll. We'll come up with the 
+    best approach. We'll discuss in this internally first then we'll let.
+  ------------------------------------------------------------------
+
+[32/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 3961.06
+    We'll discuss module four maybe by Wednesday. Just a man. If you can have the bo
+    ard ready with the timeline, deadlines and current security stuff. If you can gi
+    ve us a document what are you going to use for security? What will it cover? And
+     we just tell the client once we do this is the final slide from us after testin
+    g.
+  ------------------------------------------------------------------
+
+[33/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 4049.21
+    Yeah I will discuss with him class for the code vulnerability but we can hand ov
+    er handle that apart from this if there are any major security measures that we 
+    need to take care by with Ravi sir and then we can confirm the team also please 
+    I have shared a contact number with you have, do you have any kind of discussion
+     with that person?
+  ------------------------------------------------------------------
+
+[34/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 4080.76
+    Yeah just make it and then I'll confirm you.
+  ------------------------------------------------------------------
+
+[35/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 4151.52
+    Just let, let me have a discussion internally and we'll come up with a plan for 
+    that too.
+  ------------------------------------------------------------------
+
+[36/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 4156.32
+    That's fine. Yeah, thank you. Okay cool. I think that was it from me as well. So
+     Simran, if you can just send us over that plan and then we'll we can discuss wi
+    th the client tonight and then we'll get clarity the other parts. But meanwhile,
+     you guys are carrying on with the forecasting and scenario modeling pages, righ
+    t?
+  ------------------------------------------------------------------
+
+[37/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 4371.56
+    Yeah, I know but they're not completed in the complete sense. Right, so. So we w
+    ork out. We just need to work out how because we're still waiting for payment fr
+    om the client and we can ask. Yeah, and one more thing here Simran. I think the 
+    plan that we have with the client was that Once the module 2 and 3 are complete 
+    and handed over to them we were going to get the next payment from them.
+  ------------------------------------------------------------------
+
+[38/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 4477.42
+    I want to make one point here. See focus, summary and forecast financials were n
+    ot included in the deliverables so you can consider them that these are not comp
+    leted from rn. I am just informing you that yeah, we will cover that in the modu
+    le 3 along with the scenario modeling and the A ST of whatever is going on and p
+    lus UAT testing and this that security measures that I also need to be considere
+    d. So these were also not mentioned earlier.
+  ------------------------------------------------------------------
+
+[39/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 4625.65
+    module one is done and it is tested as well. And as you have seen the sheet that
+     client provided and plus model 2 and 3, whatever was covered was tested by that
+     client and those points were covered even. And yes, stress test. Sorry, stress 
+    is not. Security measures are under processing as just. I just informed you that
+     was not done yet. As you informed me that would. That should be considered afte
+    r only six.
+  ------------------------------------------------------------------
+
+[40/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 4682.2
+    Unit testing was in the deliverables mentioned at last for all the modules. Sorr
+    y, I just said that in the deliverables the unit testing was mentioned. It lasts
+     for all the modules. We are considering it alongside with the modules. As you j
+    ust mentioned that we will cover everything with the modules. For example as you
+     said that module one is done now we will cover the UAT testing and then we will
+     cover the security measures.
+  ------------------------------------------------------------------
+
+[41/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 4711.34
+    Then we will hand over it to the client so that we won't touch it again. So we w
+    ill follow that approach.
+  ------------------------------------------------------------------
+
+[42/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 4822.22
+    up and if there's any that's a food milestone on upwork as well. Yeah, I agree w
+    ith you.
+  ------------------------------------------------------------------
+
+[43/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 4831.1
+    Are we on the same page here? Do you think that should be fine? Fine, yeah, I sh
+    ould be okay. But just Simran we're. We're kind of doing you a favor here. So if
+     we can just work together to make sure we. We execute the deliverables so that 
+    we can get the timely payment the client then everyone's going to be happy, righ
+    t?
+  ------------------------------------------------------------------
+
+[44/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 4898.31
+    Plus module 4 is also in progress side by side as you just informed that we can 
+    prioritize the stress test first and then we can check the chatbot task. So we a
+    re just on it for now. We just start with the limitation part. That is the histo
+    ry management I have shared with you. So we will cover that part in this week pl
+    us after that we will check with the stress test first.
+  ------------------------------------------------------------------
+
+[45/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 4932.33
+    Well let's move with this plan and yeah, just appreciate that we have our client
+     expectations to meet and get the payment unlocked based on the milestone delive
+    ry.
+  ------------------------------------------------------------------
+
+[46/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #11  (1772453100000)
+  Time     : 4944.81
+    Okay, thank you. Okay, so give us, give us, give me till tomorrow Simran. I'll p
+    ayment and release it tomorrow morning if that's okay. Just continue then we'll.
+     Yeah, we'll make sure you get paid accordingly.
+  ------------------------------------------------------------------
+
+[47/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode architecture meeting  #12  (1773911100000)
+  Time     : 458.86
+    yeah as I got your question and like we are just trying to explain like we can i
+    mplement it in your way and your way is better than us it's just that like we ju
+    st want to like we're currently focusing on featuring like delivering our featur
+    es first so like Manish Manisha suggested if we'll go with your way and he made 
+    it to take around two or three days more so like when we are discussed with the 
+    internally and with the cash indeed so we need may need two or more three days s
+    o we can implement it later after we once we have delivered all the all the othe
+    r features to you we can implement it later.
+  ------------------------------------------------------------------
+
+[48/392]
+  Speaker  : Ashpreet Singh  [client]
+  Meeting  : Nolocode architecture meeting  #12  (1773911100000)
+  Time     : 527.79
+    for now okay I take your or technically points you need to understand I will ans
+    wer this on a later stage I will but before that if you have any other question 
+    where you need a technical support on that perspective I want to want to know th
+    at first is it or not.
+  ------------------------------------------------------------------
+
+[49/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode architecture meeting  #12  (1773911100000)
+  Time     : 556.21
+    Actually the thing is actually I have a discussion with Akash to many unknown ph
+    one care that we had a discussion with the team plus we have discussion with our
+     senior as well he informed that currently our flow is okay and everything is go
+    ing well right so it's the thing is we have to complete the features or we have 
+    to enhance the things because the enhancement is a extra efforts for now because
+     that was not earlier informed to us so that's the only concern that we want to 
+    discuss with you everything that this extra effort can be discussed or can be ta
+    ken later on once the features and the rest of the stuff is done so that's why I
+     just want to know your thoughts on this I
+  ------------------------------------------------------------------
+
+[50/392]
+  Speaker  : Ashpreet Singh  [client]
+  Meeting  : Nolocode architecture meeting  #12  (1773911100000)
+  Time     : 647.88
+    thank you Simran for highlighting it. Let me talk this internally also with Gomi
+     and B and we will form Akash and Raheel on that behalf. But let me tell you wha
+    t I am proposing. We will move that.
+  ------------------------------------------------------------------
+
+[51/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode architecture meeting  #12  (1773911100000)
+  Time     : 712.659
+    know even I'll we have created a document for your responses too. I'll share tha
+    t with you even after this meeting you can have a look.
+  ------------------------------------------------------------------
+
+[52/392]
+  Speaker  : Ashpreet Singh  [client]
+  Meeting  : Nolocode architecture meeting  #12  (1773911100000)
+  Time     : 782.32
+    will appreciate merges someone senior looks into all the merge of Backend and es
+    pecially front end. Some code has been merged. Okay, just look at it. I will sha
+    re.
+  ------------------------------------------------------------------
+
+[53/392]
+  Speaker  : Ashpreet Singh  [client]
+  Meeting  : Nolocode architecture meeting  #12  (1773911100000)
+  Time     : 798.36
+    We will share the screenshot. Doubt that. Hanji bullion.
+  ------------------------------------------------------------------
+
+[54/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode architecture meeting  #12  (1773911100000)
+  Time     : 808.69
+    I just said that. Then we will look into it.
+  ------------------------------------------------------------------
+
+[55/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode architecture meeting  #12  (1773911100000)
+  Time     : 815.89
+    By the way, I would like to just confirm you that no code merge has been done. L
+    ike from our end. Actually, I am only. I was only doing the code merge. But that
+     was on. Is on the different branch. That branch is not shared with the developm
+    ent team. That branch is with me. And whatever the. Like the. Any ui, anything y
+    ou are seeing on the. That is on a different. We'll check it out. If there is an
+    ything. Anything from outside, we'll fix that.
+  ------------------------------------------------------------------
+
+[56/392]
+  Speaker  : Ashpreet Singh  [client]
+  Meeting  : Nolocode architecture meeting  #12  (1773911100000)
+  Time     : 850.23
+    I can also be wrong. I can also be wrong. But I saw somewhere that third level s
+    egregation was there in the balance sheet on third level. It was only two. Secon
+    d level. Third level. I will come back. I will come back with the screenshot. If
+     I could find any relevance. But I will just request done or not.
+  ------------------------------------------------------------------
+
+[57/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode architecture meeting  #12  (1773911100000)
+  Time     : 875.76
+    We will look into it. You can share the screenshot. Whether that is our code or 
+    not.
+  ------------------------------------------------------------------
+
+[58/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #13  (1774268100000)
+  Time     : 161.02
+    I have informed him. Even I have informed him that is the extra effort and that 
+    was not int in the initial phase. So I'll confirm with Akash and rail regarding 
+    the efforts we have to vote in. So he was okay with that too.
+  ------------------------------------------------------------------
+
+[59/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #13  (1774268100000)
+  Time     : 323.77
+    Yeah, I was just going to say like your test cases, once you write it one for fu
+    nctionality testing, they all remain the same, Redis or not. If after implementi
+    ng Redis those unit tests fail, then you may have to add or change some test cas
+    es. But yeah, so whatever testing you're doing right now will remain the same. I
+    t's just you implement redis, any extra backend REDIS relevant unit test will be
+     added.
+  ------------------------------------------------------------------
+
+[60/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #13  (1774268100000)
+  Time     : 507.78
+    So I didn't get that. Where are we mentioning recommended solutions? Just a seco
+    nd. Just allow me a second. Just a second. Just a second. I'm showing my screen 
+    and then I'll let that one. Please let me know when my screen is visible to you.
+     Yes, it is. Yeah, see for example this point. This point is not done by my team
+    . No role based authentication. We haven't covered this. And you have mentioned 
+    this kind of recommendations in some of the points. Like those are just for find
+    ing one.
+  ------------------------------------------------------------------
+
+[61/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #13  (1774268100000)
+  Time     : 656.16
+    Then we are skipping those points which are not from our work and we will work o
+    n the ones which are in the critical and the high part. Yeah, right. And we will
+     follow the recommendation of that as well. If you want to follow this or you th
+    ink you have something Better just. Yeah, up to you. And if you think there's so
+    mething like secrets manager for secrets and variables and stuff that is somethi
+    ng Ashbridge should provide. So you can ask him. So don't feel free.
+  ------------------------------------------------------------------
+
+[62/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #13  (1774268100000)
+  Time     : 709.1
+    Yeah, just leave comments as well here. Like when it's clearly because you guys 
+    have been developing the code, you're the most familiar. If there's something th
+    at doesn't cross over to your work, just highlight it and that's something we ha
+    ve the visibility of and we can let them know. So we're only working on our scop
+    e here then.
+  ------------------------------------------------------------------
+
+[63/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #13  (1774268100000)
+  Time     : 731.13
+    Then we will try our best to complete this sheet by today itself. And we will de
+    ploy the forecast summary and forecast financials for you so that you can test a
+    nd the unit testing will be done and so that my tester can even test on that sid
+    e as well.
+  ------------------------------------------------------------------
+
+[64/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #13  (1774268100000)
+  Time     : 754.13
+    I will make the. I will make forecast module live today. Forecast summary and fi
+    nancials that are left and yeah scenario morning we will be live. That's already
+     done. Yeah, but the unit testing is in progress from our end as well so might b
+    e they can face some kind of issues. So I believe that we can make it live by to
+    day end of day so that our testing is completed.
+  ------------------------------------------------------------------
+
+[65/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #13  (1774268100000)
+  Time     : 820.19
+    See for that part as well we are working on the second IO setup that is done jus
+    t the unit testing and OS evaluation is pending for that part too.
+  ------------------------------------------------------------------
+
+[66/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #13  (1774268100000)
+  Time     : 830.81
+    So we'll let them know that 25th this all should be complete but at least they c
+    an have a look at the numbers and see if there's any glaring issues with the, wi
+    th, with any of These pieces. Okay, so fine.
+  ------------------------------------------------------------------
+
+[67/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #13  (1774268100000)
+  Time     : 859.56
+    They were saying that we have merged the code and they were facing some kind of 
+    issues at their level. So I just asked for the screenshots where I have merged t
+    he code and plus from our code. They are facing some kind of listenations. But n
+    o, they haven't shared any kind of screenshots related to that part. So they hav
+    en't confirmed from their side what to keep and what to remove from the merges. 
+    We will ask them and then. Okay, in terms of deployment, what is DevOps?
+  ------------------------------------------------------------------
+
+[68/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #13  (1774268100000)
+  Time     : 896.1
+    What's the status from with between Gaurav and the DevOps guy from our side? See
+    , we didn't get. We didn't get any update from the Gaurav yet. I have pinged him
+     on the email as well, but no response yet. And can you just check one? I'm shar
+    ing the form for bug report from jira. The client has been saying they can't ope
+    n it and I wanted to confirm if you can open it. I know your. Your account is in
+     the JIRA Atlassian account. It may work.
+  ------------------------------------------------------------------
+
+[69/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #13  (1774268100000)
+  Time     : 945.01
+    I'll stop sharing.
+  ------------------------------------------------------------------
+
+[70/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #13  (1774268100000)
+  Time     : 947.09
+    What I really want is Simon like when we say to them tomorrow that unit testing 
+    and security review is complete for module, it stays stable and there's no chang
+    es to module one. So we are trying our best so that there are no issue in the de
+    ployment. And the code remains same deployment remains static because then they 
+    can give feedback to us last. So the form does open for you. Yes, the form is wo
+    rking for me. Okay, I'll ask them to check. Okay, sure. And regarding this OVIS 
+    assessment.
+  ------------------------------------------------------------------
+
+[71/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode - AI module  #14  (1775044800000)
+  Time     : 60.4
+    Okay, I'm making the notes but for the recording, let me check. Yeah, I am recor
+    ding this session as well.
+  ------------------------------------------------------------------
+
+[72/392]
+  Speaker  : Ashpreet Singh  [client]
+  Meeting  : Nolocode - AI module  #14  (1775044800000)
+  Time     : 415.09
+    The two level of security. One is code which I am asking you doing today. But de
+    ployment and infrastructure is I am asking listed. We will do that tomorrow. Tha
+    t's Phase B. In short. I am not asking you to do phase B. Yeah, yeah.
+  ------------------------------------------------------------------
+
+[73/392]
+  Speaker  : Ashpreet Singh  [client]
+  Meeting  : Nolocode - AI module  #14  (1775044800000)
+  Time     : 515.51
+    What I believe just in adding another part of your validation we will have some 
+    validation rules and it was just one more three, four lines.
+  ------------------------------------------------------------------
+
+[74/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode - AI module  #14  (1775044800000)
+  Time     : 685.57
+    No, actually that's not allowed. So I can do one thing that we can have a daily 
+    call for 15 minutes or if something is required then I'll share on WhatsApp.
+  ------------------------------------------------------------------
+
+[75/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode - AI module  #14  (1775044800000)
+  Time     : 703.95
+    No problem. And just before we close this ashweet, are you clear with all the ma
+    jor core functionalities for this module? Because I just want to be fair for and
+     also do the right thing for you. We want to do much as we can help you in this 
+    phase and we. And as you said, this can be a phase B as well.
+  ------------------------------------------------------------------
+
+[76/392]
+  Speaker  : Ashpreet Singh  [client]
+  Meeting  : Nolocode - AI module  #14  (1775044800000)
+  Time     : 727.69
+    Phase B, we have phase two as well. If you look at the document I've asked, you 
+    should be ready for phase two.
+  ------------------------------------------------------------------
+
+[77/392]
+  Speaker  : Ashpreet Singh  [client]
+  Meeting  : Nolocode - AI module  #14  (1775044800000)
+  Time     : 735.21
+    I understand there is. There's going to be phase two. So no, no stepping back on
+     that. How we commercialize it, how we do it, that's separate. But there is goin
+    g to be phase two. I'm not going to find another team. I don't have.
+  ------------------------------------------------------------------
+
+[78/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode - AI module  #14  (1775044800000)
+  Time     : 754.77
+    Yeah, I know. I meant that. I just want to make sure that what we have defined a
+    s a specs now for phase one of M4, this is locked and we can implement now. What
+    ever discussion we can have now onwards can be just from your side. Our team jus
+    t clarifying the existing specs. If you ask for any additional functional specif
+    ication that enhances the scope. If it's a minor change, that's fine, we'll inco
+    rporate it. Major will take it as a feature request.
+  ------------------------------------------------------------------
+
+[79/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode - AI module  #14  (1775044800000)
+  Time     : 892.34
+    No ma', am just there are one or two points that we need to discuss first with y
+    ou. So we'll have this like we'll. We'll discuss with you then you can discuss t
+    hat with Ray. There are just 12 more points extra so which Harshad mentioned so 
+    we just need to discuss that and we can now finalize and we can start working to
+    morrow.
+  ------------------------------------------------------------------
+
+[80/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode - AI module  #14  (1775044800000)
+  Time     : 976.53
+    You want him. I'll ask Akash if he's available. He is on holiday for this week u
+    ntil 6th. So I let him know we can do it.
+  ------------------------------------------------------------------
+
+[81/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode - AI module  #14  (1775044800000)
+  Time     : 994.77
+    If possible, Yes, I will ask him. But yeah, I will let.
+  ------------------------------------------------------------------
+
+[82/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode - AI module  #14  (1775044800000)
+  Time     : 1011.93
+    Firstly, I would like to discuss with my team first and then I'll come back to y
+    ou.
+  ------------------------------------------------------------------
+
+[83/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode - AI module  #14  (1775044800000)
+  Time     : 1017.25
+    Yeah, sure. I'll ping you on teams.
+  ------------------------------------------------------------------
+
+[84/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 14.88
+    So the first one, this one I checked, this is fine. All of them are black now. S
+    o that's okay. All the balances, which is. Which is good. And I've tested that. 
+    The data then is redirected to the dashboard. So I've checked that. That's fine.
+     I'll recheck it again for the third time. So 1 and 2. I wanted to touch base on
+     number three. This was cash balances that initially showed zero and now I saw s
+    ome of them are showing really high balances for. For cash. Manish, you've given
+     a comment.
+  ------------------------------------------------------------------
+
+[85/392]
+  Speaker  : Manish  [unknown]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 63.85
+    So this is because the zero data and the Excel data there is a huge difference b
+    etween the values and I have shared the screenshot as well with you in the last 
+    comment. I have shared the full document where I. I have mentioned why the value
+    s are so much of difference.
+  ------------------------------------------------------------------
+
+[86/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 85.16
+    Yeah, but they're not. So I'm just going into zero. For example, so I'll go into
+    . So for example, we're looking at December 2025. Going to December 25. If I loo
+    k at my cash number, my cash number here, 584,000 plus 350,000 plus 234,000. So 
+    nowhere does it show that 39 million.
+  ------------------------------------------------------------------
+
+[87/392]
+  Speaker  : Manish  [unknown]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 391.65
+    Okay, I will look into this.
+  ------------------------------------------------------------------
+
+[88/392]
+  Speaker  : Manish  [unknown]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 424.75
+    Okay, Okay, I will look into this again.
+  ------------------------------------------------------------------
+
+[89/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 465.96
+    Yeah, So that was a major one on the cache. And again that was similar as well t
+    hat I saw on the other numbers as well. So even if I looked at P L and balance s
+    heet, I put a screenshot here. December months were showing double entries. Is t
+    hat now fixed?
+  ------------------------------------------------------------------
+
+[90/392]
+  Speaker  : Manish  [unknown]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 504.25
+    Yes, this is I have. It's fixed now. Maybe the values I'm taking from the zero a
+    nd now you have shown me that I have to take from the manual generals that maybe
+     the reason there's a difference between the values. So I will look into this an
+    d.
+  ------------------------------------------------------------------
+
+[91/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 554.36
+    And the other thing I noticed as well is that not just the cash. Balance here, b
+    ut all the accounts right. For the December balances, even in the. Profit and lo
+    ss, the balance sheet, all. Those numbers were appearing to be larger than they 
+    should be. So I think it's the same issue where you from because the other month
+    s seem to be fine. Then the other thing I wanted to check was on the syncing. So
+     you're saying the data is syncing. At 1am every day, right?
+  ------------------------------------------------------------------
+
+[92/392]
+  Speaker  : Manish  [unknown]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 714.79
+    Like for now we are syncing the data from the zero for the last four years. So f
+    or the 2026 we will not say we are not syncing the data from the zero.
+  ------------------------------------------------------------------
+
+[93/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 820.16
+    We will look into it then.
+  ------------------------------------------------------------------
+
+[94/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 1128.42
+    Sure, sure. Once the database will be working, then we will test it accordingly 
+    and then I'll confirm you.
+  ------------------------------------------------------------------
+
+[95/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 1539.7
+    No, there'll be another one where you have targets as well. When you actually op
+    en the tv just.
+  ------------------------------------------------------------------
+
+[96/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 1599.74
+    Okay, no problem. Look, I'll check with them.
+  ------------------------------------------------------------------
+
+[97/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 1694.62
+    Okay, I will keep you updated. Regarding this page.
+  ------------------------------------------------------------------
+
+[98/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 1715.69
+    So I wouldn't suggest to do the numbers now, right? I would one, subtract module
+     two and I know it's working. Then we'll do that at the end. We don't have to do
+     it now, right? There's no point doing it now. And then you're changing the numb
+    ers and. Then I pick up maybe you need to fix. So this we do at the end. Once al
+    l the bugs are fixed and. UAT has been signed off for module two.
+  ------------------------------------------------------------------
+
+[99/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 1757.99
+    So we will check related to the points that you have mentioned and plus whatever
+     we can cover now the team will work on at once the database is up and after tha
+    t lead to that target sheet. We will consider it later on once the UAT points ar
+    e done.
+  ------------------------------------------------------------------
+
+[100/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 1826.01
+    I'll just wait for your message on the group. Okay, when you tell me your module
+     one is done, I'll go and test it. When you tell module 2 and 3 is done, I'll go
+     and test it. In the meantime on the Unified Scope,. If you can just add the lin
+    k to the test cases, I can look at that.
+  ------------------------------------------------------------------
+
+[101/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 1840.19
+    Yes, yes, yes. I just shared it, but I believe I added in the wrong page. So I'l
+    l check and then I'll add them.
+  ------------------------------------------------------------------
+
+[102/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 1984.28
+    You want to check everything in the same document. So that's why we have shared 
+    the link as well.
+  ------------------------------------------------------------------
+
+[103/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode - M1  #15  (1775124600000)
+  Time     : 2004.61
+    Okay, we'll keep you updated to everything.
+  ------------------------------------------------------------------
+
+[104/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode  #16  (1775477700000)
+  Time     : 76.57
+    I. I thought you guys made this. Okay, that's fine. Okay, we can keep it here as
+     it is. We'll just inform them.
+  ------------------------------------------------------------------
+
+[105/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode  #16  (1775477700000)
+  Time     : 280.67
+    And the UI doesn't reflect the correct so okay, I think that's fine as long as y
+    ou guys have got all of this working. Okay, I'll do my check and complete and if
+     I do find anything else. I'll let you guys know One more.
+  ------------------------------------------------------------------
+
+[106/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode  #16  (1775477700000)
+  Time     : 348.08
+    Okay can you make a list of these like. Okay, well it's fine. Leave it. It's fro
+    m the side. That's okay. And sorry, you were saying that I should only test with
+     December 2025 right up to 2025.
+  ------------------------------------------------------------------
+
+[107/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode  #16  (1775477700000)
+  Time     : 472.47
+    Okay, that's fine. So I think we are good with this. We will connect with Bhavni
+     and the. Rest tomorrow and we'll get gather the. Final feedback from them modul
+    e 2 and. 3 Is what Akash, I don't know if he's here right now. Yeah, he was trav
+    eling. He was coming back this week so. He can confirm about the other tools.
+  ------------------------------------------------------------------
+
+[108/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode  #16  (1775477700000)
+  Time     : 498.96
+    And then see in M2 and M3 was saying that he was getting some mismatched values 
+    so that's why I just asked for the data set as well but I didn't get any respons
+    e from there. And even he was saying that Nagumi is adding a detailed feedback s
+    o haven't get that too.
+  ------------------------------------------------------------------
+
+[109/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode  #16  (1775477700000)
+  Time     : 540.81
+    If the data match zero and there's something incorrect our side then we'll have.
+     To figure it out.
+  ------------------------------------------------------------------
+
+[110/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode  #16  (1775477700000)
+  Time     : 553.29
+    So we were going to meet today and finalize but I think it's gonna. Be a discuss
+    ion tomorrow. All right. Yeah, so yeah that's from my side. I think this is what
+     we have so far.
+  ------------------------------------------------------------------
+
+[111/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode  #16  (1775477700000)
+  Time     : 623.63
+    Have a good week. Let's connect tomorrow and we'll let.
+  ------------------------------------------------------------------
+
+[112/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 21.2
+    Simran as in there's. If the issue is an M2, there'll be issues in M3. So there'
+    s no point until the issues. Get resolved because whatever you're fixing in M2, 
+    you need to fix. So the main thing is getting M2 ready. And once M2 is ready, wh
+    atever changes you have, you need to incorporate that. Into M3 and then we'll st
+    art testing. Otherwise there's no point testing.
+  ------------------------------------------------------------------
+
+[113/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 51.1
+    Let me share my screen. I'll start with some of the other pages and then he can 
+    talk about the more general ones. Yeah, he needs a couple of minutes to join. Ok
+    ay, so let me know when you can see my screen.
+  ------------------------------------------------------------------
+
+[114/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 71.19
+    So I'll start with some of the other ones here. So I'm starting midway through. 
+    On working capital. So I'll talk through working capital, the cash flow and the 
+    financial statements. In particular. So the working capital, the table that you 
+    have below and the numbers. Don't align with what we have in the Excel. So this 
+    is the Excel output. That Akash had generated. And I put all the calculations an
+    d we've gone through these a couple of times. So if you look, the numbers don't.
+  ------------------------------------------------------------------
+
+[115/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 144.36
+    So we're comparing like for like. So in the Excel as well, you have the same day
+    s, the DSO Dio,. DPO days, all of them are the same. You should be generating th
+    e same results. Because of the numbers here are not correct and the numbers in t
+    he graph also not correct because that's where they're deriving from. So that. S
+    o this working capital page needs to be re looked at again from a numbers perspe
+    ctive. The Jan 2026 number, this change in working capital, you've got 53 millio
+    n.
+  ------------------------------------------------------------------
+
+[116/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 183.84
+    I don't know how you derive that from, but you should be taking the working capi
+    tal balance from December 2025 and. What the change is from January 26 to Decemb
+    er 2025. Like which is not 53 million working capital. So you need to look at th
+    is number as well. Okay, yeah, I'll put it down here again as well. See, negativ
+    e 53 million. It shouldn't be that much. I think I've given in the Excel the wor
+    king capital for 2025. But you can still apply it and use the same thing from th
+    e numbers.
+  ------------------------------------------------------------------
+
+[117/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 283.15
+    Okay, Yeah, yeah, we were checking. We will check these things.
+  ------------------------------------------------------------------
+
+[118/392]
+  Speaker  : Neha  [developer]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 539.38
+    So right now it's hard coded but we will look into this to make it dynamic.
+  ------------------------------------------------------------------
+
+[119/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 585.64
+    Then the third. Then you can then say in essence basically it's some months of p
+    ositive and some are negative. Right, Basically. So you can just explain it. Yea
+    h, sure. That way. So these are all the working capital page specific feedback. 
+    Then I'll go to cash flow and Runway forecast page. So again Simran similar thin
+    g. The, the cash flow numbers don't match what we have in the Excel output. So I
+    'll put the Excel output and what the numbers are.
+  ------------------------------------------------------------------
+
+[120/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 631.97
+    And if I'm comparing it to, to your cash numbers, there's quite a big difference
+    . You're looking at 8 million of cash. Versus 38 million that you have. And even
+     your net cash flow seems quite low compared to what you have here as well. And 
+    then similarly you have on the cash Runway and the burn rates as well. We had th
+    is drawn down where you have your cash flow, your burn rate and your Runway. The
+     numbers are very different to be. Looking at 14 months versus 948 months.
+  ------------------------------------------------------------------
+
+[121/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 794.14
+    So it's quite clear. I know as a user you can. Hover over it, but if you have so
+    me data labels, so it's quite clear what the numbers are, that'll give a better 
+    visual because we don't have a. Table underneath as well to show it. So just add
+    ing some data labels would. Become a bit more clearer to the user if. When he's 
+    looking at these charts. These two ones in particular.
+  ------------------------------------------------------------------
+
+[122/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 940.19
+    And the same then feedback on your cost of sales as well. If I look at the amort
+    ization, the patents, software, lease improvements, all these numbers have been 
+    historically zero. There's no number in the historical data. Naturally there'll 
+    be no number in the forecast data. So these are additional roles that are not re
+    quired. So we'll just use that as general feedback across the pnl. I think expen
+    ses were fine. But I saw this revenue and cost of sales.
+  ------------------------------------------------------------------
+
+[123/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 1055.75
+    Millions, hundreds of billions or billions in this case. So you just really need
+     to look at both the balance sheet and the. Cash flow because these numbers are 
+    quite. Far off and like even the balance. Sheet numbers aren't balancing. So you
+     can see. Here in 60, 84.85 and 164 so showing double. So the balance sheet, the
+     assets are not even equaling your liabilities and equities. Yeah, I think you j
+    ust the. And then the same feedback on the cash flow as well. So both the balanc
+    e sheet and the.
+  ------------------------------------------------------------------
+
+[124/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 1147.78
+    The other feedback I had just generally. When I was trying to open. I tried to o
+    pen a new account. And loaded with Excel. It said it wasn't providing the foreca
+    sting right. It said 2025 data does not load so you can't generate a forecast fo
+    r. Module two, module three. So I'll give you. I'll put in the chat. I'll give y
+    ou the test account. So you can check at the back end. But it wasn't working for
+     me. I think Omi said it was working for him. But for the account that I created
+    , it didn't work.
+  ------------------------------------------------------------------
+
+[125/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 1186.12
+    I'll put that. I'll put the account I've created in the chat.
+  ------------------------------------------------------------------
+
+[126/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 1197.03
+    Yeah, I will stop sharing. I'll let go me share if he's joined. There were some 
+    things that he also. Figured out as well. So let me just stop.
+  ------------------------------------------------------------------
+
+[127/392]
+  Speaker  : Manish  [unknown]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 1376.36
+    Okay, I will look into this.
+  ------------------------------------------------------------------
+
+[128/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 1500.08
+    We will check for the possibility of save button.
+  ------------------------------------------------------------------
+
+[129/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 1603.61
+    Since you just had a meeting yesterday only and we didn't had any discussion wit
+    h them yet. So let us have a discussion with them and then we will cover these p
+    oints.
+  ------------------------------------------------------------------
+
+[130/392]
+  Speaker  : Ngũmi Gituro  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 1917
+    I'll create a new account and. In number nine, I think it was what Bob Meat had 
+    mentioned. Maybe there was like. The Optimistic and the Conservative toggles. It
+     seems like the settings are not being retained. So for example, if I click betw
+    een one or the other, maybe I can show you a demo. Let me see which one we're go
+    nna use. So for example, this one. So we know that the optimistic is 105% and th
+    e conservative is like 95% from plus 5 minus 5%. But as you toggle through it ch
+    anges the scenario.
+  ------------------------------------------------------------------
+
+[131/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 2245.01
+    Okay, okay, we'll do that then. We'll do that.
+  ------------------------------------------------------------------
+
+[132/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 2285.9
+    The rate should be two decimal places here as well.
+  ------------------------------------------------------------------
+
+[133/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 2324.1
+    So we'll continue to add for the other pages as well. These are the setup feedba
+    ck. For over overall and then the revenue forecast and then also pages. So we'll
+     keep on adding to the document.
+  ------------------------------------------------------------------
+
+[134/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 2342.9
+    Okay, sure. So whatever feedback you have added so far, we will start working on
+     it. And also Akash informed me yesterday night that module, Sorry, the approach
+     one is finalized for module four as well. So we will start with that too.
+  ------------------------------------------------------------------
+
+[135/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 2372.54
+    As we have just informed earlier that socket IO plus Redis needs to be implement
+    ed. So socket IO was implemented but Redis was not implemented because no confir
+    mation was provided to us for that. So do you have any discussion with Raheel an
+    d Akash related to that Redis part as well?
+  ------------------------------------------------------------------
+
+[136/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 2401.45
+    All right. In the meanwhile we will focus on 1, 2 and 3 module for now and modul
+    e 4 starting with the approach 1, whatever is.
+  ------------------------------------------------------------------
+
+[137/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 2493.07
+    Okay, no problem. We will consider this part as well. We will test it accordingl
+    y.
+  ------------------------------------------------------------------
+
+[138/392]
+  Speaker  : Ngũmi Gituro  [client]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 2601.02
+    Is it possible to add because like it's more likely that they're only going to c
+    hange to maybe the last month of data to say which month here was updated in the
+     same.
+  ------------------------------------------------------------------
+
+[139/392]
+  Speaker  : Manish  [unknown]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 2612.54
+    Okay, you just want like we add one or more column where the user will see that 
+    for which month the data is updated in the tv. We will look into this.
+  ------------------------------------------------------------------
+
+[140/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #17  (1775623200000)
+  Time     : 2800.08
+    All right. Then we will look into all these feedbacks and we will start working 
+    upon it and if we have any kind of query we will ping you on WhatsApp too.
+  ------------------------------------------------------------------
+
+[141/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 51.14
+    Yeah, I'm also doing well, thank you.
+  ------------------------------------------------------------------
+
+[142/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 56.82
+    Superhill, you're on the call. Yeah, hey, hey, one second. Yeah, so we were tryi
+    ng to just discuss the module one right now. Before we jump into the module two,
+     I remember like Nagumi said that he would give us a comparison feedback between
+     Excel and 0 and I'm unable to find that. He was going to put that in the Unifie
+    d Scope. Yeah, that's what he said and I think, yeah, I don't see that there. Ma
+    ybe he's done it on a new document or something.
+  ------------------------------------------------------------------
+
+[143/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 150.53
+    Yeah, see this is the feedback document that we have received from. So we have u
+    pdated the most of the points yesterday as well and they just informed us that s
+    till these points are not fixed. But the thing is that we have asked for the acc
+    ounts that they are using. We are facing issue with the previous accounts that t
+    hey were using because the resynching was not done at that time because the team
+     has updated the database and most of the points are covered. So now we have cov
+    ered.
+  ------------------------------------------------------------------
+
+[144/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 249.24
+    No, I just informed them to have a call. We just had a call yesterday. He inform
+    ed that these were the issues, but we have checked those issues were not regener
+    ated either. Even we checked today as well with their account and everything see
+    ms to be good. So I asked for the meeting today as well. But Was not available. 
+    Even the boomi was not available. Even there is some mismatch in the Excel sheet
+     as well.
+  ------------------------------------------------------------------
+
+[145/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 313.77
+    Yeah, sure, sure, sure. N is sharing her screen. I'll inform her to showcase tha
+    t to you. Even Alka is also there. Just a second. In the opex planned OPEX plan,
+     the value is wrong in plan of it. Here in the marketing you can check for third
+     or fourth value. The formula is wrong that they have used. Yeah, it's F. And in
+     the next value cross check for the next one.
+  ------------------------------------------------------------------
+
+[146/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 692.6
+    Is it just you doing this Olka on your side, you're reviewing the numbers, right
+    ? Okay, so we can give Alka access because this is quite an important point for 
+    the client and because we've been looking at the numbers, doing the calculations
+     and Bhavni has the domain expertise. Only he can verify these calculation numbe
+    rs. So if you can, after the call we'll give you access or maybe during the call
+     we'll give you access.
+  ------------------------------------------------------------------
+
+[147/392]
+  Speaker  : Alka Saini  [unknown]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 754.4
+    Yeah, sure, I'll do that.
+  ------------------------------------------------------------------
+
+[148/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 782.81
+    This is a dummy data plus tax calculations. Excel, right? Yes, that's the one. S
+    o I made you an editor Alka. You can also comment and flag like add client's nam
+    e or our name and just mention that maybe we can do a joint call with the client
+     and go through these numbers once. Ak what do you think like Bhakti should vali
+    date on the call? Yeah, I think we. We need him to do this. The validation of th
+    e numbers and the calculations, that's something we'll do.
+  ------------------------------------------------------------------
+
+[149/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 1304.02
+    So the idea for this part was that they should have matched, right? So the user 
+    has options in the baseline to add the baseline numbers. But let's just say thro
+    ughout the year things changed, they can come here on this page and update the n
+    umbers or update their additions or anything they need to update. So we did want
+     them to be reflected on both because you guys have done it on the front end. I'
+    m not sure going to make it a bit more difficult.
+  ------------------------------------------------------------------
+
+[150/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 1699.53
+    So what we'll do is so me with Simon will team will sit maybe tomorrow in Scrum 
+    and we'll. We'll discuss this internally first and we'll come up with a plan pro
+    perly and then we'll let. We'll come up with a plan.
+  ------------------------------------------------------------------
+
+[151/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 1751.96
+    No, sorry, sorry. So if you want a reset button also not then also you want to c
+    lear us this thing in the first only because like we'll. We'll analyze this and 
+    we'll then come up with the architecture which will support these things. So for
+     now like I was not considering to add a reset button, but if you want that rese
+    nd to like you order reset button. So then also you need to tell us the before a
+    nd only then because we'll come up with the architecture according to that.
+  ------------------------------------------------------------------
+
+[152/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 2080.05
+    So again just I want to highlight like we'll discuss this with my team because m
+    aybe they would have any concerns of how to implement it. So from now only like 
+    we'll give some time to analyze like what are the code changes and then in tomor
+    row so me and Simon and team will sit and we'll decide according and then we'll 
+    come up with a plan and we'll let.
+  ------------------------------------------------------------------
+
+[153/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 2104.55
+    Thank you. Okay cool. So we'll wait for that one. Anything else on the M2?
+  ------------------------------------------------------------------
+
+[154/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 2244.54
+    I think what we probably need is one session with them with you guys as well. Ca
+    n I just ask one more thing on module one just remembered one point on the sync 
+    history. If you go into the UAT feedback tab. And one is this one. And you go al
+    l the way to the. There's a number 14 which is about when the sync is done. And 
+    the history shows that records were synced. It just shows number of records. So 
+    it shows like 100, 300 number of records have been.
+  ------------------------------------------------------------------
+
+[155/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 2514.55
+    We can show the time with the date here as well, in the brackets.
+  ------------------------------------------------------------------
+
+[156/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 2713.36
+    Okay, I'll check with my team that how much time they need to do that or is ther
+    e a quick point then we can cover it soon? But yeah, I'll keep you updated regar
+    ding this as well. But more.
+  ------------------------------------------------------------------
+
+[157/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 2765.88
+    Okay, I'll check regarding this screen as well. Yes, I have a.
+  ------------------------------------------------------------------
+
+[158/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 2845.91
+    It seems like an input field because there's. There's going to be previous years
+     where we cannot input numbers so they can manually override the numbers. In tha
+    t case when we just. We don't need to change any functionality. It's just a matt
+    er of for the years we have forecasted or for the existing. If you scroll up, so
+    rry, the other way, go to the top of the page. So 2025, we don't have forecast n
+    umbers for 2026. There will be a forecast number. A forecast page of this versio
+    n.
+  ------------------------------------------------------------------
+
+[159/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 2920.03
+    We will let the client know that for whatever reason you have highlighted, they 
+    cannot do this because maybe 2026 is not populated or the 2026 calendar year is 
+    not functionality is not there. Whatever it may be, just let us know. We'll let 
+    them know. And it's their responsibility to fix for us. It's just simply populat
+    ing the latest forecast numbers or the latest forecast year.
+  ------------------------------------------------------------------
+
+[160/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 3159.61
+    Okay, cool. So just a request from before. Highlight the. We've given Alka now a
+    ccess to the. Highlight it. Just leave a comment somewhere to say exactly what y
+    our concern is with the numbers. We'll clarify that. Then we'll let them know wh
+    at else is pending and we'll just tell them everything else is being fixed. Just
+     use new account. Test those numbers.
+  ------------------------------------------------------------------
+
+[161/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 3218.5
+    Thank you. Yes, we'll let them know about creating a new account and testing the
+     new features. That was it for now.
+  ------------------------------------------------------------------
+
+[162/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 3230.19
+    I have shared one query for module 4 as well. Can you please look at it?
+  ------------------------------------------------------------------
+
+[163/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 3264.88
+    Can you please inform Harsh to join as well?
+  ------------------------------------------------------------------
+
+[164/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 3443.06
+    I don't see this input being specified in the question itself. Like if my produc
+    tion increased by xyz, whatever. So I'm assuming that this is a figure that must
+     be taken from database that the customer has a gross margin. We'll ask this que
+    stion just to be sure from the client side. So nothing's been that number is not
+     being calculated in any way. In part of the logic from what you see. So let me 
+    just see. Minimum safe margin percentage. Yeah, let me open.
+  ------------------------------------------------------------------
+
+[165/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 3585.29
+    I think his Internet crashed. It says it's an input in the table so context inpu
+    t. So I can see in this scenario there's no input defined for the safe cross mar
+    gin percentage but it's mentioning that's being calculated somewhere as well in 
+    the previous module 2 and 3. Are we calculating this anywhere? I'll pose a quest
+    ion to the clients. Let's ask clarity from them if it's.
+  ------------------------------------------------------------------
+
+[166/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 3633.15
+    If they want to specify this safety, this number in this question manually stati
+    cally by the user in the query or do they want this to be a parameter that they 
+    take from the database which is calculated from somewhere? Yeah, I think we just
+     need to identify where this variable number value is found or calculated from. 
+    Okay, we'll ask the client and we'll let. I think hashtrup Simran so if you coul
+    d just let him know that we will double check this.
+  ------------------------------------------------------------------
+
+[167/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 3675.22
+    Yeah, actually there is some electricity issue at our end and so that's why thei
+    r systems are just switched off. So that's why they are not able to join now. So
+     can we discuss this point tomorrow as well?
+  ------------------------------------------------------------------
+
+[168/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 3686.64
+    That's fine, yeah. We'll ask them today and hopefully we get an answer.
+  ------------------------------------------------------------------
+
+[169/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 3759.17
+    And we want to get you paid obviously and we want to get paid too. So if we can 
+    just speed this up, we'll help you communicate this back to the client. But yeah
+    , we. We just need the next payment unlocked from the client.
+  ------------------------------------------------------------------
+
+[170/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 3810.61
+    I haven't informed them yet that yeah, we have started working on M4 but yeah, i
+    n the next week obviously I'll inform them that yeah, we are working on model fo
+    ur.
+  ------------------------------------------------------------------
+
+[171/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #18  (1775736600000)
+  Time     : 3907.52
+    Next week. Okay, no problem. I'll talk to them till mid next week. All right.
+  ------------------------------------------------------------------
+
+[172/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #19  (1775823300000)
+  Time     : 218.83
+    And I just mentioned that we haven't worked on the feedback today we were just m
+    ore focused on the save button feature so that because we have informed you or p
+    romised you yesterday that we will provide you with the documentation and the ne
+    w architecture so that's why this two days was more focused on that same feature
+     architecture. Yeah apart from this the team have started working on the zero mo
+    dules feedback but that is still in progress.
+  ------------------------------------------------------------------
+
+[173/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #19  (1775823300000)
+  Time     : 259.52
+    Okay all I all I'd ask is just if you can make sure that any comments you've lef
+    t here which are done these accurate and up to date because then what we'll tell
+     the client to do is just to refer to this if he thinks it's not there and it's 
+    done it should be there then he can review an accounts to make sure this is, thi
+    s has been fixed. So just make sure these comments are all up to date.
+  ------------------------------------------------------------------
+
+[174/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting  #19  (1775823300000)
+  Time     : 347.06
+    Yeah we will check these ones again before we leaving today.
+  ------------------------------------------------------------------
+
+[175/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode meeting  #19  (1775823300000)
+  Time     : 350.9
+    Yeah please. Thank you. Okay cool. Yeah I think we need the rest of the team Sim
+    ran if you can just stay behind. Just need to follow up a conversation with you 
+    but I think we're for the rest of the team unless there's anything else you want
+     to add or. No, that's fine. I think next week we'll ask if we can join either o
+    ur cadence call and have that call with you another time. We just. So we should 
+    just align next week with this.
+  ------------------------------------------------------------------
+
+[176/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+  Time     : 181.33
+    Yeah, so. So I think I've given that number as well. So if you go to inputs, the
+     inputs tab here in this sheet. No, no, no, no, no, no, no. Go back to the other
+     sheet you're on or even. If you go to inputs. I think if you go down. I think t
+    his is where he.
+  ------------------------------------------------------------------
+
+[177/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+  Time     : 475.42
+    Can you just write these all down so it's clear to us as well?
+  ------------------------------------------------------------------
+
+[178/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+  Time     : 693.58
+    Wait a second. I will check.
+  ------------------------------------------------------------------
+
+[179/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+  Time     : 773.69
+    Yes sir. No, we do not have any count related to that as we will uploading this 
+    Excel sheet. But in this Excel sheet there is no such code. So it is also not pr
+    esent in the db.
+  ------------------------------------------------------------------
+
+[180/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+  Time     : 874.28
+    No, it's the same one. I'll check with Ashpreet.
+  ------------------------------------------------------------------
+
+[181/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+  Time     : 1137.59
+    Yeah, So it's under financing activities. Okay, just going to the Excel.
+  ------------------------------------------------------------------
+
+[182/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+  Time     : 1178.24
+    Just one second. Okay, let's go to the next query. We'll come back to these two.
+  ------------------------------------------------------------------
+
+[183/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+  Time     : 1346.89
+    So we shall remove it from the UI as well and we can just focus on the property 
+    and equipment for now. Okay, got it.
+  ------------------------------------------------------------------
+
+[184/392]
+  Speaker  : Neha  [developer]
+  Meeting  : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+  Time     : 2598.93
+    Now dashboard is saying that we should go with the Redis pub sub which will be a
+     better approach. And I have gone done some R D like Socket IO the W also a bett
+    er approach. Just the redis is like messaging queue like when the consumer compl
+    etes the task. Redis P also give the responses a little bit too fast as compared
+     to the double Q. WQ is also a better approach. We just share the timeline as we
+    ll. That the recommendation which I provided by the split so will take our two w
+    orking days off.
+  ------------------------------------------------------------------
+
+[185/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+  Time     : 2695.35
+    And apart from this we will try to provide you with the time estimations for the
+     forecast module.
+  ------------------------------------------------------------------
+
+[186/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+  Time     : 2744.72
+    So we will provide you with the time estimations of both the modules for now bec
+    ause scenario modeling is done but for now the socket IO regarding which we need
+     to discuss with Ashpreet and once it is finalized then we can provide you with 
+    that handover of scenario modeling.
+  ------------------------------------------------------------------
+
+[187/392]
+  Speaker  : Ngũmi Gituro  [client]
+  Meeting  : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+  Time     : 2800.42
+    Well I mean I recommend that we still need a little bit of a discussion on our s
+    ide and then we'll get back to you asap.
+  ------------------------------------------------------------------
+
+[188/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 60.02
+    Thank you. I'll be back. Five minutes.
+  ------------------------------------------------------------------
+
+[189/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 613.96
+    Okay so yeah Simran is harsh going to take the lead here or.
+  ------------------------------------------------------------------
+
+[190/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 767.23
+    So we will, we were getting like what will be the input required to execute this
+     test? What are the reasoning which need to be performed to get out from these t
+    ests and what are the output format we need to show in the output what are the g
+    raphs and the summary and other things. So we in the like before like including 
+    stress test we will, we will be needing our document in the previous approach.
+  ------------------------------------------------------------------
+
+[191/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 868.82
+    So if we have five stress tests then we will be needing like five types of stres
+    s test in the classification. So for every stress test a new classification need
+     to be added in that query classification prompt before after writing its logic.
+     So in the previous approach first we need a document. Then by understanding doc
+    ument we were creating a Python file implementing all the logic from the documen
+    t.
+  ------------------------------------------------------------------
+
+[192/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 896.53
+    Then we will we were adding a classification regarding that stress test and then
+     we were writing unit test cases and verifying it. Then yeah, that's how we were
+     integrating the stress test into the chat flow previously.
+  ------------------------------------------------------------------
+
+[193/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 1087.67
+    Okay, So this is the chatbot. I am asking the question here. Let me refresh. Oka
+    y, see this time response is written in 31 seconds. So the response is, the ques
+    tion was if the market dips and we miss revenue by 20% from quarter three, what 
+    do we need to cut or delete to survive next four months? So it analyzed the curr
+    ent situation and provided the mitigation plan along with that, all the scenario
+     like shown in the graph as well. And after that recommendation and assumption f
+    or this stress test.
+  ------------------------------------------------------------------
+
+[194/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 1656.26
+    So I will directly explain it how the new test case will be inserted in this app
+    roach. Okay, implementation strategy. Okay, so in this approach first initial re
+    quirement is still the same. A document will be required with all the necessary 
+    input. After that document will be processed into the markdown format by an agen
+    t. Previously, what the developer is like processing document in the python file
+    .
+  ------------------------------------------------------------------
+
+[195/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 1892.6
+    So x second, there one more thing in the second approach which I need to mention
+     1 second. Picture. So in the like while when we start when we will implement th
+    e second approach, first we will go with the single agent approach. Like if the 
+    single agent is enough to implement the stress test on his own, then we will lik
+    e stay with the single agent. Else we will again like move to a multi agent arch
+    itecture in the answer generation pipeline.
+  ------------------------------------------------------------------
+
+[196/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 2008.33
+    Yeah, simulation result will be validated by the second agent. Like yeah, if we 
+    move to like multi agent architecture. If the single agent is enough like if we 
+    get good accuracy with single agent then we will stay with the single agent arch
+    itecture as we are already doing. So like should I show a demo of this approach 
+    or you have any question regarding the like how it is being implemented?
+  ------------------------------------------------------------------
+
+[197/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 2055.83
+    So like this is a. This is Langsmith platform for like testing the agent rapidly
+    . So I built the POC regarding the approach to. So I will be showing you a demo 
+    of that POC using this platform. I will stay. I will be again executing this str
+    ess test. Queries. So this is the query if the market divs and we miss the reven
+    ue and this is the company ID and user ID for that. We'll be automating that whe
+    n we move to production. For now we are providing it in the query. So agent will
+     hit the query.
+  ------------------------------------------------------------------
+
+[198/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 2447.94
+    we can manage that. But again for classification we need like. We need what? So 
+    how we will classify the query then? Like can I.
+  ------------------------------------------------------------------
+
+[199/392]
+  Speaker  : Ashpreet Singh  [client]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 2488.48
+    Your first step is you have a set of documents which have let's say a set of str
+    ess tests. I want to look at what. What was the first step? Which document? How 
+    the document. Let's say it was on docx. I will want to look into the docx Docume
+    nt.
+  ------------------------------------------------------------------
+
+[200/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 2555.73
+    Yeah, yeah. Oh no, yeah, that part is for like first agent which. Which will lik
+    e convert documented to markdown and like write the function for it. For the POC
+     purpose we just like give this document to the LLM and created a concise functi
+    on which is including all the logic just for like looking like feasibility purpo
+    se. Like if it is possible not. But yeah, we can also convert it using agent as 
+    well.
+  ------------------------------------------------------------------
+
+[201/392]
+  Speaker  : Ashpreet Singh  [client]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 2620.25
+    I do understand. But you want to understand. See, see for me the document. So if
+     that this document is going to be part of my general let's say flow I need to u
+    nderstand what is the document about. How they have chunked so they have reached
+     to a success story around it. See, that's important because. Because I need to 
+    follow the same strategy of building a document. That's the simple garbage in, g
+    arbage out.
+  ------------------------------------------------------------------
+
+[202/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 2679.2
+    Actually output will be same because we will be validating it before like indexi
+    ng that function into the vector database so the output will be the same like in
+     both cases.
+  ------------------------------------------------------------------
+
+[203/392]
+  Speaker  : Ashpreet Singh  [client]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 3072.23
+    In this deterministic can we into one effort adding another stress test with thi
+    s current approach. If that saves me time and effort and make that production re
+    ady in within one day. That's the benefit. I get it with the new approach and I 
+    can take a better decision. I hope that sounds well to you Akash.
+  ------------------------------------------------------------------
+
+[204/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 3251.57
+    Yeah, I'll ping you. So regarding the efforts or regarding how much time that we
+     require to do all these things and when we can showcase you something
+  ------------------------------------------------------------------
+
+[205/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 3349.48
+    And so when the query will come the similarity search will be like based on the 
+    summary and the output which will be given after that search is the executable f
+    unction. So it's a kind of parent document retriever. So we will apply search on
+     the summary and the output will be the stress test function. So we are not like
+     embedding the whole document or this. We are just embedding the summary of the 
+    document like this much only.
+  ------------------------------------------------------------------
+
+[206/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 3429.74
+    Yeah, I will look into that also. Like if it makes it more accurate and fast, th
+    en we will surely do that. We can do that.
+  ------------------------------------------------------------------
+
+[207/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 3452
+    Okay, I will look into that. Oh and the second question is the document you prov
+    ided where four agent are mentioned. So regarding that you are saying that go th
+    rough that document and like what's
+  ------------------------------------------------------------------
+
+[208/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 3557.2
+    And we need to provide with the design as well.
+  ------------------------------------------------------------------
+
+[209/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 3613.99
+    Actually Ashpreet like suppose once we goes with the approach too. So like only 
+    thing on your side is to do like. Is to like we'll share you a template of our d
+    ocument. Like how you doing to define this test case? You just need to upload so
+    mewhere like we'll provide you a UI over there. You just need to upload it. Rest
+     of the things like, like.
+  ------------------------------------------------------------------
+
+[210/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 3694.61
+    No, I was just going to say so thanks for the discussion. We'll consolidate ever
+    ything and if we can get a accurate comparison between the two so we can share a
+    s we said that'd be great. Nothing else from my side. So I'm not sure Bhavni and
+     Gumi anything else you want to raise on top of Ashpree mentioned. Or anyone els
+    e on the call.
+  ------------------------------------------------------------------
+
+[211/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 3886.18
+    we'll integrate that for you we'll indicate some basic effort so it'll be an
+  ------------------------------------------------------------------
+
+[212/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 4050.79
+    Then we'll share it by today or most of the tomorrow and you can. You can go thr
+    ough that and you can let us know if you. If you have any concerns over our appr
+    oach. And we also highlight what are the formulas which you use to get the diffe
+    rent values. So do you can have a more clarity over like and, and like the possi
+    bilities which I'm talking about?
+  ------------------------------------------------------------------
+
+[213/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 4071.24
+    There are a lot of possibilities like, which the AI considers but we'll highligh
+    t like five to 10 possibilities like, like, but how it is getting that possibili
+    ties will highlight some of the like main things to you. So do you can get an id
+    ea about that and you can let us know if you have anything about any, any concer
+    ns?
+  ------------------------------------------------------------------
+
+[214/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 4117.03
+    Okay, sure, sure. We will continue.
+  ------------------------------------------------------------------
+
+[215/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode AI meeting  #2  (2026-03-25)
+  Time     : 4146.529
+    We will provide you with the requested documents and plus whatever we have sugge
+    sted and then you can finalize according to that.
+  ------------------------------------------------------------------
+
+[216/392]
+  Speaker  : Manish  [unknown]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 85.51
+    Think actually like there is a lot of data. Like we are syncing for the last fou
+    r years of data and plus the current month up to current month. So the when the 
+    crone was hit like at 1am the blood like let's take. There are two to three comp
+    anies are going to be sync at the same date. So when the crone hit the for the t
+    hree of the companies the gyro syncing is going. So like we have to sync all the
+     data again.
+  ------------------------------------------------------------------
+
+[217/392]
+  Speaker  : Gaurav Gupta  [unknown]
+  Meeting  : Nolocode-AWS-deployment  #10  (2026-04-14)
+  Time     : 112.47
+    I'm just going to talk. Just give me a second.
+  ------------------------------------------------------------------
+
+[218/392]
+  Speaker  : Gaurav Gupta  [unknown]
+  Meeting  : Nolocode-AWS-deployment  #10  (2026-04-14)
+  Time     : 124.31
+    I will walk you through that.
+  ------------------------------------------------------------------
+
+[219/392]
+  Speaker  : parteek chaurasiya  [unknown]
+  Meeting  : Nolocode-AWS-deployment  #10  (2026-04-14)
+  Time     : 125.91
+    Oh, sure. Similar. Maybe Ash is sharing the some domain as well. So please store
+     this all.
+  ------------------------------------------------------------------
+
+[220/392]
+  Speaker  : parteek chaurasiya  [unknown]
+  Meeting  : Nolocode-AWS-deployment  #10  (2026-04-14)
+  Time     : 250.48
+    I'll just show you what's the domain of front end.
+  ------------------------------------------------------------------
+
+[221/392]
+  Speaker  : Ngũmi Gituro  [client]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 326.92
+    So like where would I see this? I'm going to go back to it.
+  ------------------------------------------------------------------
+
+[222/392]
+  Speaker  : parteek chaurasiya  [unknown]
+  Meeting  : Nolocode-AWS-deployment  #10  (2026-04-14)
+  Time     : 396.17
+    Okay well, not the issue just. Can you see Just show me that logo which.
+  ------------------------------------------------------------------
+
+[223/392]
+  Speaker  : Gaurav Gupta  [unknown]
+  Meeting  : Nolocode-AWS-deployment  #10  (2026-04-14)
+  Time     : 706.14
+    Connection. I guess these services are not able to connect to database itself ri
+    ght? Let me just get to this other server I'll try to assist.
+  ------------------------------------------------------------------
+
+[224/392]
+  Speaker  : Manish  [unknown]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 779.44
+    So actually we are doing the updation. Like if the value is updated in the zero.
+     So we will just update that value.
+  ------------------------------------------------------------------
+
+[225/392]
+  Speaker  : Ngũmi Gituro  [client]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 817.75
+    Okay then in that case then that this feature kind of already exists, right? The
+     only difference. And you also have a log and the log is very, very clear. Like 
+    what has been imported, right? Like it shows. Okay, this was imported this month
+    . The only thing that you guys don't have is like whether you're applying correc
+    tions or whether you're only adding new months, which is fine. Okay then in that
+     case what I'll do is I'll test another sync.
+  ------------------------------------------------------------------
+
+[226/392]
+  Speaker  : Ngũmi Gituro  [client]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 848.68
+    I've already like scheduled one for tomorrow, so I'll see if it syncs again. And
+     then I'm also going to create a new account and try and upload data. Okay, so I
+     already saw this one for there was like extra lines. Yeah, so there was some mi
+    ssing like items when you import zero. So the data exists in zero. Like for exam
+    ple, this line dividend.
+  ------------------------------------------------------------------
+
+[227/392]
+  Speaker  : Manish  [unknown]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 886.06
+    I will update all the comments.
+  ------------------------------------------------------------------
+
+[228/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 888.06
+    Actually he was working on it. So we will update sheet at the end of the day and
+     I'll keep you posted on WhatsApp too.
+  ------------------------------------------------------------------
+
+[229/392]
+  Speaker  : Ngũmi Gituro  [client]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 927.37
+    Also this one, you have seen it. Then I had asked like what time and you guys sa
+    id UTC at 1:00am, right? Is it 1:00am UTC time, right? Okay, so we'll check that
+    . I'll confirm it tomorrow. And then we go to 15. Oh yeah. So we talked about th
+    is one. That was zero that started appearing only during the zero upload. What w
+    as the commentary from this?
+  ------------------------------------------------------------------
+
+[230/392]
+  Speaker  : Manish  [unknown]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 980.81
+    Like we have matched the Excel data and the zero data. All the values are matchi
+    ng. But the values which are coming zero. These are also coming the Excel file a
+    s well. The showing of the data is already implemented. We are not showing that 
+    data.
+  ------------------------------------------------------------------
+
+[231/392]
+  Speaker  : Neha  [developer]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 1037.92
+    Give me few minutes, I will check.
+  ------------------------------------------------------------------
+
+[232/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 1335.07
+    No worries. We will check with Karan after this call and then we will.
+  ------------------------------------------------------------------
+
+[233/392]
+  Speaker  : Ngũmi Gituro  [client]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 1339.86
+    Yeah, if you get blocked then you can and. Or you can tag me and then I will try
+     and like get the server running so you can compare.
+  ------------------------------------------------------------------
+
+[234/392]
+  Speaker  : Manish  [unknown]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 1368.49
+    I will Update that.
+  ------------------------------------------------------------------
+
+[235/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 1378.33
+    Then we can mark M1 as done once these points are finished. And I'll let by the 
+    end of day when these points are in. And then we can have a meeting for M2 and M
+    4 by tomorrow.
+  ------------------------------------------------------------------
+
+[236/392]
+  Speaker  : parteek chaurasiya  [unknown]
+  Meeting  : Nolocode-AWS-deployment  #10  (2026-04-14)
+  Time     : 1437.55
+    Yeah, yeah, actually somehow electricity is gone so I took the backup but it. It
+     takes some time. Then I'll send you over the mail yeah, sure, sure. Okay, thank
+     you.
+  ------------------------------------------------------------------
+
+[237/392]
+  Speaker  : Ngũmi Gituro  [client]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 1673.92
+    Yeah, I think this is wrong. So I'm going to write the formula should be like, s
+    imple, simple formula. The one that we learned when you were in like or somethin
+    g. I'm gonna like write the formula and then you can tell us like whether it's d
+    oable instead of having a static figure. Because this is not like a true reflect
+    ion of the principle.
+  ------------------------------------------------------------------
+
+[238/392]
+  Speaker  : Ngũmi Gituro  [client]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 1706.1
+    It should probably be replaced. Let me talk to Bob needs and we will align on a 
+    strategy. At least now I understand where the figures are coming from because it
+     didn't make sense why they're not dynamic. Because if I'm doing a forecast, I w
+    ant to know like, okay, how much am I paying extra interest every month if I'm t
+    aking new loans? So it's not working the way it should. Yeah, I'll add some note
+    s to that and ping you. Okay, sure. All right. Any other pressing issue?
+  ------------------------------------------------------------------
+
+[239/392]
+  Speaker  : Ngũmi Gituro  [client]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 1812.81
+    By the end of the day. And if we'll make it work, we'll make sure it works becau
+    se we also want to finish as many modules.
+  ------------------------------------------------------------------
+
+[240/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 1840.9
+    Yeah, you can have a look for the podcast module points that have covered so far
+    . Plus we. I'll let for the 02 if you feel like that something is still not fixe
+    d and we can have that point in the tomorrow's call as well.
+  ------------------------------------------------------------------
+
+[241/392]
+  Speaker  : Ngũmi Gituro  [client]
+  Meeting  : Nolocode-M1  #9  (2026-04-14)
+  Time     : 2233.38
+    Okay then yeah, let me do this. I will ask Ashby to run the server and then you 
+    can try see it yourself. Okay, because we have the one. The original code that y
+    ours is based on. We have it running somewhere. It's just that it's not offline 
+    right now. I had the link on the call. Oh, actually, I think, I think you might 
+    have a problem. Just give me a second. I think I know how to access it. I, I, we
+     need vpn.
+  ------------------------------------------------------------------
+
+[242/392]
+  Speaker  : Gaurav Gupta  [unknown]
+  Meeting  : Nolocode-AWS-deployment  #10  (2026-04-14)
+  Time     : 3123.72
+    And another call so. I'm in another call I'll check okay,.
+  ------------------------------------------------------------------
+
+[243/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-AWS-deployment  #10  (2026-04-14)
+  Time     : 5386.78
+    Actually, can you handle this call? Actually I do have a call with Nagumi as wel
+    l.
+  ------------------------------------------------------------------
+
+[244/392]
+  Speaker  : parteek chaurasiya  [unknown]
+  Meeting  : Nolocode-AWS-deployment  #10  (2026-04-14)
+  Time     : 6965.64
+    We have to update on ENV as well.
+  ------------------------------------------------------------------
+
+[245/392]
+  Speaker  : Ngũmi Gituro  [client]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 334.15
+    Just give me a second. I'm gonna call him and see if he can join asap. One secon
+    d. Right, I'm going to.
+  ------------------------------------------------------------------
+
+[246/392]
+  Speaker  : Alka Saini  [unknown]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 934.34
+    Only this point is pending because of this formula. We will complete it.
+  ------------------------------------------------------------------
+
+[247/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 1081.54
+    Yeah, I'm here. Raheel here. So just for the saving functionality, we believe th
+    at. I think Akash and I will have a call with you guys because I feel there is s
+    ome architectural changes that are needed for that because it's not as simple as
+     saving it to. For persistence in the database. We wanted to get some clarity in
+     terms of the approach there.
+  ------------------------------------------------------------------
+
+[248/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 1141.88
+    Okay, so when do you want to have that discussion? Then we'll go, me and I. Yeah
+    ,.
+  ------------------------------------------------------------------
+
+[249/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 1146.12
+    We'll come back to you. I need to ask AK for his availability and then this week
+    , maybe tomorrow or by Friday for sure.
+  ------------------------------------------------------------------
+
+[250/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 1321.03
+    Yeah, so the ones where. So the ones we have asked for provide the output, right
+    ? So for example, this one. So if I go to this point and say the numbers aren't 
+    correct, can you provide a breakdown of how you're generating the number? I get 
+    a response. Please retest. So can I actually see how you're generating the numbe
+    rs? Because I mentioned this I think in two or three places where if you're not 
+    going to give me the breakdown, how can I help you then on identifying the issue
+    ?
+  ------------------------------------------------------------------
+
+[251/392]
+  Speaker  : Neha  [developer]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 1444.09
+    And also the forecasting values are also matching like for from the 0 and as wel
+    l as from the Excel.
+  ------------------------------------------------------------------
+
+[252/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 1859.46
+    A mapping of where you're getting the cash. So where you're getting the 3.9 mill
+    ion cache number from as an example. Because that's what I was asking Manish. Th
+    at if you're not going to provide me the details and I cannot see, I cannot help
+     you to say, okay fine, this is correct or this is incorrect.
+  ------------------------------------------------------------------
+
+[253/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 1880.03
+    I'll need a mapping for every row to see where you're getting 3.9 from 4 account
+    s receivable where you're getting the 2.35 million number from. So then I can, I
+     can check to see. Okay fine, that's correct or that's not correct. But right no
+    w the balance sheet's not balancing. So if I go to the accounting view, if I cli
+    ck accounting view on. The top. See, it shows I'm off. If you go down. So it's. 
+    You see I'm off. Total assets 8.01 million. I can't see what you.
+  ------------------------------------------------------------------
+
+[254/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 2042.15
+    Actually, I don't have my system right now with me, so I will. No, no, you can d
+    o it tomorrow. You can do it tomorrow. Yeah, yeah, yeah. But if you. If you prov
+    ide. For the balance sheet and for the cash flow, then we can have a look. Once 
+    you've done that and provided to us, just give it to us on the document so it's 
+    clear and then we can look at it and we can come back to you on that.
+  ------------------------------------------------------------------
+
+[255/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 2068.24
+    Yeah, yeah, I will add document in the document itself.
+  ------------------------------------------------------------------
+
+[256/392]
+  Speaker  : Ngũmi Gituro  [client]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 2147.07
+    There was one point. The zero values that they come from the back end. They don'
+    t come from the front end. The ones we discussed yesterday. And then secondly, o
+    kay, this is off topic, but about the zero integration. The sync did work. Today
+     I still need to add more data, more data sets and new accounts and then see if 
+    it's actually going to the sync again. And then I can confirm if it does in the 
+    morning, but we need more data to see if it's actually syncing correctly.
+  ------------------------------------------------------------------
+
+[257/392]
+  Speaker  : Neha  [developer]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 2257.68
+    Okay, I will check.
+  ------------------------------------------------------------------
+
+[258/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 2387.66
+    No, we'll also add the forecast value underneath and then. The percentage.
+  ------------------------------------------------------------------
+
+[259/392]
+  Speaker  : Alka Saini  [unknown]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 2395.1
+    You want percentage as well to replace.
+  ------------------------------------------------------------------
+
+[260/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 2414.78
+    Yeah, so on this point, right, so we currently we're in the month of April. So i
+    f I click year to date as a period, it shows. Well now it'll show actual. Then i
+    t'll show forecast and then the percentage of actual versus forecast. And then t
+    hese are forecast numbers.
+  ------------------------------------------------------------------
+
+[261/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 2521.28
+    Yeah, No, so this is what I've seen for now. But then once, once, once we once y
+    ou align on the, the mapping and everything. And then providing the outputs and 
+    then. Retest and then you guys will, will refix and fix the bugs. Akash and Rahe
+    el will also test from their side and then Komi and I will do the final testing.
+     I'll stop presenting. There's nothing else M4.
+  ------------------------------------------------------------------
+
+[262/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 2813.4
+    Okay, so you are saying for now we will assume its value and when it is stored i
+    n backend and we will be fetching it from backend.
+  ------------------------------------------------------------------
+
+[263/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 2855.39
+    Next question is regarding cache and load. In the cache envelope. Here are some 
+    bounds mentioned. These are them. So from where we will be getting these values?
+     I checked on the back end. I didn't get. There is no value which is similar to 
+    them.
+  ------------------------------------------------------------------
+
+[264/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 2947.17
+    Because based on these boundary we will be making various scenarios. For now, wh
+    at we are assuming. Let me show you. For now we are assuming these values in the
+     back end for testing purposes. But I just wanted to make sure that. Will these 
+    value be dynamic or will you be defined only once and used again?
+  ------------------------------------------------------------------
+
+[265/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 3028.2
+    Actually it is not the part of AI. This is totally deterministic. And if we don'
+    t determine them, we don't define them, then we will not be able to generate sce
+    narios. So in case of cache and looks, test, test we will be like changing DSO v
+    alues, dio values and DPO values and all other factors. And after changing we wi
+    ll be checking like how much cash is like is freed after 5% decrease in DSO D an
+    d other values. Then similar for others. Like for first we decrease DSO by 5%, t
+    hen 10%.
+  ------------------------------------------------------------------
+
+[266/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 3115.67
+    I'm using it based on. So ideally it's unlikely your DSO is going to be below 25
+     days. So your. So if you're looking at your cut, right, whatever the DSO number
+     is, say it's, say it's 40, say it's 35, say it's 50. It's very unlikely that yo
+    ur DSO number will go below 25. All right. So you can put your D. Like the, the,
+     the lowest the, the DSO number can be is 25.
+  ------------------------------------------------------------------
+
+[267/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 3167.13
+    Now for, for that DSO value, they don't have enough free cash. So now they want 
+    to free up cash free of this much cash. So for that we will be like this. So we 
+    will be also in this case, harsh.
+  ------------------------------------------------------------------
+
+[268/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 3368.78
+    Okay, I'll check firstly at my end and if I didn't get it then I'll ping Akash o
+    r Rahib for the same.
+  ------------------------------------------------------------------
+
+[269/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 3751
+    Yeah, we agree with your point that. But actually when we like in this case so a
+    t the start of the like assumption. So at that time only we didn't have the mini
+    mum cash balance. So that's why it, it is saying like suppose at the start of th
+    is, this test. So if you have the minimum balance and then we'll suggest you som
+    e options.
+  ------------------------------------------------------------------
+
+[270/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 4249.6
+    I will not able to follow it properly.
+  ------------------------------------------------------------------
+
+[271/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 4254.8
+    What we'll do is we'll discuss his in this internally and we'll. We'll come back
+     to you on this point.
+  ------------------------------------------------------------------
+
+[272/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 4691.24
+    So last question is, you said minimum cash flow will be like slightly less than 
+    the initial cash balance. So how we will be defining that, like how much, how mu
+    ch less is there? Like, how will we define like 4 weeks? Like if it. Let's say i
+    n this case, initial cash balance is this much. So how we'll be calculating medi
+    um cash flow using this value. How much percentage?
+  ------------------------------------------------------------------
+
+[273/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-M2-and-M4  #8  (2026-04-15)
+  Time     : 4795.57
+    By the way, it's really late. We are getting late for even dinner as well. All r
+    ight then let's connect later on.
+  ------------------------------------------------------------------
+
+[274/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 3.84
+    Okay, so as you like the document which you have got from your side also like we
+     have read through that. So like in here like a simple approach will be like wha
+    t we're doing will be like we'll firstly take out all the like drivers which are
+     there in the different forecast pages and we'll. We'll like whenever like a use
+    r will come and sign up.
+  ------------------------------------------------------------------
+
+[275/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 102.79
+    So that's the summary of the basically approach we are doing and the time estima
+    tion. Like it's like we need around three days for the implementation in the bac
+    k end. One day is basically we require for the like the updating the test cases 
+    according to this new scenario. And in the three days we'll also give you the CO
+    VID of the reset button also and like one day will be required for the test case
+    s. We need to update the test cases.
+  ------------------------------------------------------------------
+
+[276/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 196.03
+    The other DB which is the JSON B will remain empty because there's no right numb
+    ers there. So we will have the baseline in that way.
+  ------------------------------------------------------------------
+
+[277/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 457.72
+    It's what you brought up that point actually myself also I was not. I was also c
+    onfused actually I was from the starting only. I was thinking of going with the.
+     The second approach. But yes, we have this in the previous week. We have discus
+    sed with the team. We'll go with your. Your recommended approach.
+  ------------------------------------------------------------------
+
+[278/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 524.009
+    Yeah, so I guess just the behavior. I think that sounds reasonable. And again I'
+    ll clarify all of this with the client. Is this behavior you have which is the a
+    uto adjustment on the front end. That's fine. Thumb button. And the button word 
+    needs to be clarified. So we need to say maybe reforecast. Reforecast based on a
+    ssumptions or something clear that the user knows that once they press this butt
+    on this new driver is being committed.
+  ------------------------------------------------------------------
+
+[279/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 624.34
+    Yeah, yeah, yeah. No, you're correct. Yeah, makes sense. And the other thing is 
+    if the client now wanted to reset to baseline, how are you thinking to coordinat
+    e that UX experience? Is it that. Is there going to be in that. In that pop up t
+    hat you mentioned? And in the note that pop up you say to reset back to baseline
+     go to maybe baseline builder and generate forecast and press the generate forec
+    ast button. Because then this should.
+  ------------------------------------------------------------------
+
+[280/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 887.18
+    Yeah, I'll clarify that. I think I don't want to add any more work just be set t
+    o.
+  ------------------------------------------------------------------
+
+[281/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 931.43
+    So that can be accomplished that way. So that's why I think having a global rese
+    t is probably best and I will position it that way. I just want to propose.
+  ------------------------------------------------------------------
+
+[282/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 974.68
+    I will give you full confirmation tonight. I'll leave a message in the team spac
+    e with the expectation of it and we'll get back to you on that. But yeah, I, I t
+    hink this is probably a good middle ground approach to achieve what they want. A
+    ll right.
+  ------------------------------------------------------------------
+
+[283/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 1033.189
+    Put this message in your internal WhatsApp group so all of you can get to know l
+    ike and then we can make a final coordinate like how do you want this feature? B
+    ecause we'll if you're making it changes again and again then it is a like time 
+    consuming for us also.
+  ------------------------------------------------------------------
+
+[284/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 1570.77
+    I've got a point. But yep. Like I will discuss this with the front end team and 
+    we'll come back to you on this.
+  ------------------------------------------------------------------
+
+[285/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 1607.26
+    Specifically asked me to like we need a different chat window so both can you co
+    nfirm from them first then we'll like think of a solution of how to implement.
+  ------------------------------------------------------------------
+
+[286/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 1622.16
+    So he mentioned he wants for anything on this AI assistant piece to be specific 
+    to generic and anything on intelligence is stress test. Is that what he said? Ok
+    ay, I will clarify this if he has said that to you. I, I can't remember being on
+     the call or hearing that comment but I'll check with Rahil.
+  ------------------------------------------------------------------
+
+[287/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 1679.84
+    We needed two separate like sessions for one for this like stress test and one f
+    or the general Q and A. So I said like I'll discuss this with you. You and the H
+    ill and Simon ma' am, of course.
+  ------------------------------------------------------------------
+
+[288/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 1710.89
+    Okay, so if he has said that to you, assume that is the way. We will go forward.
+     We will again get a final clarity today.
+  ------------------------------------------------------------------
+
+[289/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 1733.32
+    Okay, that's fine, I'll do that. And just two more minutes. So Ashpreet was aski
+    ng for a lot of clarity on the AWS deployment. Have we been able to find out wha
+    t's going on there?
+  ------------------------------------------------------------------
+
+[290/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 1753.04
+    Actually he just mentioned that some of the things in the AWS environment is not
+     working but that are working on the railway. So the team is testing on it and p
+    lus we are facing some kind of issue with the socket io0 so once we will fix tha
+    t and then we will check for the AWS one.
+  ------------------------------------------------------------------
+
+[291/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 1914.18
+    See firstly once we are done with the zero part and the forecast one, then the t
+    eam will jump to the redis one so that we can done with the functionality and th
+    e T and the BHAVNIT is okay with the UAT testing because if we made any kind of 
+    changes later on and then we have to do the redis part again and the UAV testing
+     needs to be done again. So for that part we just want that once the UAT and the
+     rest of the stuff is done and then only we will jump to the redis.
+  ------------------------------------------------------------------
+
+[292/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 1957.96
+    Sorry, I just said that these both features are in our bucket list. Once the tes
+    ting and the rest of the issues features are done, then only we will jump to tho
+    se.
+  ------------------------------------------------------------------
+
+[293/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 2029.7
+    I would rather not give them just because it's gonna, they things which is unnec
+    essary and create additional, extend the project longer than we want. But yeah, 
+    if you can just once we get to that phase, let's just have a discussion on how w
+    e will approach the testing. I just wanted to be clear so that I can explain tha
+    t to the client today.
+  ------------------------------------------------------------------
+
+[294/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 2056.6
+    All right, well, thanks for that.
+  ------------------------------------------------------------------
+
+[295/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 2174.09
+    So all we want him to have. And if you can specify the calculation as well. So w
+    hat I did and I. I've shared this with you. So if someone. If you guys don't hav
+    e access to this, let me know. But I've shared it. So you should. Basically what
+     I've done here is mapped it using AI so for cash flow.
+  ------------------------------------------------------------------
+
+[296/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 2520.83
+    Yes, exactly. So if I just share my screen one more time I will. So all he wants
+     to know is where is this data or this value in the forecast financials being fo
+    und from? So I've created this template. Feel free to use this template. Okay, s
+    o what he wants to know is net income location in forecast page. So the UI page.
+     So in here for example AI told me this net income comes from profitability fore
+    cast page and this is basically the specific field.
+  ------------------------------------------------------------------
+
+[297/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 2599.26
+    Okay, no worries, I will do that.
+  ------------------------------------------------------------------
+
+[298/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 2603.26
+    Thank you. So take this document and just if you can just update it so that if i
+    t's. It's correct that'd be great. If you can share that by today, that'd be ide
+    al if. If it needs to be tomorrow, just let us know. Simran, if you don't mind t
+    hat we'll share this.
+  ------------------------------------------------------------------
+
+[299/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 2618.76
+    We'll try to cover it by today.
+  ------------------------------------------------------------------
+
+[300/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 2851.19
+    For 1000 please and we will, we will and get back to us a.
+  ------------------------------------------------------------------
+
+[301/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 2906
+    And then I'll get back to you regarding the same thank you.
+  ------------------------------------------------------------------
+
+[302/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 2980.49
+    Of our policy no 100 anything out of policy and this is we don't encourage to se
+    e that from NOLA coach so we are on your side on this point we'll push back to t
+    he client today that this is not how we work and this cannot be done so don't wo
+    rry about that I'll make it clear to them to not request such things again leave
+     that with us Sorry that you had to deal with this is yeah I'm disappointed too 
+    so you've been doing a great job by the way so client is frustrated because thin
+    gs are taking time we're extending and this is not only on us is on them as well
+     so.
+  ------------------------------------------------------------------
+
+[303/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 3039.19
+    But Simran, we've said this client is a very difficult client and I just want th
+    is project done so we don't have to deal with these guys anymore. So don't take 
+    it to heart. We appreciate what you do. We like NOLA code. Definitely appreciate
+    . Appreciates what you guys do for us. We're gonna have a good relationship. Thi
+    s client. Once we're done, we're done, we'll move on. So let me raise those poin
+    ts with the client and make sure that's not done.
+  ------------------------------------------------------------------
+
+[304/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 3075.47
+    I already informed you and as well that I'm only. And still I was available. I w
+    as replying to them and still I'm listening all these things kind of things this
+     concern with you.
+  ------------------------------------------------------------------
+
+[305/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 3090.47
+    Thanks for raising it. I appreciate you being open but don't worry, this is. We'
+    ll deal with this together. I'll make it clear to the client and you don't have 
+    to worry. You've been doing a good job and so it doesn't matter what the client.
+     Thinks in this case.
+  ------------------------------------------------------------------
+
+[306/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-catchup  #7  (2026-04-20)
+  Time     : 3114.51
+    Sorry, I will get back to you soon. Regarding the budget.
+  ------------------------------------------------------------------
+
+[307/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-AI-meeting  #6  (2026-04-22)
+  Time     : 33.4
+    If your revenue is going to drop, your cash will drop by 50 straight away, right
+    ? So where have you modeled that You've. Kept the cash the same. You haven't eve
+    n changed the cash balance, right? You dropped by 50%.
+  ------------------------------------------------------------------
+
+[308/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-AI-meeting  #6  (2026-04-22)
+  Time     : 236.29
+    Yeah, it's clear to me. But if anything else you like I'm missing here, can you 
+    point it out as well?
+  ------------------------------------------------------------------
+
+[309/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-AI-meeting  #6  (2026-04-22)
+  Time     : 244.07
+    So that's one point. And at the other point when you're saying OPEX and, and, an
+    d, and Capex, I think there were other factors in. The recession playbook as wel
+    l, right? If you, if you open the document. There were other, there were a few. 
+    Levers to play with or was it only copics and capex?
+  ------------------------------------------------------------------
+
+[310/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-AI-meeting  #6  (2026-04-22)
+  Time     : 296.92
+    So there's also hiring, right? There's opex, there's Capex, there's a hiring pla
+    n as well. You've got a module 2 so you. Delay your hiring, right. Which will im
+    pact your opex and then you protecting your payroll, your payroll is. Saying wha
+    tever your payroll number is that. Cannot be cut, right? So there are three leve
+    rs. So if you look at module, if you look at module 2, you have. Opex, you have 
+    capex and then you also have a hiring plan where they have hiring certain number
+     of people.
+  ------------------------------------------------------------------
+
+[311/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-AI-meeting  #6  (2026-04-22)
+  Time     : 392.12
+    Otherwise the output that he's producing every time is not going to be correct h
+    ere because he doesn't have that context of Module two. So in this, yeah, so in 
+    this example, right, it's very clear he has, he has an opex. He has an OPEX fore
+    cast. He has a CAPEX forecast, right? He says you have, you, you, you, you don't
+     you delay your hiring, right? We know from, from OPEX in Module two that if you
+     hire more people, your OPEX goes out, right? So if you delay that, then you. Ca
+    n reduce your opex.
+  ------------------------------------------------------------------
+
+[312/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-AI-meeting  #6  (2026-04-22)
+  Time     : 503.91
+    So it needs to, it needs to leverage that information and the context it's getti
+    ng from Module two, right, to provide appropriate recommendations. If it's givin
+    g, like if I look. At the output that harsh Is producing. Giving generic informa
+    tion that I can put on chat GBT as well and it'll give it to me. Why will they u
+    se. Why will they use. Why will they use a tool there?
+  ------------------------------------------------------------------
+
+[313/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-AI-meeting  #6  (2026-04-22)
+  Time     : 551.21
+    Now I can't. If I'm going to give you the answer, then why do I need you? I've g
+    iven you all the outputs multiple times now.
+  ------------------------------------------------------------------
+
+[314/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-AI-meeting  #6  (2026-04-22)
+  Time     : 563.85
+    So I have one more question here. Like if I decrease cash, let's say from the fo
+    urth month, my cash is decreased by 50% also. Then in my whole like scenarios, I
+     will be using that cache then four. Four whole simulation.
+  ------------------------------------------------------------------
+
+[315/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-AI-meeting  #6  (2026-04-22)
+  Time     : 687.61
+    Okay, got it. So for the first month, I will decrease the cast with the revenue 
+    and then I will use that as a base and model it after that.
+  ------------------------------------------------------------------
+
+[316/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-AI-meeting  #6  (2026-04-22)
+  Time     : 702.17
+    And I think you need to speak to Manish in Module two to understand how the cach
+    e is working. And the context as well. You guys cannot work in silos between the
+     two of you that you're not talking to each other and building it out. Otherwise
+    . Otherwise it won't work. Can you just ensure that Harsh gets the relevant info
+    rmation from Manish or whoever else is looking at Module two? And it's not just 
+    for this. It'll be for all the preset questions.
+  ------------------------------------------------------------------
+
+[317/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 312.57
+    So the logic should be built that you do it from both COGS and opex. We know cur
+    rently in the data the. OPEX number is zero, right? You're only going to take it
+     from cogs, but the logic should be built. That tomorrow any other data set we a
+    dd. If we're going to add depreciation, amortization under opex, then the formul
+    a and logic should be built that it should take it from both places. And the dat
+    a set you are working with at the minute, the OPEX number zero.
+  ------------------------------------------------------------------
+
+[318/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 338.98
+    But tomorrow, when Gumi and I tested with different data sets, right. We will ad
+    d depreciation, amortization and OpEx. We could have negative depreciation, OpEx
+    . Then the formula should be built in. Such a way that if the formula is correct
+    . And it takes it from both places.
+  ------------------------------------------------------------------
+
+[319/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 537.09
+    You should have. Yes, because deferred revenue is already there, Right. We have 
+    preferred revenue in the working. Capital forecast and we have ocl, we have accr
+    ued expenses, right? So yeah, we have expenses and you. Just need to add deferre
+    d revenue as well.
+  ------------------------------------------------------------------
+
+[320/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 623.7
+    So you've got like CapEx additions, right? And you've got disposals as well, rig
+    ht? So the disposals is the opposite of an addition, right. If you've got. In th
+    e capex, we don't have, currently. We don't have a disposal button. Basically to
+    . If you're disposing of an asset, if you dispose of an asset, then you are gene
+    rating cash. So that's a increase in your cash. Whereas a capex addition is you'
+    re. You're spending money to purchase a coffee machine or a new office, for exam
+    ple, right?
+  ------------------------------------------------------------------
+
+[321/392]
+  Speaker  : Ngũmi Gituro  [client]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 999.23
+    Okay, so the way. What he's saying is basically principal repayment is without t
+    he interest on the implementation. It's actually okay. In the, in the document t
+    hat you shared with them, it's actually like their loan, it includes the interes
+    t. That one, the table that you were showing below. Yeah, that includes the loan
+    . And, and on our website, on our application, it includes the. It includes the 
+    interest as well. Which means.
+  ------------------------------------------------------------------
+
+[322/392]
+  Speaker  : Neha  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 1307.26
+    Then this is what I am going to say that. Okay, rhythm, you can continue.
+  ------------------------------------------------------------------
+
+[323/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 1501.3
+    Have shared the queries related to the short term and the long term and the rest
+     of the things in which you just confirmed on the call itself that these are der
+    ived from there. I'll share that with you after this meeting. For now we can dis
+    cuss the formulas.
+  ------------------------------------------------------------------
+
+[324/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 1573.05
+    I'll discuss with this regarding this with you later on because these are someth
+    ing that we have to work upon later on. And plus this is what did we have to put
+     the extra efforts. Yeah, currently you want to add something.
+  ------------------------------------------------------------------
+
+[325/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 1653.34
+    So the like we have already always followed the one unified document within whic
+    h all the formats were mentioned. So now if you like come like if you have given
+     us the sheet with the updated formulas. If like you. You feel like something is
+     not right, we'll fix that. But if you, if you would say like the full formula i
+    s changed and it is a new requirement for us.
+  ------------------------------------------------------------------
+
+[326/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 1700.47
+    That's why I just mentioned twice we can discuss it later on. I haven't bring it
+     up now. I just mentioned we'll have a separate.
+  ------------------------------------------------------------------
+
+[327/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 1709.25
+    We'll have a separate call. One second. Simran, don't interrupt me. We'll have a
+     separate call. Yeah, with Akash Raheel, yourself, me and Gomi about this I agre
+    e.
+  ------------------------------------------------------------------
+
+[328/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 1922.78
+    Okay, so let me go. Let me get back to you on. The tax one then. And then I'll j
+    ust add the comment in the, in the document itself. Yeah, yeah, sure. I'm just c
+    hecking. Retained earnings. You had a question, but that's clear now, is it? Yes
+    , you're clear on that. So that you had a comment on retained earnings, but that
+    's clear now, is it?
+  ------------------------------------------------------------------
+
+[329/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 1985.72
+    One last point. Let me share. Regarding principal repayments, you said that use 
+    principal repayment for the loan balance and use interest in cash flow friends a
+    s well. Like we should also use that loan repayment, which is the sum of emi. So
+    rry, which is the sum of principal repayment plus interest. Like there, Like the
+    re. It should be the sum of principal repayment plus interest.
+  ------------------------------------------------------------------
+
+[330/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 2097.08
+    Okay, so I'll get back to you on the tax. So that's the only other query, right?
+     Shall we go through? You had a question on module four as well, right?
+  ------------------------------------------------------------------
+
+[331/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 2322.55
+    Then we are extracting information about revenue, operating expenditure, capital
+     expenditure and cash for the next year. That is 2026. Then our shock is going t
+    o apply from the starting months of seven. Then we are taking that value as a re
+    ference. It is July 7th cash and we are deducting 5% from that. And calculating 
+    minimum cash flow using that value. Okay, then these are the input.
+  ------------------------------------------------------------------
+
+[332/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 2426.61
+    For protection. No, in this, in this scenario, protection payroll is false. So w
+    e are not protecting. In this scenario if it is true, then we will be protecting
+     it.
+  ------------------------------------------------------------------
+
+[333/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 2447.01
+    So protected payroll will be. That is one question I want to ask for. As mention
+    ed, the unified document, it is by default true. So but for this scenario I, I l
+    ike, I make it false. So if we, in any case, if it is false then we will not be 
+    protecting the payroll. But if it is true, then the payroll will be protected.
+  ------------------------------------------------------------------
+
+[334/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 2478.8
+    For now it is like set to by default. So by default value is true. So I wanted t
+    o ask this question like how we will be getting this dynamic value. But as for t
+    he document, it is true by default.
+  ------------------------------------------------------------------
+
+[335/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 2500.39
+    Yeah, I can generate that example as well. But for this example I manually make 
+    it false.
+  ------------------------------------------------------------------
+
+[336/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 2507.19
+    Like we are covering, we are covering both true and false. So tomorrow if the re
+    quirement comes and you like, oh, and we've covered only the true part and not t
+    he fourth part. So it's a like not a good thing on our side. So if you want like
+     we'll share example where the payroll will be true. But now just we are letting
+     like how to read this document and then how we are getting the values from the 
+    DB and how we are like coming up there with the solution with the mitigation pla
+    n.
+  ------------------------------------------------------------------
+
+[337/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 2594.59
+    Can we complete this example and we'll also share you with the protection payrol
+    ls too?
+  ------------------------------------------------------------------
+
+[338/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 2607.48
+    Okay then for July we Let me explain the payroll formula we are using here. So w
+    e divided payroll into operating expenditure into payroll waste and non payroll 
+    waste. So like if we need to protect the payroll then we will not include a payr
+    oll and we will just deduct from non payroll operating expenditure then. But if 
+    it is false then we will include both of them and deduct as a whole. So you can 
+    see it in the formula here. In this case protect payroll is false.
+  ------------------------------------------------------------------
+
+[339/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 2680.81
+    So now we will plus this net cache into the shock start cache which was this in 
+    the start of the month. Then we Will get the cash value at the end of this month
+     which is this. And then we will compare it with the minimum cash flow. So for n
+    ow it is less than the minimum cash flow. And then we will continue simulation t
+    o the next one that is August. Then we will do the same thing with August and in
+     the August after doing all the calculation our net cash remaining in the rest i
+    s this.
+  ------------------------------------------------------------------
+
+[340/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 2763.66
+    We'll come up the next scenario where the cuts are applied.
+  ------------------------------------------------------------------
+
+[341/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 2766.78
+    So what if the baseline scenario survives? Then we don't apply any cuts. We will
+     straightforward said that you don't need any cut. Your baseline server is alrea
+    dy capable enough of surviving. But in this case baseline scenario is not surviv
+    ing. Then we go forward with the mitigation plan. So now going for to mitigation
+     plan.
+  ------------------------------------------------------------------
+
+[342/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 2789.74
+    Before we go to the mitigation plan. So tomorrow if I put it now it's Q3 and it'
+    s four months. Basically so if I change it to. Five months it'll take in Novembe
+    r. If I change it to six months it'll take. I'll go up to December. Correct?
+  ------------------------------------------------------------------
+
+[343/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 3029.58
+    No, these are based on the maximum value set already. So for example, we'll disc
+    uss it after the call.
+  ------------------------------------------------------------------
+
+[344/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 3097.46
+    These ones passed as well, right? Yeah yeah.
+  ------------------------------------------------------------------
+
+[345/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 3133.29
+    So pain I'll pin score also mentioned along with the scenario. So after like app
+    lying the pain score on the past scenario the algorithm give this scenario the b
+    est plan here like pain score is one and we just need to like cut our capital ex
+    penditure by 50.
+  ------------------------------------------------------------------
+
+[346/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 3152.98
+    Now here is the detail of how this base plan is calculated for each month. For J
+    uly we applied 0% soak in opex and 50 soak in capex and the revenue is also drop
+    ped and then we get this net cash by applying the capital expenditure drop and t
+    hen we will be adding it in the soak start case again by decreasing the it's by 
+    the same number as the revenue.
+  ------------------------------------------------------------------
+
+[347/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 3181.29
+    Everything is same as I explained for the baseline scenario just we applied cut 
+    for the CAPEX here and then doing this over the four months in the like till Oct
+    ober we will get like this cash and for October which is greater than the minimu
+    m cash flow.
+  ------------------------------------------------------------------
+
+[348/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 3201.79
+    So this scenario passes and then we will be like just explaining this result usi
+    ng in text later on along with the chart. This is the chart data.
+  ------------------------------------------------------------------
+
+[349/392]
+  Speaker  : Harsh Vardhan Dixit  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 3382.85
+    Okay, sure, I will add that.
+  ------------------------------------------------------------------
+
+[350/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 3609.54
+    We'll inform you on Monday.
+  ------------------------------------------------------------------
+
+[351/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 3675.74
+    I will have a discussion with them first and then I'll just have a discussion wi
+    th you.
+  ------------------------------------------------------------------
+
+[352/392]
+  Speaker  : Bhavneet Mhajan  [client]
+  Meeting  : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+  Time     : 3694.77
+    Yeah, I'll. And I'll share anything with Akashan that. We have on the. From our 
+    side as well. And then we can discuss as a group commander.
+  ------------------------------------------------------------------
+
+[353/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode-meeting  #5  (2026-05-05)
+  Time     : 391
+    Okay, now I will walk you through another change. For example like in cogs we ar
+    e using code V course and depth like we have sub account for depth account like 
+    amortization and depreciation which all come under account code tap and these al
+    l accounts come under because so in new sheet he told us not to include code dep
+    th. They have already mentioned this.
+  ------------------------------------------------------------------
+
+[354/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode-meeting  #5  (2026-05-05)
+  Time     : 430.02
+    Okay and then this affect Coke's percentage also like here because for calculati
+    ng percentage we take historical data as well as sorry actual data as well as fo
+    recasting data to calculate percentage like here scorch percentage is 27.85 and 
+    in the previous sheet it is 28.30 and we have already calculated it according to
+     this sheet only. And in this tab he's. He mentioned all the findings like these
+     are all the findings he changed like revenue forecast.
+  ------------------------------------------------------------------
+
+[355/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-meeting  #5  (2026-05-05)
+  Time     : 691.64
+    I have this sheet with you yesterday in the downloaded form as well, because in 
+    the drive, whatever sheet we do have now, they didn't have this tab.
+  ------------------------------------------------------------------
+
+[356/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #5  (2026-05-05)
+  Time     : 712.6
+    Okay, I'll have a look at that. Could you just trying to think what will help me
+     now specify this because I need to raise this right. So I need.
+  ------------------------------------------------------------------
+
+[357/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode-meeting  #5  (2026-05-05)
+  Time     : 844.99
+    I have one query also. Yes, this is the new sheet and Subhavneet asked us to cal
+    culate these values. And these values are like these key names are much differen
+    t from the UI screen. Like we have change in other current assets and change in 
+    other current liabilities. But in this sheet we do not have other current asset 
+    as well as ocl. For operating activities you can see that operating activities a
+    nd for operating activities we have this case. So it bit confusing to me. Like w
+    hat to do.
+  ------------------------------------------------------------------
+
+[358/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #5  (2026-05-05)
+  Time     : 957.2
+    Now they're changing it. So before we work on anything I want a formal document 
+    which we will sign off and we will put it on read only for everyone. And so that
+     is the sole document we will work from. So just if you can. So as you said Simr
+    an, just add, create a sheet, add the column if you can summarize the effort as 
+    well. And I'm just trying to think what else.
+  ------------------------------------------------------------------
+
+[359/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #5  (2026-05-05)
+  Time     : 1002.89
+    Yeah, just give us that summary please separately on our private space and then 
+    what I'll do then work out the best way.
+  ------------------------------------------------------------------
+
+[360/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #5  (2026-05-05)
+  Time     : 1018.09
+    Well thanks for your patience on this guys. We'll work it out. Just yeah kindly 
+    where we can be productive. Let's do that and then meanwhile I'll speed up the, 
+    the confirmation on this.
+  ------------------------------------------------------------------
+
+[361/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 15.84
+    As well as the front end also have to do work on it as. As some calculation are 
+    also being also be done in the front end like for driver's part. So they also ha
+    ve to change formula for that.
+  ------------------------------------------------------------------
+
+[362/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 199.62
+    So the range just changes. That's it. The formula is that in the previous tab in
+     forecasting calculations, the total revenue is in 16 to 22 then as a correct wa
+    y. So we're, we're. We're just trying to, we're going to ask hard questions beca
+    use these are the questions the client will ask us. If we say this is medium eff
+    ort, low effort or high effort, they're gonna, they're gonna question back and w
+    e need to be very clear. That's why, rhythm don't feel like we're putting it on 
+    the spot.
+  ------------------------------------------------------------------
+
+[363/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 332.01
+    It is the closing bit I can show you like from here. It is the closing asset in 
+    capex. As I will walk you through ui.
+  ------------------------------------------------------------------
+
+[364/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 769.97
+    We will add the descriptions at every point.
+  ------------------------------------------------------------------
+
+[365/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 864.2
+    Okay sir, I will also mark, I will also mark them in because there's some that I
+     was reviewing very quickly on the call with the client yesterday and I wasn't a
+    ble to explain and some of them seemed very, didn't really seem a change. So I'm
+     gonna highlight them as well. Where it says impact. I'm just gonna state why I 
+    believe it's not much effort at all.
+  ------------------------------------------------------------------
+
+[366/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 1127.66
+    Now he want us to use one single formula for that which I have to look when. I w
+    ill work on that. Yeah, its impact is medium.
+  ------------------------------------------------------------------
+
+[367/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 1245.03
+    So Akash, so like maybe like it's. It's in the medium category because we'll now
+     need to check like from where the values we need to pick from Again if the form
+    ula would have been the same like we have already done like we need to just chan
+    ge that formula there. And already what we are doing logic previously doing, we 
+    just need to implement it. But now the formula has been changed. We need to agai
+    n check from where to pick the values. We need to again implement the formula in
+     both the president.
+  ------------------------------------------------------------------
+
+[368/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 1364.08
+    Now the formula is changed like I have to take from. I have to take value from h
+    istorical data as well.
+  ------------------------------------------------------------------
+
+[369/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 1929.93
+    So seasonality when we were discussing this was based off as much data as we hav
+    e. So if there's three years data, we'll base it off three years. If there's fou
+    r years, is four years more than more. That was the. That was the initial interp
+    retation of this when they first said it. Are they saying now they only want fou
+    r?
+  ------------------------------------------------------------------
+
+[370/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 1960.13
+    So the seasonality. No worries, no worries. Just let me know I can repeat my pro
+    blem. So seasonality detector, what the client had said at the start, it should 
+    be based off all the available previous years. So if there's only two available 
+    years or 10 available years, we will base it off all of those years. Yes, that w
+    as the expectation. That's the current implementation, right? And now you want i
+    t to be four. He said he wants it to be only four.
+  ------------------------------------------------------------------
+
+[371/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 2058.959
+    So override. Yeah, I don't know. Just make sure that's, that's clear in the. Yes
+    , I'll go.
+  ------------------------------------------------------------------
+
+[372/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 2077.999
+    Also we have to do changes in baseline builders as well as in the calculation.
+  ------------------------------------------------------------------
+
+[373/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 2408.36
+    Next we move to like for, for forecast financial we do not have any values in th
+    e sheet. He only provide us the document in which he given us all the formula so
+     I will walk you through that like my first point is in right now in forecast fi
+    nancials. Oh sorry it's local.
+  ------------------------------------------------------------------
+
+[374/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 2562.45
+    I go to sheet like a cured income and security deposit before it was not there a
+    s you can see it in UI under current assets like it is not in UI before he did n
+    ot give us formula for that either but in the like in this sheet he mentioned ac
+    ute income security deposits and the long term investment formula also change li
+    ke before in the document he gave us formula for short term depth Long term dept
+    h but now the formula for show Sorry for long term depth is changed again like h
+    ere you can see I will walk you through by the.
+  ------------------------------------------------------------------
+
+[375/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 2782.98
+    I will mark it acute income, security deposit, long term investment, investment 
+    property, goodwill bond payable, lease, liability fields. All are the new line i
+    tems.
+  ------------------------------------------------------------------
+
+[376/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 2848.91
+    Okay, just comment that it's in the balance sheet again as well because if you g
+    o back to the sheet the qc.
+  ------------------------------------------------------------------
+
+[377/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 3044.84
+    Sorry but I think I understand what you're saying but I just need to see this on
+    e on my own. So I'll do this after the call. Okay, let's just move on. But what'
+    s the efforts for all of these changes.
+  ------------------------------------------------------------------
+
+[378/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 3122.26
+    Itself the new one. So once yeah okay. For now as it is rhythm when you have a c
+    hance to review just update the risk or let Simran or myself know we'll update i
+    t and then I'll find a way to make it seem simple. Yes Ala.
+  ------------------------------------------------------------------
+
+[379/392]
+  Speaker  : Project Manager SFS  [project_manager]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 3184.89
+    So we have to check what, what will affect if we change any, hierarchy of, of th
+    e forecast to low or above. So we, we will need a much more time to figure all t
+    his out because we ourselves don't know the impact. We have to, see everything f
+    irst, see the impact of change of every section. So it may take one to two. Are 
+    you getting my point?
+  ------------------------------------------------------------------
+
+[380/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 3222.72
+    Sorry, yeah, as I mentioned before like we can like we are telling you estimated
+     time like when we will work on that, then we will get to know the effect of all
+     this. Like as Neha previously mentioned, the, the effect of all this also like 
+    the effect of all these changes in the value will impact scenario part also like
+     scenario modeling. So we have, we also have to see that part also.
+  ------------------------------------------------------------------
+
+[381/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 3259.97
+    Yes, I appreciate that and this is, this is why we're just trying to understand 
+    for me at least so I can explain the impact. Right, so that's fine. Obviously ri
+    ght now we haven't got commitment yet from the client but the explanations you'r
+    e giving me and potential impact is going to help me explain this to the client.
+  ------------------------------------------------------------------
+
+[382/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 3284.34
+    And so if the client doesn't agree, then we're going to push to not make any of 
+    these changes because as far as I'm concerned this is out of scope and this wasn
+    't previously agreed. So for us, as Simran knows, the client's not very easy to 
+    work with. They are quite challenging. So unless we have clear expectations set 
+    and understanding set to them, they won't agree. So this is all an effort to hel
+    p us.
+  ------------------------------------------------------------------
+
+[383/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 3329.29
+    No, no, of course. So the exercise, the document we're creating now needs final 
+    document which we will add to an addendum and create a contract with it which wi
+    ll be signed. Work off the back of that. So this is why I'm saying let's add as 
+    much detail as we can on this document because then there's not room for changes
+    .
+  ------------------------------------------------------------------
+
+[384/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 3355.58
+    Okay, look, I appreciate your time. I know it's late for you guys. I don't want 
+    to take too much more time. I will review what, what you have put. What I would 
+    say is just when you have a minute review those impacts again, please keep them 
+    updated Simran and then we can have discussion around that.
+  ------------------------------------------------------------------
+
+[385/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 3380.94
+    I'll have a word with Rhythm after.
+  ------------------------------------------------------------------
+
+[386/392]
+  Speaker  : Karan Middha  [developer]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 3383.98
+    This meeting and then we will update.
+  ------------------------------------------------------------------
+
+[387/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 3419.83
+    So if you go into the drive folder right in the planning and discussions you sho
+    uld see at the bottom dummy data plus calcs plus validation. So we're obviously 
+    working off this. I don't know if you guys have access so I'll give Simran acces
+    s to this. Are you project please?
+  ------------------------------------------------------------------
+
+[388/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 3546.95
+    So I'm looking on the ui, I'm coming here and I'm making sure the numbers match.
+     The first few sections are good. These ones are minor issues. Okay when I go to
+     working capital. Sorry, not working capital capex there is issues here. These a
+    re not minor ones either. These are quite significant. So I'm going to complete 
+    this for all of the forecasting pages so just give me some time. Can you please 
+    just review the red and let us know why these are wrong?
+  ------------------------------------------------------------------
+
+[389/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 3587.05
+    Okay, these need to Be accurate, because I want to go to the client and say the 
+    app is. The forecasting pages are now complete. They have been complete for a wh
+    ile according to the sheet we have already built. And all the numbers are valida
+    ted and I've done the validation. And so any changes to this now will be more ef
+    fort. And so I'm going to summarize here. Dummy calculations, matches up. This i
+    s what we're working on. This is their new calculation.
+  ------------------------------------------------------------------
+
+[390/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 3613.29
+    Obviously it won't match what the app has, so I'll finish this. For the rest, pl
+    ease review the red. Please review the red items and just make sure you understa
+    nd why they're wrong, because I don't know if they're actually wrong or you have
+     implemented some feedback along the way that the client might have given you. A
+    nd it's different in the app versus what's here. Just please review the word. An
+    d just one more question on CapEx. What I've understood here is opening PPE.
+  ------------------------------------------------------------------
+
+[391/392]
+  Speaker  : Nolocode AI  [client]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 3687.94
+    Okay, that's fine. So I will go ahead and do this and please, if you can review 
+    and let me know as soon as you can why these are wrong. Because if I can go to t
+    he client and say the app is complete, the numbers are matching, everything is v
+    alidated now, everything you're asking for is changes, we will be in a stronger 
+    position.
+  ------------------------------------------------------------------
+
+[392/392]
+  Speaker  : Rhythm jalhotra  [developer]
+  Meeting  : Nolocode-meeting  #4  (2026-05-07)
+  Time     : 3719.65
+    Yeah, we will review it tomorrow and add our comments in the document.
+  ------------------------------------------------------------------
+

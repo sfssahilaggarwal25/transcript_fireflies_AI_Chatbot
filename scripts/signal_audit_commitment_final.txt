@@ -1,0 +1,2577 @@
+COMMITMENT SIGNAL AUDIT — FINAL CLASSIFIER
+Generated : 2026-06-04 23:22:10
+Total non-summary chunks : 2667
+Commitment chunks        : 302  (11.3%)
+
+[1/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    I'll just remind them.
+  ------------------------------------------------------------------
+
+[2/302] trigger=[going to]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    So this. You're not going to have that because basically the scenario modeling i
+    s utilizing existing data points but we're simulating certain conditions in the.
+     So we're modeling different scenarios. So there's no real way for us to show yo
+    u the numbers to measure because the numbers can be anything.
+  ------------------------------------------------------------------
+
+[3/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    I'll do it. Yeah, if you can do that. So I don't know why this is grayed out. I 
+    can't click anything on this page. Do you guys have a working app that I can. We
+     can refer to.
+  ------------------------------------------------------------------
+
+[4/302] trigger=[We will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    We will look into it. Okay, sure. Yeah, look into it and let me know if there's 
+    any questions. We'll raise it. But just for the forecast summary, these are the 
+    performance using the forecasted data points all in one table. And see the reven
+    ue forecast for the year that we've calculated before, the COGS, the OPEX bit, e
+    tc.
+  ------------------------------------------------------------------
+
+[5/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Okay so these points I'll get you clarification on how to calculate this. But as
+     you can see this on track statement comes from the previous pages. Cash flow Ru
+    nway. I think it's this one. Okay, so just, just not to waste time, what I'll do
+     is I'll get you some on how the those populated.
+  ------------------------------------------------------------------
+
+[6/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    So yeah, we have started with this and we will try to complete this within this 
+    week. Scenario
+  ------------------------------------------------------------------
+
+[7/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    As for the development and as you have mentioned that UAT is also needs to be in
+    cluded in this. So the dev team includes or requires at least to three weeks. So
+     apart from that we will require one week, a complete one week to do the UAT tes
+    ting for all the modules.
+  ------------------------------------------------------------------
+
+[8/302] trigger=[going to]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    But you have to be 100% sure that this is where you completely conclude module 2
+    , 3 and 4. Okay, so quick question from my side guys. Are you guys going through
+     the whole development phase and then you're coming back to security and testing
+     or are you going to do each module will. Will be developed and then security te
+    sted and then finalized. Are we going to find
+  ------------------------------------------------------------------
+
+[9/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Okay, all right, I'll create a document for the same.
+  ------------------------------------------------------------------
+
+[10/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    But as Raheel said that we have to update everything on JIRA as per the timeline
+     document. And so I'll update there and then I'll let ping.
+  ------------------------------------------------------------------
+
+[11/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    All right, then sure, I'll do.
+  ------------------------------------------------------------------
+
+[12/302] trigger=[we will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    So it'll be sequential build development, security testing, and then handover fo
+    r UAT and then any minor fixes that need to be done. And then we will transfer c
+    ode, sign off and transfer. If you can just summarize those for each modules. I 
+    know you've got an AI guy, so it makes sense that working in parallel on the AI 
+    pieces. But we can finalize the AI part with Karen and the rest of the team afte
+    r forecasting and scenario modeling.
+  ------------------------------------------------------------------
+
+[13/302] trigger=[we will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Perfect. That's how we want it. Okay, sounds good. Okay, so that's fine. I think
+     the other last thing I wanted to discuss was your git branching strategy here. 
+    Because what we want to do is once we hand over the code, once the final section
+     is completed, we just want to submit the branch, not all of the code that you g
+    uys are developing. Anything that's final, we will merge with the main branch. A
+    re you guys following those feature branches?
+  ------------------------------------------------------------------
+
+[14/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    So we suppose we'll create two different branches from here from the development
+     branch. One is forecasting and one is the scenario modeling. And we'll push the
+     respective code to their both branch. Once you like. But if you want to see the
+     code on live. Net because like a development branch is the one like which is co
+    nnected with the railway. Like when we do push the code to here like then at tha
+    t time only you can you are able to see. So we cannot create a three different l
+    ike URLs.
+  ------------------------------------------------------------------
+
+[15/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Let's see new Z login. And then as we keep completing and signing off module 2, 
+    3 and so on, they just change it to release version 4, 5 and so on and take pull
+     from our repo or merge from our reference on whatever that happens. Okay, yeah,
+     we can follow that. If there is any better way that you guys think come up, jus
+    t let us know for now we'll try and manage it but I guess zero is complete that 
+    we can hand them over right. All the testing is done on that.
+  ------------------------------------------------------------------
+
+[16/302] trigger=[I will]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    There were more of the Ashpries command. Okay, I will check it. I don't know. Ca
+    n you go to the.
+  ------------------------------------------------------------------
+
+[17/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    But like what we'll do one thing is Manish, do one thing. Take note of all these
+     comments provided by Ashpreet and provide a time estimation to me and Simon. Ma
+    ', am, like how much time do you require? And let me know and we'll then share t
+    hat sheet with like after discussing internal we'll share that sheet with you an
+    d you can let us know which part to cover or which. No, not to. Yeah and we'll a
+    lso. I will also mark if there is any high priority, medium priority and low pri
+    ority.
+  ------------------------------------------------------------------
+
+[18/302] trigger=[going to]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    No, they've said yeah, yeah, we can ask them and I think they've answered that, 
+    saying that they want a general ingestion service as a microservice that include
+    s zeros, Excel and everything. But then we're not going to touch Excel. So that'
+    s what we need to understand. We're already building a microservice in the merge
+     conflicts that happened and they wanted us to give them zero as part of that. I
+    t's a discussion we should have. Karan, with Ashby, I think, I think
+  ------------------------------------------------------------------
+
+[19/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Many microservices are required for like each ingestion and each thing. So maybe
+     we need to discuss with him, like, what, what, what do you want to get out of? 
+    Like, why, why not? So we'll build a different microservice. Maybe the client is
+     also not clear, like, like how these things work. So we need to like, connect w
+    ith him and we need to ask, like, what is the main reason behind this?
+  ------------------------------------------------------------------
+
+[20/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Okay, so we'll raise the initial discussion today and if required, we'll set up 
+    a call with you at some point tomorrow or the day after and then we can clear th
+    is matter up. Can I just share this quickly if you have two minutes? I just ran 
+    it through some internal AI agent that we have and I wanted to understand how yo
+    u guys have implemented it. So, one second.
+  ------------------------------------------------------------------
+
+[21/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    That's fine. I'll give it to you. Yeah sure.
+  ------------------------------------------------------------------
+
+[22/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    If it is required then we'll build it. We'll give you just give you a time estim
+    ation and we'll start building it.
+  ------------------------------------------------------------------
+
+[23/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    If it can be decoupled then we'll do the decoupling part. They're like in the ba
+    ck end also there are like apart from the main threads there is an event loop. S
+    o if you can make use of that like then also like we'll. We'll come up with the 
+    best approach. We'll discuss in this internally first then we'll let.
+  ------------------------------------------------------------------
+
+[24/302] trigger=[We'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    We'll discuss module four maybe by Wednesday. Just a man. If you can have the bo
+    ard ready with the timeline, deadlines and current security stuff. If you can gi
+    ve us a document what are you going to use for security? What will it cover? And
+     we just tell the client once we do this is the final slide from us after testin
+    g.
+  ------------------------------------------------------------------
+
+[25/302] trigger=[I will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Yeah I will discuss with him class for the code vulnerability but we can hand ov
+    er handle that apart from this if there are any major security measures that we 
+    need to take care by with Ravi sir and then we can confirm the team also please 
+    I have shared a contact number with you have, do you have any kind of discussion
+     with that person?
+  ------------------------------------------------------------------
+
+[26/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Yeah just make it and then I'll confirm you.
+  ------------------------------------------------------------------
+
+[27/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Just let, let me have a discussion internally and we'll come up with a plan for 
+    that too.
+  ------------------------------------------------------------------
+
+[28/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    That's fine. Yeah, thank you. Okay cool. I think that was it from me as well. So
+     Simran, if you can just send us over that plan and then we'll we can discuss wi
+    th the client tonight and then we'll get clarity the other parts. But meanwhile,
+     you guys are carrying on with the forecasting and scenario modeling pages, righ
+    t?
+  ------------------------------------------------------------------
+
+[29/302] trigger=[going to]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Yeah, I know but they're not completed in the complete sense. Right, so. So we w
+    ork out. We just need to work out how because we're still waiting for payment fr
+    om the client and we can ask. Yeah, and one more thing here Simran. I think the 
+    plan that we have with the client was that Once the module 2 and 3 are complete 
+    and handed over to them we were going to get the next payment from them.
+  ------------------------------------------------------------------
+
+[30/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    I want to make one point here. See focus, summary and forecast financials were n
+    ot included in the deliverables so you can consider them that these are not comp
+    leted from rn. I am just informing you that yeah, we will cover that in the modu
+    le 3 along with the scenario modeling and the A ST of whatever is going on and p
+    lus UAT testing and this that security measures that I also need to be considere
+    d. So these were also not mentioned earlier.
+  ------------------------------------------------------------------
+
+[31/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Unit testing was in the deliverables mentioned at last for all the modules. Sorr
+    y, I just said that in the deliverables the unit testing was mentioned. It lasts
+     for all the modules. We are considering it alongside with the modules. As you j
+    ust mentioned that we will cover everything with the modules. For example as you
+     said that module one is done now we will cover the UAT testing and then we will
+     cover the security measures.
+  ------------------------------------------------------------------
+
+[32/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Then we will hand over it to the client so that we won't touch it again. So we w
+    ill follow that approach.
+  ------------------------------------------------------------------
+
+[33/302] trigger=[going to]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Are we on the same page here? Do you think that should be fine? Fine, yeah, I sh
+    ould be okay. But just Simran we're. We're kind of doing you a favor here. So if
+     we can just work together to make sure we. We execute the deliverables so that 
+    we can get the timely payment the client then everyone's going to be happy, righ
+    t?
+  ------------------------------------------------------------------
+
+[34/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Plus module 4 is also in progress side by side as you just informed that we can 
+    prioritize the stress test first and then we can check the chatbot task. So we a
+    re just on it for now. We just start with the limitation part. That is the histo
+    ry management I have shared with you. So we will cover that part in this week pl
+    us after that we will check with the stress test first.
+  ------------------------------------------------------------------
+
+[35/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Okay, thank you. Okay, so give us, give us, give me till tomorrow Simran. I'll p
+    ayment and release it tomorrow morning if that's okay. Just continue then we'll.
+     Yeah, we'll make sure you get paid accordingly.
+  ------------------------------------------------------------------
+
+[36/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode architecture meeting  #12  (1773911100000)
+    yeah as I got your question and like we are just trying to explain like we can i
+    mplement it in your way and your way is better than us it's just that like we ju
+    st want to like we're currently focusing on featuring like delivering our featur
+    es first so like Manish Manisha suggested if we'll go with your way and he made 
+    it to take around two or three days more so like when we are discussed with the 
+    internally and with the cash indeed so we need may need two or more three days s
+    o we can implement it later after we once we have delivered all the all the othe
+    r features to you we can implement it later.
+  ------------------------------------------------------------------
+
+[37/302] trigger=[I will]
+  Speaker : Ashpreet Singh  [client]
+  Meeting : Nolocode architecture meeting  #12  (1773911100000)
+    for now okay I take your or technically points you need to understand I will ans
+    wer this on a later stage I will but before that if you have any other question 
+    where you need a technical support on that perspective I want to want to know th
+    at first is it or not.
+  ------------------------------------------------------------------
+
+[38/302] trigger=[we will]
+  Speaker : Ashpreet Singh  [client]
+  Meeting : Nolocode architecture meeting  #12  (1773911100000)
+    thank you Simran for highlighting it. Let me talk this internally also with Gomi
+     and B and we will form Akash and Raheel on that behalf. But let me tell you wha
+    t I am proposing. We will move that.
+  ------------------------------------------------------------------
+
+[39/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode architecture meeting  #12  (1773911100000)
+    know even I'll we have created a document for your responses too. I'll share tha
+    t with you even after this meeting you can have a look.
+  ------------------------------------------------------------------
+
+[40/302] trigger=[I will]
+  Speaker : Ashpreet Singh  [client]
+  Meeting : Nolocode architecture meeting  #12  (1773911100000)
+    will appreciate merges someone senior looks into all the merge of Backend and es
+    pecially front end. Some code has been merged. Okay, just look at it. I will sha
+    re.
+  ------------------------------------------------------------------
+
+[41/302] trigger=[We will]
+  Speaker : Ashpreet Singh  [client]
+  Meeting : Nolocode architecture meeting  #12  (1773911100000)
+    We will share the screenshot. Doubt that. Hanji bullion.
+  ------------------------------------------------------------------
+
+[42/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode architecture meeting  #12  (1773911100000)
+    I just said that. Then we will look into it.
+  ------------------------------------------------------------------
+
+[43/302] trigger=[We'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode architecture meeting  #12  (1773911100000)
+    By the way, I would like to just confirm you that no code merge has been done. L
+    ike from our end. Actually, I am only. I was only doing the code merge. But that
+     was on. Is on the different branch. That branch is not shared with the developm
+    ent team. That branch is with me. And whatever the. Like the. Any ui, anything y
+    ou are seeing on the. That is on a different. We'll check it out. If there is an
+    ything. Anything from outside, we'll fix that.
+  ------------------------------------------------------------------
+
+[44/302] trigger=[I will]
+  Speaker : Ashpreet Singh  [client]
+  Meeting : Nolocode architecture meeting  #12  (1773911100000)
+    I can also be wrong. I can also be wrong. But I saw somewhere that third level s
+    egregation was there in the balance sheet on third level. It was only two. Secon
+    d level. Third level. I will come back. I will come back with the screenshot. If
+     I could find any relevance. But I will just request done or not.
+  ------------------------------------------------------------------
+
+[45/302] trigger=[We will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode architecture meeting  #12  (1773911100000)
+    We will look into it. You can share the screenshot. Whether that is our code or 
+    not.
+  ------------------------------------------------------------------
+
+[46/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #13  (1774268100000)
+    I have informed him. Even I have informed him that is the extra effort and that 
+    was not int in the initial phase. So I'll confirm with Akash and rail regarding 
+    the efforts we have to vote in. So he was okay with that too.
+  ------------------------------------------------------------------
+
+[47/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #13  (1774268100000)
+    So I didn't get that. Where are we mentioning recommended solutions? Just a seco
+    nd. Just allow me a second. Just a second. Just a second. I'm showing my screen 
+    and then I'll let that one. Please let me know when my screen is visible to you.
+     Yes, it is. Yeah, see for example this point. This point is not done by my team
+    . No role based authentication. We haven't covered this. And you have mentioned 
+    this kind of recommendations in some of the points. Like those are just for find
+    ing one.
+  ------------------------------------------------------------------
+
+[48/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #13  (1774268100000)
+    Then we are skipping those points which are not from our work and we will work o
+    n the ones which are in the critical and the high part. Yeah, right. And we will
+     follow the recommendation of that as well. If you want to follow this or you th
+    ink you have something Better just. Yeah, up to you. And if you think there's so
+    mething like secrets manager for secrets and variables and stuff that is somethi
+    ng Ashbridge should provide. So you can ask him. So don't feel free.
+  ------------------------------------------------------------------
+
+[49/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #13  (1774268100000)
+    Then we will try our best to complete this sheet by today itself. And we will de
+    ploy the forecast summary and forecast financials for you so that you can test a
+    nd the unit testing will be done and so that my tester can even test on that sid
+    e as well.
+  ------------------------------------------------------------------
+
+[50/302] trigger=[I will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #13  (1774268100000)
+    I will make the. I will make forecast module live today. Forecast summary and fi
+    nancials that are left and yeah scenario morning we will be live. That's already
+     done. Yeah, but the unit testing is in progress from our end as well so might b
+    e they can face some kind of issues. So I believe that we can make it live by to
+    day end of day so that our testing is completed.
+  ------------------------------------------------------------------
+
+[51/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #13  (1774268100000)
+    So we'll let them know that 25th this all should be complete but at least they c
+    an have a look at the numbers and see if there's any glaring issues with the, wi
+    th, with any of These pieces. Okay, so fine.
+  ------------------------------------------------------------------
+
+[52/302] trigger=[We will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #13  (1774268100000)
+    They were saying that we have merged the code and they were facing some kind of 
+    issues at their level. So I just asked for the screenshots where I have merged t
+    he code and plus from our code. They are facing some kind of listenations. But n
+    o, they haven't shared any kind of screenshots related to that part. So they hav
+    en't confirmed from their side what to keep and what to remove from the merges. 
+    We will ask them and then. Okay, in terms of deployment, what is DevOps?
+  ------------------------------------------------------------------
+
+[53/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #13  (1774268100000)
+    I'll stop sharing.
+  ------------------------------------------------------------------
+
+[54/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #13  (1774268100000)
+    What I really want is Simon like when we say to them tomorrow that unit testing 
+    and security review is complete for module, it stays stable and there's no chang
+    es to module one. So we are trying our best so that there are no issue in the de
+    ployment. And the code remains same deployment remains static because then they 
+    can give feedback to us last. So the form does open for you. Yes, the form is wo
+    rking for me. Okay, I'll ask them to check. Okay, sure. And regarding this OVIS 
+    assessment.
+  ------------------------------------------------------------------
+
+[55/302] trigger=[We will]
+  Speaker : Ashpreet Singh  [client]
+  Meeting : Nolocode - AI module  #14  (1775044800000)
+    The two level of security. One is code which I am asking you doing today. But de
+    ployment and infrastructure is I am asking listed. We will do that tomorrow. Tha
+    t's Phase B. In short. I am not asking you to do phase B. Yeah, yeah.
+  ------------------------------------------------------------------
+
+[56/302] trigger=[we will]
+  Speaker : Ashpreet Singh  [client]
+  Meeting : Nolocode - AI module  #14  (1775044800000)
+    What I believe just in adding another part of your validation we will have some 
+    validation rules and it was just one more three, four lines.
+  ------------------------------------------------------------------
+
+[57/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode - AI module  #14  (1775044800000)
+    No, actually that's not allowed. So I can do one thing that we can have a daily 
+    call for 15 minutes or if something is required then I'll share on WhatsApp.
+  ------------------------------------------------------------------
+
+[58/302] trigger=[going to]
+  Speaker : Ashpreet Singh  [client]
+  Meeting : Nolocode - AI module  #14  (1775044800000)
+    I understand there is. There's going to be phase two. So no, no stepping back on
+     that. How we commercialize it, how we do it, that's separate. But there is goin
+    g to be phase two. I'm not going to find another team. I don't have.
+  ------------------------------------------------------------------
+
+[59/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode - AI module  #14  (1775044800000)
+    Yeah, I know. I meant that. I just want to make sure that what we have defined a
+    s a specs now for phase one of M4, this is locked and we can implement now. What
+    ever discussion we can have now onwards can be just from your side. Our team jus
+    t clarifying the existing specs. If you ask for any additional functional specif
+    ication that enhances the scope. If it's a minor change, that's fine, we'll inco
+    rporate it. Major will take it as a feature request.
+  ------------------------------------------------------------------
+
+[60/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode - AI module  #14  (1775044800000)
+    No ma', am just there are one or two points that we need to discuss first with y
+    ou. So we'll have this like we'll. We'll discuss with you then you can discuss t
+    hat with Ray. There are just 12 more points extra so which Harshad mentioned so 
+    we just need to discuss that and we can now finalize and we can start working to
+    morrow.
+  ------------------------------------------------------------------
+
+[61/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode - AI module  #14  (1775044800000)
+    You want him. I'll ask Akash if he's available. He is on holiday for this week u
+    ntil 6th. So I let him know we can do it.
+  ------------------------------------------------------------------
+
+[62/302] trigger=[I will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode - AI module  #14  (1775044800000)
+    If possible, Yes, I will ask him. But yeah, I will let.
+  ------------------------------------------------------------------
+
+[63/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode - AI module  #14  (1775044800000)
+    Firstly, I would like to discuss with my team first and then I'll come back to y
+    ou.
+  ------------------------------------------------------------------
+
+[64/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode - AI module  #14  (1775044800000)
+    Yeah, sure. I'll ping you on teams.
+  ------------------------------------------------------------------
+
+[65/302] trigger=[I'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    So the first one, this one I checked, this is fine. All of them are black now. S
+    o that's okay. All the balances, which is. Which is good. And I've tested that. 
+    The data then is redirected to the dashboard. So I've checked that. That's fine.
+     I'll recheck it again for the third time. So 1 and 2. I wanted to touch base on
+     number three. This was cash balances that initially showed zero and now I saw s
+    ome of them are showing really high balances for. For cash. Manish, you've given
+     a comment.
+  ------------------------------------------------------------------
+
+[66/302] trigger=[I'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    Yeah, but they're not. So I'm just going into zero. For example, so I'll go into
+    . So for example, we're looking at December 2025. Going to December 25. If I loo
+    k at my cash number, my cash number here, 584,000 plus 350,000 plus 234,000. So 
+    nowhere does it show that 39 million.
+  ------------------------------------------------------------------
+
+[67/302] trigger=[I will]
+  Speaker : Manish  [unknown]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    Okay, I will look into this.
+  ------------------------------------------------------------------
+
+[68/302] trigger=[I will]
+  Speaker : Manish  [unknown]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    Okay, Okay, I will look into this again.
+  ------------------------------------------------------------------
+
+[69/302] trigger=[I will]
+  Speaker : Manish  [unknown]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    Yes, this is I have. It's fixed now. Maybe the values I'm taking from the zero a
+    nd now you have shown me that I have to take from the manual generals that maybe
+     the reason there's a difference between the values. So I will look into this an
+    d.
+  ------------------------------------------------------------------
+
+[70/302] trigger=[we will]
+  Speaker : Manish  [unknown]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    Like for now we are syncing the data from the zero for the last four years. So f
+    or the 2026 we will not say we are not syncing the data from the zero.
+  ------------------------------------------------------------------
+
+[71/302] trigger=[We will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    We will look into it then.
+  ------------------------------------------------------------------
+
+[72/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    Okay, no problem. Look, I'll check with them.
+  ------------------------------------------------------------------
+
+[73/302] trigger=[I will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    Okay, I will keep you updated. Regarding this page.
+  ------------------------------------------------------------------
+
+[74/302] trigger=[we'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    So I wouldn't suggest to do the numbers now, right? I would one, subtract module
+     two and I know it's working. Then we'll do that at the end. We don't have to do
+     it now, right? There's no point doing it now. And then you're changing the numb
+    ers and. Then I pick up maybe you need to fix. So this we do at the end. Once al
+    l the bugs are fixed and. UAT has been signed off for module two.
+  ------------------------------------------------------------------
+
+[75/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    So we will check related to the points that you have mentioned and plus whatever
+     we can cover now the team will work on at once the database is up and after tha
+    t lead to that target sheet. We will consider it later on once the UAT points ar
+    e done.
+  ------------------------------------------------------------------
+
+[76/302] trigger=[I'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    I'll just wait for your message on the group. Okay, when you tell me your module
+     one is done, I'll go and test it. When you tell module 2 and 3 is done, I'll go
+     and test it. In the meantime on the Unified Scope,. If you can just add the lin
+    k to the test cases, I can look at that.
+  ------------------------------------------------------------------
+
+[77/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    Yes, yes, yes. I just shared it, but I believe I added in the wrong page. So I'l
+    l check and then I'll add them.
+  ------------------------------------------------------------------
+
+[78/302] trigger=[we'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    Okay, we'll keep you updated to everything.
+  ------------------------------------------------------------------
+
+[79/302] trigger=[We'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode  #16  (1775477700000)
+    I. I thought you guys made this. Okay, that's fine. Okay, we can keep it here as
+     it is. We'll just inform them.
+  ------------------------------------------------------------------
+
+[80/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode  #16  (1775477700000)
+    And the UI doesn't reflect the correct so okay, I think that's fine as long as y
+    ou guys have got all of this working. Okay, I'll do my check and complete and if
+     I do find anything else. I'll let you guys know One more.
+  ------------------------------------------------------------------
+
+[81/302] trigger=[We will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode  #16  (1775477700000)
+    Okay, that's fine. So I think we are good with this. We will connect with Bhavni
+     and the. Rest tomorrow and we'll get gather the. Final feedback from them modul
+    e 2 and. 3 Is what Akash, I don't know if he's here right now. Yeah, he was trav
+    eling. He was coming back this week so. He can confirm about the other tools.
+  ------------------------------------------------------------------
+
+[82/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode  #16  (1775477700000)
+    If the data match zero and there's something incorrect our side then we'll have.
+     To figure it out.
+  ------------------------------------------------------------------
+
+[83/302] trigger=[going to]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode  #16  (1775477700000)
+    So we were going to meet today and finalize but I think it's gonna. Be a discuss
+    ion tomorrow. All right. Yeah, so yeah that's from my side. I think this is what
+     we have so far.
+  ------------------------------------------------------------------
+
+[84/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode  #16  (1775477700000)
+    Have a good week. Let's connect tomorrow and we'll let.
+  ------------------------------------------------------------------
+
+[85/302] trigger=[we'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    Simran as in there's. If the issue is an M2, there'll be issues in M3. So there'
+    s no point until the issues. Get resolved because whatever you're fixing in M2, 
+    you need to fix. So the main thing is getting M2 ready. And once M2 is ready, wh
+    atever changes you have, you need to incorporate that. Into M3 and then we'll st
+    art testing. Otherwise there's no point testing.
+  ------------------------------------------------------------------
+
+[86/302] trigger=[I'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    Let me share my screen. I'll start with some of the other pages and then he can 
+    talk about the more general ones. Yeah, he needs a couple of minutes to join. Ok
+    ay, so let me know when you can see my screen.
+  ------------------------------------------------------------------
+
+[87/302] trigger=[I'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    So I'll start with some of the other ones here. So I'm starting midway through. 
+    On working capital. So I'll talk through working capital, the cash flow and the 
+    financial statements. In particular. So the working capital, the table that you 
+    have below and the numbers. Don't align with what we have in the Excel. So this 
+    is the Excel output. That Akash had generated. And I put all the calculations an
+    d we've gone through these a couple of times. So if you look, the numbers don't.
+  ------------------------------------------------------------------
+
+[88/302] trigger=[I'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    I don't know how you derive that from, but you should be taking the working capi
+    tal balance from December 2025 and. What the change is from January 26 to Decemb
+    er 2025. Like which is not 53 million working capital. So you need to look at th
+    is number as well. Okay, yeah, I'll put it down here again as well. See, negativ
+    e 53 million. It shouldn't be that much. I think I've given in the Excel the wor
+    king capital for 2025. But you can still apply it and use the same thing from th
+    e numbers.
+  ------------------------------------------------------------------
+
+[89/302] trigger=[We will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    Okay, Yeah, yeah, we were checking. We will check these things.
+  ------------------------------------------------------------------
+
+[90/302] trigger=[we will]
+  Speaker : Neha  [developer]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    So right now it's hard coded but we will look into this to make it dynamic.
+  ------------------------------------------------------------------
+
+[91/302] trigger=[I'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    Then the third. Then you can then say in essence basically it's some months of p
+    ositive and some are negative. Right, Basically. So you can just explain it. Yea
+    h, sure. That way. So these are all the working capital page specific feedback. 
+    Then I'll go to cash flow and Runway forecast page. So again Simran similar thin
+    g. The, the cash flow numbers don't match what we have in the Excel output. So I
+    'll put the Excel output and what the numbers are.
+  ------------------------------------------------------------------
+
+[92/302] trigger=[we'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    And the same then feedback on your cost of sales as well. If I look at the amort
+    ization, the patents, software, lease improvements, all these numbers have been 
+    historically zero. There's no number in the historical data. Naturally there'll 
+    be no number in the forecast data. So these are additional roles that are not re
+    quired. So we'll just use that as general feedback across the pnl. I think expen
+    ses were fine. But I saw this revenue and cost of sales.
+  ------------------------------------------------------------------
+
+[93/302] trigger=[I'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    The other feedback I had just generally. When I was trying to open. I tried to o
+    pen a new account. And loaded with Excel. It said it wasn't providing the foreca
+    sting right. It said 2025 data does not load so you can't generate a forecast fo
+    r. Module two, module three. So I'll give you. I'll put in the chat. I'll give y
+    ou the test account. So you can check at the back end. But it wasn't working for
+     me. I think Omi said it was working for him. But for the account that I created
+    , it didn't work.
+  ------------------------------------------------------------------
+
+[94/302] trigger=[I'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    I'll put that. I'll put the account I've created in the chat.
+  ------------------------------------------------------------------
+
+[95/302] trigger=[I will]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    Yeah, I will stop sharing. I'll let go me share if he's joined. There were some 
+    things that he also. Figured out as well. So let me just stop.
+  ------------------------------------------------------------------
+
+[96/302] trigger=[I will]
+  Speaker : Manish  [unknown]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    Okay, I will look into this.
+  ------------------------------------------------------------------
+
+[97/302] trigger=[We will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    We will check for the possibility of save button.
+  ------------------------------------------------------------------
+
+[98/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    Since you just had a meeting yesterday only and we didn't had any discussion wit
+    h them yet. So let us have a discussion with them and then we will cover these p
+    oints.
+  ------------------------------------------------------------------
+
+[99/302] trigger=[I'll]
+  Speaker : Ngũmi Gituro  [client]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    I'll create a new account and. In number nine, I think it was what Bob Meat had 
+    mentioned. Maybe there was like. The Optimistic and the Conservative toggles. It
+     seems like the settings are not being retained. So for example, if I click betw
+    een one or the other, maybe I can show you a demo. Let me see which one we're go
+    nna use. So for example, this one. So we know that the optimistic is 105% and th
+    e conservative is like 95% from plus 5 minus 5%. But as you toggle through it ch
+    anges the scenario.
+  ------------------------------------------------------------------
+
+[100/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    Okay, okay, we'll do that then. We'll do that.
+  ------------------------------------------------------------------
+
+[101/302] trigger=[we'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    So we'll continue to add for the other pages as well. These are the setup feedba
+    ck. For over overall and then the revenue forecast and then also pages. So we'll
+     keep on adding to the document.
+  ------------------------------------------------------------------
+
+[102/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    Okay, sure. So whatever feedback you have added so far, we will start working on
+     it. And also Akash informed me yesterday night that module, Sorry, the approach
+     one is finalized for module four as well. So we will start with that too.
+  ------------------------------------------------------------------
+
+[103/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    All right. In the meanwhile we will focus on 1, 2 and 3 module for now and modul
+    e 4 starting with the approach 1, whatever is.
+  ------------------------------------------------------------------
+
+[104/302] trigger=[We will]
+  Speaker : Manish  [unknown]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    Okay, you just want like we add one or more column where the user will see that 
+    for which month the data is updated in the tv. We will look into this.
+  ------------------------------------------------------------------
+
+[105/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    All right. Then we will look into all these feedbacks and we will start working 
+    upon it and if we have any kind of query we will ping you on WhatsApp too.
+  ------------------------------------------------------------------
+
+[106/302] trigger=[going to]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    Superhill, you're on the call. Yeah, hey, hey, one second. Yeah, so we were tryi
+    ng to just discuss the module one right now. Before we jump into the module two,
+     I remember like Nagumi said that he would give us a comparison feedback between
+     Excel and 0 and I'm unable to find that. He was going to put that in the Unifie
+    d Scope. Yeah, that's what he said and I think, yeah, I don't see that there. Ma
+    ybe he's done it on a new document or something.
+  ------------------------------------------------------------------
+
+[107/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    Yeah, sure, sure, sure. N is sharing her screen. I'll inform her to showcase tha
+    t to you. Even Alka is also there. Just a second. In the opex planned OPEX plan,
+     the value is wrong in plan of it. Here in the marketing you can check for third
+     or fourth value. The formula is wrong that they have used. Yeah, it's F. And in
+     the next value cross check for the next one.
+  ------------------------------------------------------------------
+
+[108/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    Is it just you doing this Olka on your side, you're reviewing the numbers, right
+    ? Okay, so we can give Alka access because this is quite an important point for 
+    the client and because we've been looking at the numbers, doing the calculations
+     and Bhavni has the domain expertise. Only he can verify these calculation numbe
+    rs. So if you can, after the call we'll give you access or maybe during the call
+     we'll give you access.
+  ------------------------------------------------------------------
+
+[109/302] trigger=[I'll]
+  Speaker : Alka Saini  [unknown]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    Yeah, sure, I'll do that.
+  ------------------------------------------------------------------
+
+[110/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    This is a dummy data plus tax calculations. Excel, right? Yes, that's the one. S
+    o I made you an editor Alka. You can also comment and flag like add client's nam
+    e or our name and just mention that maybe we can do a joint call with the client
+     and go through these numbers once. Ak what do you think like Bhakti should vali
+    date on the call? Yeah, I think we. We need him to do this. The validation of th
+    e numbers and the calculations, that's something we'll do.
+  ------------------------------------------------------------------
+
+[111/302] trigger=[going to]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    So the idea for this part was that they should have matched, right? So the user 
+    has options in the baseline to add the baseline numbers. But let's just say thro
+    ughout the year things changed, they can come here on this page and update the n
+    umbers or update their additions or anything they need to update. So we did want
+     them to be reflected on both because you guys have done it on the front end. I'
+    m not sure going to make it a bit more difficult.
+  ------------------------------------------------------------------
+
+[112/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    So what we'll do is so me with Simon will team will sit maybe tomorrow in Scrum 
+    and we'll. We'll discuss this internally first and we'll come up with a plan pro
+    perly and then we'll let. We'll come up with a plan.
+  ------------------------------------------------------------------
+
+[113/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    No, sorry, sorry. So if you want a reset button also not then also you want to c
+    lear us this thing in the first only because like we'll. We'll analyze this and 
+    we'll then come up with the architecture which will support these things. So for
+     now like I was not considering to add a reset button, but if you want that rese
+    nd to like you order reset button. So then also you need to tell us the before a
+    nd only then because we'll come up with the architecture according to that.
+  ------------------------------------------------------------------
+
+[114/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    So again just I want to highlight like we'll discuss this with my team because m
+    aybe they would have any concerns of how to implement it. So from now only like 
+    we'll give some time to analyze like what are the code changes and then in tomor
+    row so me and Simon and team will sit and we'll decide according and then we'll 
+    come up with a plan and we'll let.
+  ------------------------------------------------------------------
+
+[115/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    Thank you. Okay cool. So we'll wait for that one. Anything else on the M2?
+  ------------------------------------------------------------------
+
+[116/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    Okay, I'll check with my team that how much time they need to do that or is ther
+    e a quick point then we can cover it soon? But yeah, I'll keep you updated regar
+    ding this as well. But more.
+  ------------------------------------------------------------------
+
+[117/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    Okay, I'll check regarding this screen as well. Yes, I have a.
+  ------------------------------------------------------------------
+
+[118/302] trigger=[going to]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    It seems like an input field because there's. There's going to be previous years
+     where we cannot input numbers so they can manually override the numbers. In tha
+    t case when we just. We don't need to change any functionality. It's just a matt
+    er of for the years we have forecasted or for the existing. If you scroll up, so
+    rry, the other way, go to the top of the page. So 2025, we don't have forecast n
+    umbers for 2026. There will be a forecast number. A forecast page of this versio
+    n.
+  ------------------------------------------------------------------
+
+[119/302] trigger=[We will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    We will let the client know that for whatever reason you have highlighted, they 
+    cannot do this because maybe 2026 is not populated or the 2026 calendar year is 
+    not functionality is not there. Whatever it may be, just let us know. We'll let 
+    them know. And it's their responsibility to fix for us. It's just simply populat
+    ing the latest forecast numbers or the latest forecast year.
+  ------------------------------------------------------------------
+
+[120/302] trigger=[We'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    Okay, cool. So just a request from before. Highlight the. We've given Alka now a
+    ccess to the. Highlight it. Just leave a comment somewhere to say exactly what y
+    our concern is with the numbers. We'll clarify that. Then we'll let them know wh
+    at else is pending and we'll just tell them everything else is being fixed. Just
+     use new account. Test those numbers.
+  ------------------------------------------------------------------
+
+[121/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    Thank you. Yes, we'll let them know about creating a new account and testing the
+     new features. That was it for now.
+  ------------------------------------------------------------------
+
+[122/302] trigger=[We'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    I don't see this input being specified in the question itself. Like if my produc
+    tion increased by xyz, whatever. So I'm assuming that this is a figure that must
+     be taken from database that the customer has a gross margin. We'll ask this que
+    stion just to be sure from the client side. So nothing's been that number is not
+     being calculated in any way. In part of the logic from what you see. So let me 
+    just see. Minimum safe margin percentage. Yeah, let me open.
+  ------------------------------------------------------------------
+
+[123/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    I think his Internet crashed. It says it's an input in the table so context inpu
+    t. So I can see in this scenario there's no input defined for the safe cross mar
+    gin percentage but it's mentioning that's being calculated somewhere as well in 
+    the previous module 2 and 3. Are we calculating this anywhere? I'll pose a quest
+    ion to the clients. Let's ask clarity from them if it's.
+  ------------------------------------------------------------------
+
+[124/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    If they want to specify this safety, this number in this question manually stati
+    cally by the user in the query or do they want this to be a parameter that they 
+    take from the database which is calculated from somewhere? Yeah, I think we just
+     need to identify where this variable number value is found or calculated from. 
+    Okay, we'll ask the client and we'll let. I think hashtrup Simran so if you coul
+    d just let him know that we will double check this.
+  ------------------------------------------------------------------
+
+[125/302] trigger=[We'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    That's fine, yeah. We'll ask them today and hopefully we get an answer.
+  ------------------------------------------------------------------
+
+[126/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    And we want to get you paid obviously and we want to get paid too. So if we can 
+    just speed this up, we'll help you communicate this back to the client. But yeah
+    , we. We just need the next payment unlocked from the client.
+  ------------------------------------------------------------------
+
+[127/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    I haven't informed them yet that yeah, we have started working on M4 but yeah, i
+    n the next week obviously I'll inform them that yeah, we are working on model fo
+    ur.
+  ------------------------------------------------------------------
+
+[128/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    Next week. Okay, no problem. I'll talk to them till mid next week. All right.
+  ------------------------------------------------------------------
+
+[129/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #19  (1775823300000)
+    And I just mentioned that we haven't worked on the feedback today we were just m
+    ore focused on the save button feature so that because we have informed you or p
+    romised you yesterday that we will provide you with the documentation and the ne
+    w architecture so that's why this two days was more focused on that same feature
+     architecture. Yeah apart from this the team have started working on the zero mo
+    dules feedback but that is still in progress.
+  ------------------------------------------------------------------
+
+[130/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #19  (1775823300000)
+    Okay all I all I'd ask is just if you can make sure that any comments you've lef
+    t here which are done these accurate and up to date because then what we'll tell
+     the client to do is just to refer to this if he thinks it's not there and it's 
+    done it should be there then he can review an accounts to make sure this is, thi
+    s has been fixed. So just make sure these comments are all up to date.
+  ------------------------------------------------------------------
+
+[131/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #19  (1775823300000)
+    Yeah we will check these ones again before we leaving today.
+  ------------------------------------------------------------------
+
+[132/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #19  (1775823300000)
+    Yeah please. Thank you. Okay cool. Yeah I think we need the rest of the team Sim
+    ran if you can just stay behind. Just need to follow up a conversation with you 
+    but I think we're for the rest of the team unless there's anything else you want
+     to add or. No, that's fine. I think next week we'll ask if we can join either o
+    ur cadence call and have that call with you another time. We just. So we should 
+    just align next week with this.
+  ------------------------------------------------------------------
+
+[133/302] trigger=[I will]
+  Speaker : Rhythm jalhotra  [developer]
+  Meeting : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+    Wait a second. I will check.
+  ------------------------------------------------------------------
+
+[134/302] trigger=[we will]
+  Speaker : Rhythm jalhotra  [developer]
+  Meeting : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+    Yes sir. No, we do not have any count related to that as we will uploading this 
+    Excel sheet. But in this Excel sheet there is no such code. So it is also not pr
+    esent in the db.
+  ------------------------------------------------------------------
+
+[135/302] trigger=[I'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+    No, it's the same one. I'll check with Ashpreet.
+  ------------------------------------------------------------------
+
+[136/302] trigger=[We'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+    Just one second. Okay, let's go to the next query. We'll come back to these two.
+  ------------------------------------------------------------------
+
+[137/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+    And apart from this we will try to provide you with the time estimations for the
+     forecast module.
+  ------------------------------------------------------------------
+
+[138/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+    So we will provide you with the time estimations of both the modules for now bec
+    ause scenario modeling is done but for now the socket IO regarding which we need
+     to discuss with Ashpreet and once it is finalized then we can provide you with 
+    that handover of scenario modeling.
+  ------------------------------------------------------------------
+
+[139/302] trigger=[we'll]
+  Speaker : Ngũmi Gituro  [client]
+  Meeting : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+    Well I mean I recommend that we still need a little bit of a discussion on our s
+    ide and then we'll get back to you asap.
+  ------------------------------------------------------------------
+
+[140/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    Thank you. I'll be back. Five minutes.
+  ------------------------------------------------------------------
+
+[141/302] trigger=[going to]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    Okay so yeah Simran is harsh going to take the lead here or.
+  ------------------------------------------------------------------
+
+[142/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    So we will, we were getting like what will be the input required to execute this
+     test? What are the reasoning which need to be performed to get out from these t
+    ests and what are the output format we need to show in the output what are the g
+    raphs and the summary and other things. So we in the like before like including 
+    stress test we will, we will be needing our document in the previous approach.
+  ------------------------------------------------------------------
+
+[143/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    So if we have five stress tests then we will be needing like five types of stres
+    s test in the classification. So for every stress test a new classification need
+     to be added in that query classification prompt before after writing its logic.
+     So in the previous approach first we need a document. Then by understanding doc
+    ument we were creating a Python file implementing all the logic from the documen
+    t.
+  ------------------------------------------------------------------
+
+[144/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    Then we will we were adding a classification regarding that stress test and then
+     we were writing unit test cases and verifying it. Then yeah, that's how we were
+     integrating the stress test into the chat flow previously.
+  ------------------------------------------------------------------
+
+[145/302] trigger=[I will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    So I will directly explain it how the new test case will be inserted in this app
+    roach. Okay, implementation strategy. Okay, so in this approach first initial re
+    quirement is still the same. A document will be required with all the necessary 
+    input. After that document will be processed into the markdown format by an agen
+    t. Previously, what the developer is like processing document in the python file
+    .
+  ------------------------------------------------------------------
+
+[146/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    So x second, there one more thing in the second approach which I need to mention
+     1 second. Picture. So in the like while when we start when we will implement th
+    e second approach, first we will go with the single agent approach. Like if the 
+    single agent is enough to implement the stress test on his own, then we will lik
+    e stay with the single agent. Else we will again like move to a multi agent arch
+    itecture in the answer generation pipeline.
+  ------------------------------------------------------------------
+
+[147/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    Yeah, simulation result will be validated by the second agent. Like yeah, if we 
+    move to like multi agent architecture. If the single agent is enough like if we 
+    get good accuracy with single agent then we will stay with the single agent arch
+    itecture as we are already doing. So like should I show a demo of this approach 
+    or you have any question regarding the like how it is being implemented?
+  ------------------------------------------------------------------
+
+[148/302] trigger=[I will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    So like this is a. This is Langsmith platform for like testing the agent rapidly
+    . So I built the POC regarding the approach to. So I will be showing you a demo 
+    of that POC using this platform. I will stay. I will be again executing this str
+    ess test. Queries. So this is the query if the market divs and we miss the reven
+    ue and this is the company ID and user ID for that. We'll be automating that whe
+    n we move to production. For now we are providing it in the query. So agent will
+     hit the query.
+  ------------------------------------------------------------------
+
+[149/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    we can manage that. But again for classification we need like. We need what? So 
+    how we will classify the query then? Like can I.
+  ------------------------------------------------------------------
+
+[150/302] trigger=[I will]
+  Speaker : Ashpreet Singh  [client]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    Your first step is you have a set of documents which have let's say a set of str
+    ess tests. I want to look at what. What was the first step? Which document? How 
+    the document. Let's say it was on docx. I will want to look into the docx Docume
+    nt.
+  ------------------------------------------------------------------
+
+[151/302] trigger=[going to]
+  Speaker : Ashpreet Singh  [client]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    I do understand. But you want to understand. See, see for me the document. So if
+     that this document is going to be part of my general let's say flow I need to u
+    nderstand what is the document about. How they have chunked so they have reached
+     to a success story around it. See, that's important because. Because I need to 
+    follow the same strategy of building a document. That's the simple garbage in, g
+    arbage out.
+  ------------------------------------------------------------------
+
+[152/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    Actually output will be same because we will be validating it before like indexi
+    ng that function into the vector database so the output will be the same like in
+     both cases.
+  ------------------------------------------------------------------
+
+[153/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    Yeah, I'll ping you. So regarding the efforts or regarding how much time that we
+     require to do all these things and when we can showcase you something
+  ------------------------------------------------------------------
+
+[154/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    And so when the query will come the similarity search will be like based on the 
+    summary and the output which will be given after that search is the executable f
+    unction. So it's a kind of parent document retriever. So we will apply search on
+     the summary and the output will be the stress test function. So we are not like
+     embedding the whole document or this. We are just embedding the summary of the 
+    document like this much only.
+  ------------------------------------------------------------------
+
+[155/302] trigger=[I will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    Yeah, I will look into that also. Like if it makes it more accurate and fast, th
+    en we will surely do that. We can do that.
+  ------------------------------------------------------------------
+
+[156/302] trigger=[I will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    Okay, I will look into that. Oh and the second question is the document you prov
+    ided where four agent are mentioned. So regarding that you are saying that go th
+    rough that document and like what's
+  ------------------------------------------------------------------
+
+[157/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    Actually Ashpreet like suppose once we goes with the approach too. So like only 
+    thing on your side is to do like. Is to like we'll share you a template of our d
+    ocument. Like how you doing to define this test case? You just need to upload so
+    mewhere like we'll provide you a UI over there. You just need to upload it. Rest
+     of the things like, like.
+  ------------------------------------------------------------------
+
+[158/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    we'll integrate that for you we'll indicate some basic effort so it'll be an
+  ------------------------------------------------------------------
+
+[159/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    Then we'll share it by today or most of the tomorrow and you can. You can go thr
+    ough that and you can let us know if you. If you have any concerns over our appr
+    oach. And we also highlight what are the formulas which you use to get the diffe
+    rent values. So do you can have a more clarity over like and, and like the possi
+    bilities which I'm talking about?
+  ------------------------------------------------------------------
+
+[160/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    There are a lot of possibilities like, which the AI considers but we'll highligh
+    t like five to 10 possibilities like, like, but how it is getting that possibili
+    ties will highlight some of the like main things to you. So do you can get an id
+    ea about that and you can let us know if you have anything about any, any concer
+    ns?
+  ------------------------------------------------------------------
+
+[161/302] trigger=[We will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    Okay, sure, sure. We will continue.
+  ------------------------------------------------------------------
+
+[162/302] trigger=[We will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    We will provide you with the requested documents and plus whatever we have sugge
+    sted and then you can finalize according to that.
+  ------------------------------------------------------------------
+
+[163/302] trigger=[going to]
+  Speaker : Manish  [unknown]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    Think actually like there is a lot of data. Like we are syncing for the last fou
+    r years of data and plus the current month up to current month. So the when the 
+    crone was hit like at 1am the blood like let's take. There are two to three comp
+    anies are going to be sync at the same date. So when the crone hit the for the t
+    hree of the companies the gyro syncing is going. So like we have to sync all the
+     data again.
+  ------------------------------------------------------------------
+
+[164/302] trigger=[going to]
+  Speaker : Gaurav Gupta  [unknown]
+  Meeting : Nolocode-AWS-deployment  #10  (2026-04-14)
+    I'm just going to talk. Just give me a second.
+  ------------------------------------------------------------------
+
+[165/302] trigger=[I will]
+  Speaker : Gaurav Gupta  [unknown]
+  Meeting : Nolocode-AWS-deployment  #10  (2026-04-14)
+    I will walk you through that.
+  ------------------------------------------------------------------
+
+[166/302] trigger=[I'll]
+  Speaker : parteek chaurasiya  [unknown]
+  Meeting : Nolocode-AWS-deployment  #10  (2026-04-14)
+    I'll just show you what's the domain of front end.
+  ------------------------------------------------------------------
+
+[167/302] trigger=[going to]
+  Speaker : Ngũmi Gituro  [client]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    So like where would I see this? I'm going to go back to it.
+  ------------------------------------------------------------------
+
+[168/302] trigger=[I'll]
+  Speaker : Gaurav Gupta  [unknown]
+  Meeting : Nolocode-AWS-deployment  #10  (2026-04-14)
+    Connection. I guess these services are not able to connect to database itself ri
+    ght? Let me just get to this other server I'll try to assist.
+  ------------------------------------------------------------------
+
+[169/302] trigger=[we will]
+  Speaker : Manish  [unknown]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    So actually we are doing the updation. Like if the value is updated in the zero.
+     So we will just update that value.
+  ------------------------------------------------------------------
+
+[170/302] trigger=[I'll]
+  Speaker : Ngũmi Gituro  [client]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    Okay then in that case then that this feature kind of already exists, right? The
+     only difference. And you also have a log and the log is very, very clear. Like 
+    what has been imported, right? Like it shows. Okay, this was imported this month
+    . The only thing that you guys don't have is like whether you're applying correc
+    tions or whether you're only adding new months, which is fine. Okay then in that
+     case what I'll do is I'll test another sync.
+  ------------------------------------------------------------------
+
+[171/302] trigger=[I'll]
+  Speaker : Ngũmi Gituro  [client]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    I've already like scheduled one for tomorrow, so I'll see if it syncs again. And
+     then I'm also going to create a new account and try and upload data. Okay, so I
+     already saw this one for there was like extra lines. Yeah, so there was some mi
+    ssing like items when you import zero. So the data exists in zero. Like for exam
+    ple, this line dividend.
+  ------------------------------------------------------------------
+
+[172/302] trigger=[I will]
+  Speaker : Manish  [unknown]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    I will update all the comments.
+  ------------------------------------------------------------------
+
+[173/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    Actually he was working on it. So we will update sheet at the end of the day and
+     I'll keep you posted on WhatsApp too.
+  ------------------------------------------------------------------
+
+[174/302] trigger=[I will]
+  Speaker : Neha  [developer]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    Give me few minutes, I will check.
+  ------------------------------------------------------------------
+
+[175/302] trigger=[We will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    No worries. We will check with Karan after this call and then we will.
+  ------------------------------------------------------------------
+
+[176/302] trigger=[I will]
+  Speaker : Ngũmi Gituro  [client]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    Yeah, if you get blocked then you can and. Or you can tag me and then I will try
+     and like get the server running so you can compare.
+  ------------------------------------------------------------------
+
+[177/302] trigger=[I will]
+  Speaker : Manish  [unknown]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    I will Update that.
+  ------------------------------------------------------------------
+
+[178/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    Then we can mark M1 as done once these points are finished. And I'll let by the 
+    end of day when these points are in. And then we can have a meeting for M2 and M
+    4 by tomorrow.
+  ------------------------------------------------------------------
+
+[179/302] trigger=[I'll]
+  Speaker : parteek chaurasiya  [unknown]
+  Meeting : Nolocode-AWS-deployment  #10  (2026-04-14)
+    Yeah, yeah, actually somehow electricity is gone so I took the backup but it. It
+     takes some time. Then I'll send you over the mail yeah, sure, sure. Okay, thank
+     you.
+  ------------------------------------------------------------------
+
+[180/302] trigger=[going to]
+  Speaker : Ngũmi Gituro  [client]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    Yeah, I think this is wrong. So I'm going to write the formula should be like, s
+    imple, simple formula. The one that we learned when you were in like or somethin
+    g. I'm gonna like write the formula and then you can tell us like whether it's d
+    oable instead of having a static figure. Because this is not like a true reflect
+    ion of the principle.
+  ------------------------------------------------------------------
+
+[181/302] trigger=[we will]
+  Speaker : Ngũmi Gituro  [client]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    It should probably be replaced. Let me talk to Bob needs and we will align on a 
+    strategy. At least now I understand where the figures are coming from because it
+     didn't make sense why they're not dynamic. Because if I'm doing a forecast, I w
+    ant to know like, okay, how much am I paying extra interest every month if I'm t
+    aking new loans? So it's not working the way it should. Yeah, I'll add some note
+    s to that and ping you. Okay, sure. All right. Any other pressing issue?
+  ------------------------------------------------------------------
+
+[182/302] trigger=[we'll]
+  Speaker : Ngũmi Gituro  [client]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    By the end of the day. And if we'll make it work, we'll make sure it works becau
+    se we also want to finish as many modules.
+  ------------------------------------------------------------------
+
+[183/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    Yeah, you can have a look for the podcast module points that have covered so far
+    . Plus we. I'll let for the 02 if you feel like that something is still not fixe
+    d and we can have that point in the tomorrow's call as well.
+  ------------------------------------------------------------------
+
+[184/302] trigger=[I will]
+  Speaker : Ngũmi Gituro  [client]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    Okay then yeah, let me do this. I will ask Ashby to run the server and then you 
+    can try see it yourself. Okay, because we have the one. The original code that y
+    ours is based on. We have it running somewhere. It's just that it's not offline 
+    right now. I had the link on the call. Oh, actually, I think, I think you might 
+    have a problem. Just give me a second. I think I know how to access it. I, I, we
+     need vpn.
+  ------------------------------------------------------------------
+
+[185/302] trigger=[I'll]
+  Speaker : Gaurav Gupta  [unknown]
+  Meeting : Nolocode-AWS-deployment  #10  (2026-04-14)
+    And another call so. I'm in another call I'll check okay,.
+  ------------------------------------------------------------------
+
+[186/302] trigger=[going to]
+  Speaker : Ngũmi Gituro  [client]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Just give me a second. I'm gonna call him and see if he can join asap. One secon
+    d. Right, I'm going to.
+  ------------------------------------------------------------------
+
+[187/302] trigger=[We will]
+  Speaker : Alka Saini  [unknown]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Only this point is pending because of this formula. We will complete it.
+  ------------------------------------------------------------------
+
+[188/302] trigger=[I will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Yeah, I'm here. Raheel here. So just for the saving functionality, we believe th
+    at. I think Akash and I will have a call with you guys because I feel there is s
+    ome architectural changes that are needed for that because it's not as simple as
+     saving it to. For persistence in the database. We wanted to get some clarity in
+     terms of the approach there.
+  ------------------------------------------------------------------
+
+[189/302] trigger=[we'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Okay, so when do you want to have that discussion? Then we'll go, me and I. Yeah
+    ,.
+  ------------------------------------------------------------------
+
+[190/302] trigger=[We'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    We'll come back to you. I need to ask AK for his availability and then this week
+    , maybe tomorrow or by Friday for sure.
+  ------------------------------------------------------------------
+
+[191/302] trigger=[going to]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Yeah, so the ones where. So the ones we have asked for provide the output, right
+    ? So for example, this one. So if I go to this point and say the numbers aren't 
+    correct, can you provide a breakdown of how you're generating the number? I get 
+    a response. Please retest. So can I actually see how you're generating the numbe
+    rs? Because I mentioned this I think in two or three places where if you're not 
+    going to give me the breakdown, how can I help you then on identifying the issue
+    ?
+  ------------------------------------------------------------------
+
+[192/302] trigger=[going to]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    A mapping of where you're getting the cash. So where you're getting the 3.9 mill
+    ion cache number from as an example. Because that's what I was asking Manish. Th
+    at if you're not going to provide me the details and I cannot see, I cannot help
+     you to say, okay fine, this is correct or this is incorrect.
+  ------------------------------------------------------------------
+
+[193/302] trigger=[I'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    I'll need a mapping for every row to see where you're getting 3.9 from 4 account
+    s receivable where you're getting the 2.35 million number from. So then I can, I
+     can check to see. Okay fine, that's correct or that's not correct. But right no
+    w the balance sheet's not balancing. So if I go to the accounting view, if I cli
+    ck accounting view on. The top. See, it shows I'm off. If you go down. So it's. 
+    You see I'm off. Total assets 8.01 million. I can't see what you.
+  ------------------------------------------------------------------
+
+[194/302] trigger=[I will]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Actually, I don't have my system right now with me, so I will. No, no, you can d
+    o it tomorrow. You can do it tomorrow. Yeah, yeah, yeah. But if you. If you prov
+    ide. For the balance sheet and for the cash flow, then we can have a look. Once 
+    you've done that and provided to us, just give it to us on the document so it's 
+    clear and then we can look at it and we can come back to you on that.
+  ------------------------------------------------------------------
+
+[195/302] trigger=[I will]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Yeah, yeah, I will add document in the document itself.
+  ------------------------------------------------------------------
+
+[196/302] trigger=[going to]
+  Speaker : Ngũmi Gituro  [client]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    There was one point. The zero values that they come from the back end. They don'
+    t come from the front end. The ones we discussed yesterday. And then secondly, o
+    kay, this is off topic, but about the zero integration. The sync did work. Today
+     I still need to add more data, more data sets and new accounts and then see if 
+    it's actually going to the sync again. And then I can confirm if it does in the 
+    morning, but we need more data to see if it's actually syncing correctly.
+  ------------------------------------------------------------------
+
+[197/302] trigger=[I will]
+  Speaker : Neha  [developer]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Okay, I will check.
+  ------------------------------------------------------------------
+
+[198/302] trigger=[we'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    No, we'll also add the forecast value underneath and then. The percentage.
+  ------------------------------------------------------------------
+
+[199/302] trigger=[I will]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Yeah, No, so this is what I've seen for now. But then once, once, once we once y
+    ou align on the, the mapping and everything. And then providing the outputs and 
+    then. Retest and then you guys will, will refix and fix the bugs. Akash and Rahe
+    el will also test from their side and then Komi and I will do the final testing.
+     I'll stop presenting. There's nothing else M4.
+  ------------------------------------------------------------------
+
+[200/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Okay, so you are saying for now we will assume its value and when it is stored i
+    n backend and we will be fetching it from backend.
+  ------------------------------------------------------------------
+
+[201/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Next question is regarding cache and load. In the cache envelope. Here are some 
+    bounds mentioned. These are them. So from where we will be getting these values?
+     I checked on the back end. I didn't get. There is no value which is similar to 
+    them.
+  ------------------------------------------------------------------
+
+[202/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Because based on these boundary we will be making various scenarios. For now, wh
+    at we are assuming. Let me show you. For now we are assuming these values in the
+     back end for testing purposes. But I just wanted to make sure that. Will these 
+    value be dynamic or will you be defined only once and used again?
+  ------------------------------------------------------------------
+
+[203/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Actually it is not the part of AI. This is totally deterministic. And if we don'
+    t determine them, we don't define them, then we will not be able to generate sce
+    narios. So in case of cache and looks, test, test we will be like changing DSO v
+    alues, dio values and DPO values and all other factors. And after changing we wi
+    ll be checking like how much cash is like is freed after 5% decrease in DSO D an
+    d other values. Then similar for others. Like for first we decrease DSO by 5%, t
+    hen 10%.
+  ------------------------------------------------------------------
+
+[204/302] trigger=[going to]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    I'm using it based on. So ideally it's unlikely your DSO is going to be below 25
+     days. So your. So if you're looking at your cut, right, whatever the DSO number
+     is, say it's, say it's 40, say it's 35, say it's 50. It's very unlikely that yo
+    ur DSO number will go below 25. All right. So you can put your D. Like the, the,
+     the lowest the, the DSO number can be is 25.
+  ------------------------------------------------------------------
+
+[205/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Now for, for that DSO value, they don't have enough free cash. So now they want 
+    to free up cash free of this much cash. So for that we will be like this. So we 
+    will be also in this case, harsh.
+  ------------------------------------------------------------------
+
+[206/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Okay, I'll check firstly at my end and if I didn't get it then I'll ping Akash o
+    r Rahib for the same.
+  ------------------------------------------------------------------
+
+[207/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Yeah, we agree with your point that. But actually when we like in this case so a
+    t the start of the like assumption. So at that time only we didn't have the mini
+    mum cash balance. So that's why it, it is saying like suppose at the start of th
+    is, this test. So if you have the minimum balance and then we'll suggest you som
+    e options.
+  ------------------------------------------------------------------
+
+[208/302] trigger=[I will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    I will not able to follow it properly.
+  ------------------------------------------------------------------
+
+[209/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    What we'll do is we'll discuss his in this internally and we'll. We'll come back
+     to you on this point.
+  ------------------------------------------------------------------
+
+[210/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    So last question is, you said minimum cash flow will be like slightly less than 
+    the initial cash balance. So how we will be defining that, like how much, how mu
+    ch less is there? Like, how will we define like 4 weeks? Like if it. Let's say i
+    n this case, initial cash balance is this much. So how we'll be calculating medi
+    um cash flow using this value. How much percentage?
+  ------------------------------------------------------------------
+
+[211/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Okay, so as you like the document which you have got from your side also like we
+     have read through that. So like in here like a simple approach will be like wha
+    t we're doing will be like we'll firstly take out all the like drivers which are
+     there in the different forecast pages and we'll. We'll like whenever like a use
+    r will come and sign up.
+  ------------------------------------------------------------------
+
+[212/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    So that's the summary of the basically approach we are doing and the time estima
+    tion. Like it's like we need around three days for the implementation in the bac
+    k end. One day is basically we require for the like the updating the test cases 
+    according to this new scenario. And in the three days we'll also give you the CO
+    VID of the reset button also and like one day will be required for the test case
+    s. We need to update the test cases.
+  ------------------------------------------------------------------
+
+[213/302] trigger=[we will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    The other DB which is the JSON B will remain empty because there's no right numb
+    ers there. So we will have the baseline in that way.
+  ------------------------------------------------------------------
+
+[214/302] trigger=[We'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    It's what you brought up that point actually myself also I was not. I was also c
+    onfused actually I was from the starting only. I was thinking of going with the.
+     The second approach. But yes, we have this in the previous week. We have discus
+    sed with the team. We'll go with your. Your recommended approach.
+  ------------------------------------------------------------------
+
+[215/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Yeah, so I guess just the behavior. I think that sounds reasonable. And again I'
+    ll clarify all of this with the client. Is this behavior you have which is the a
+    uto adjustment on the front end. That's fine. Thumb button. And the button word 
+    needs to be clarified. So we need to say maybe reforecast. Reforecast based on a
+    ssumptions or something clear that the user knows that once they press this butt
+    on this new driver is being committed.
+  ------------------------------------------------------------------
+
+[216/302] trigger=[going to]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Yeah, yeah, yeah. No, you're correct. Yeah, makes sense. And the other thing is 
+    if the client now wanted to reset to baseline, how are you thinking to coordinat
+    e that UX experience? Is it that. Is there going to be in that. In that pop up t
+    hat you mentioned? And in the note that pop up you say to reset back to baseline
+     go to maybe baseline builder and generate forecast and press the generate forec
+    ast button. Because then this should.
+  ------------------------------------------------------------------
+
+[217/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Yeah, I'll clarify that. I think I don't want to add any more work just be set t
+    o.
+  ------------------------------------------------------------------
+
+[218/302] trigger=[I will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    So that can be accomplished that way. So that's why I think having a global rese
+    t is probably best and I will position it that way. I just want to propose.
+  ------------------------------------------------------------------
+
+[219/302] trigger=[I will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    I will give you full confirmation tonight. I'll leave a message in the team spac
+    e with the expectation of it and we'll get back to you on that. But yeah, I, I t
+    hink this is probably a good middle ground approach to achieve what they want. A
+    ll right.
+  ------------------------------------------------------------------
+
+[220/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Put this message in your internal WhatsApp group so all of you can get to know l
+    ike and then we can make a final coordinate like how do you want this feature? B
+    ecause we'll if you're making it changes again and again then it is a like time 
+    consuming for us also.
+  ------------------------------------------------------------------
+
+[221/302] trigger=[I will]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    I've got a point. But yep. Like I will discuss this with the front end team and 
+    we'll come back to you on this.
+  ------------------------------------------------------------------
+
+[222/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Specifically asked me to like we need a different chat window so both can you co
+    nfirm from them first then we'll like think of a solution of how to implement.
+  ------------------------------------------------------------------
+
+[223/302] trigger=[I will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    So he mentioned he wants for anything on this AI assistant piece to be specific 
+    to generic and anything on intelligence is stress test. Is that what he said? Ok
+    ay, I will clarify this if he has said that to you. I, I can't remember being on
+     the call or hearing that comment but I'll check with Rahil.
+  ------------------------------------------------------------------
+
+[224/302] trigger=[I'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    We needed two separate like sessions for one for this like stress test and one f
+    or the general Q and A. So I said like I'll discuss this with you. You and the H
+    ill and Simon ma' am, of course.
+  ------------------------------------------------------------------
+
+[225/302] trigger=[We will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Okay, so if he has said that to you, assume that is the way. We will go forward.
+     We will again get a final clarity today.
+  ------------------------------------------------------------------
+
+[226/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Okay, that's fine, I'll do that. And just two more minutes. So Ashpreet was aski
+    ng for a lot of clarity on the AWS deployment. Have we been able to find out wha
+    t's going on there?
+  ------------------------------------------------------------------
+
+[227/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Actually he just mentioned that some of the things in the AWS environment is not
+     working but that are working on the railway. So the team is testing on it and p
+    lus we are facing some kind of issue with the socket io0 so once we will fix tha
+    t and then we will check for the AWS one.
+  ------------------------------------------------------------------
+
+[228/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    See firstly once we are done with the zero part and the forecast one, then the t
+    eam will jump to the redis one so that we can done with the functionality and th
+    e T and the BHAVNIT is okay with the UAT testing because if we made any kind of 
+    changes later on and then we have to do the redis part again and the UAV testing
+     needs to be done again. So for that part we just want that once the UAT and the
+     rest of the stuff is done and then only we will jump to the redis.
+  ------------------------------------------------------------------
+
+[229/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Sorry, I just said that these both features are in our bucket list. Once the tes
+    ting and the rest of the issues features are done, then only we will jump to tho
+    se.
+  ------------------------------------------------------------------
+
+[230/302] trigger=[we will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    I would rather not give them just because it's gonna, they things which is unnec
+    essary and create additional, extend the project longer than we want. But yeah, 
+    if you can just once we get to that phase, let's just have a discussion on how w
+    e will approach the testing. I just wanted to be clear so that I can explain tha
+    t to the client today.
+  ------------------------------------------------------------------
+
+[231/302] trigger=[I will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Yes, exactly. So if I just share my screen one more time I will. So all he wants
+     to know is where is this data or this value in the forecast financials being fo
+    und from? So I've created this template. Feel free to use this template. Okay, s
+    o what he wants to know is net income location in forecast page. So the UI page.
+     So in here for example AI told me this net income comes from profitability fore
+    cast page and this is basically the specific field.
+  ------------------------------------------------------------------
+
+[232/302] trigger=[I will]
+  Speaker : Rhythm jalhotra  [developer]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Okay, no worries, I will do that.
+  ------------------------------------------------------------------
+
+[233/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Thank you. So take this document and just if you can just update it so that if i
+    t's. It's correct that'd be great. If you can share that by today, that'd be ide
+    al if. If it needs to be tomorrow, just let us know. Simran, if you don't mind t
+    hat we'll share this.
+  ------------------------------------------------------------------
+
+[234/302] trigger=[We'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    We'll try to cover it by today.
+  ------------------------------------------------------------------
+
+[235/302] trigger=[we will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    For 1000 please and we will, we will and get back to us a.
+  ------------------------------------------------------------------
+
+[236/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    And then I'll get back to you regarding the same thank you.
+  ------------------------------------------------------------------
+
+[237/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Of our policy no 100 anything out of policy and this is we don't encourage to se
+    e that from NOLA coach so we are on your side on this point we'll push back to t
+    he client today that this is not how we work and this cannot be done so don't wo
+    rry about that I'll make it clear to them to not request such things again leave
+     that with us Sorry that you had to deal with this is yeah I'm disappointed too 
+    so you've been doing a great job by the way so client is frustrated because thin
+    gs are taking time we're extending and this is not only on us is on them as well
+     so.
+  ------------------------------------------------------------------
+
+[238/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    But Simran, we've said this client is a very difficult client and I just want th
+    is project done so we don't have to deal with these guys anymore. So don't take 
+    it to heart. We appreciate what you do. We like NOLA code. Definitely appreciate
+    . Appreciates what you guys do for us. We're gonna have a good relationship. Thi
+    s client. Once we're done, we're done, we'll move on. So let me raise those poin
+    ts with the client and make sure that's not done.
+  ------------------------------------------------------------------
+
+[239/302] trigger=[We'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Thanks for raising it. I appreciate you being open but don't worry, this is. We'
+    ll deal with this together. I'll make it clear to the client and you don't have 
+    to worry. You've been doing a good job and so it doesn't matter what the client.
+     Thinks in this case.
+  ------------------------------------------------------------------
+
+[240/302] trigger=[I will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Sorry, I will get back to you soon. Regarding the budget.
+  ------------------------------------------------------------------
+
+[241/302] trigger=[going to]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-AI-meeting  #6  (2026-04-22)
+    Now I can't. If I'm going to give you the answer, then why do I need you? I've g
+    iven you all the outputs multiple times now.
+  ------------------------------------------------------------------
+
+[242/302] trigger=[I will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-AI-meeting  #6  (2026-04-22)
+    So I have one more question here. Like if I decrease cash, let's say from the fo
+    urth month, my cash is decreased by 50% also. Then in my whole like scenarios, I
+     will be using that cache then four. Four whole simulation.
+  ------------------------------------------------------------------
+
+[243/302] trigger=[I will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-AI-meeting  #6  (2026-04-22)
+    Okay, got it. So for the first month, I will decrease the cast with the revenue 
+    and then I will use that as a base and model it after that.
+  ------------------------------------------------------------------
+
+[244/302] trigger=[going to]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    So the logic should be built that you do it from both COGS and opex. We know cur
+    rently in the data the. OPEX number is zero, right? You're only going to take it
+     from cogs, but the logic should be built. That tomorrow any other data set we a
+    dd. If we're going to add depreciation, amortization under opex, then the formul
+    a and logic should be built that it should take it from both places. And the dat
+    a set you are working with at the minute, the OPEX number zero.
+  ------------------------------------------------------------------
+
+[245/302] trigger=[We will]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    But tomorrow, when Gumi and I tested with different data sets, right. We will ad
+    d depreciation, amortization and OpEx. We could have negative depreciation, OpEx
+    . Then the formula should be built in. Such a way that if the formula is correct
+    . And it takes it from both places.
+  ------------------------------------------------------------------
+
+[246/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    Have shared the queries related to the short term and the long term and the rest
+     of the things in which you just confirmed on the call itself that these are der
+    ived from there. I'll share that with you after this meeting. For now we can dis
+    cuss the formulas.
+  ------------------------------------------------------------------
+
+[247/302] trigger=[I'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    I'll discuss with this regarding this with you later on because these are someth
+    ing that we have to work upon later on. And plus this is what did we have to put
+     the extra efforts. Yeah, currently you want to add something.
+  ------------------------------------------------------------------
+
+[248/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    So the like we have already always followed the one unified document within whic
+    h all the formats were mentioned. So now if you like come like if you have given
+     us the sheet with the updated formulas. If like you. You feel like something is
+     not right, we'll fix that. But if you, if you would say like the full formula i
+    s changed and it is a new requirement for us.
+  ------------------------------------------------------------------
+
+[249/302] trigger=[we'll]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    That's why I just mentioned twice we can discuss it later on. I haven't bring it
+     up now. I just mentioned we'll have a separate.
+  ------------------------------------------------------------------
+
+[250/302] trigger=[We'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    We'll have a separate call. One second. Simran, don't interrupt me. We'll have a
+     separate call. Yeah, with Akash Raheel, yourself, me and Gomi about this I agre
+    e.
+  ------------------------------------------------------------------
+
+[251/302] trigger=[I'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    Okay, so let me go. Let me get back to you on. The tax one then. And then I'll j
+    ust add the comment in the, in the document itself. Yeah, yeah, sure. I'm just c
+    hecking. Retained earnings. You had a question, but that's clear now, is it? Yes
+    , you're clear on that. So that you had a comment on retained earnings, but that
+    's clear now, is it?
+  ------------------------------------------------------------------
+
+[252/302] trigger=[I'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    Okay, so I'll get back to you on the tax. So that's the only other query, right?
+     Shall we go through? You had a question on module four as well, right?
+  ------------------------------------------------------------------
+
+[253/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    For protection. No, in this, in this scenario, protection payroll is false. So w
+    e are not protecting. In this scenario if it is true, then we will be protecting
+     it.
+  ------------------------------------------------------------------
+
+[254/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    So protected payroll will be. That is one question I want to ask for. As mention
+    ed, the unified document, it is by default true. So but for this scenario I, I l
+    ike, I make it false. So if we, in any case, if it is false then we will not be 
+    protecting the payroll. But if it is true, then the payroll will be protected.
+  ------------------------------------------------------------------
+
+[255/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    For now it is like set to by default. So by default value is true. So I wanted t
+    o ask this question like how we will be getting this dynamic value. But as for t
+    he document, it is true by default.
+  ------------------------------------------------------------------
+
+[256/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    Like we are covering, we are covering both true and false. So tomorrow if the re
+    quirement comes and you like, oh, and we've covered only the true part and not t
+    he fourth part. So it's a like not a good thing on our side. So if you want like
+     we'll share example where the payroll will be true. But now just we are letting
+     like how to read this document and then how we are getting the values from the 
+    DB and how we are like coming up there with the solution with the mitigation pla
+    n.
+  ------------------------------------------------------------------
+
+[257/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    Can we complete this example and we'll also share you with the protection payrol
+    ls too?
+  ------------------------------------------------------------------
+
+[258/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    Okay then for July we Let me explain the payroll formula we are using here. So w
+    e divided payroll into operating expenditure into payroll waste and non payroll 
+    waste. So like if we need to protect the payroll then we will not include a payr
+    oll and we will just deduct from non payroll operating expenditure then. But if 
+    it is false then we will include both of them and deduct as a whole. So you can 
+    see it in the formula here. In this case protect payroll is false.
+  ------------------------------------------------------------------
+
+[259/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    So now we will plus this net cache into the shock start cache which was this in 
+    the start of the month. Then we Will get the cash value at the end of this month
+     which is this. And then we will compare it with the minimum cash flow. So for n
+    ow it is less than the minimum cash flow. And then we will continue simulation t
+    o the next one that is August. Then we will do the same thing with August and in
+     the August after doing all the calculation our net cash remaining in the rest i
+    s this.
+  ------------------------------------------------------------------
+
+[260/302] trigger=[We'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    We'll come up the next scenario where the cuts are applied.
+  ------------------------------------------------------------------
+
+[261/302] trigger=[We will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    So what if the baseline scenario survives? Then we don't apply any cuts. We will
+     straightforward said that you don't need any cut. Your baseline server is alrea
+    dy capable enough of surviving. But in this case baseline scenario is not surviv
+    ing. Then we go forward with the mitigation plan. So now going for to mitigation
+     plan.
+  ------------------------------------------------------------------
+
+[262/302] trigger=[I'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    Before we go to the mitigation plan. So tomorrow if I put it now it's Q3 and it'
+    s four months. Basically so if I change it to. Five months it'll take in Novembe
+    r. If I change it to six months it'll take. I'll go up to December. Correct?
+  ------------------------------------------------------------------
+
+[263/302] trigger=[we'll]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    No, these are based on the maximum value set already. So for example, we'll disc
+    uss it after the call.
+  ------------------------------------------------------------------
+
+[264/302] trigger=[I'll]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    So pain I'll pin score also mentioned along with the scenario. So after like app
+    lying the pain score on the past scenario the algorithm give this scenario the b
+    est plan here like pain score is one and we just need to like cut our capital ex
+    penditure by 50.
+  ------------------------------------------------------------------
+
+[265/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    Now here is the detail of how this base plan is calculated for each month. For J
+    uly we applied 0% soak in opex and 50 soak in capex and the revenue is also drop
+    ped and then we get this net cash by applying the capital expenditure drop and t
+    hen we will be adding it in the soak start case again by decreasing the it's by 
+    the same number as the revenue.
+  ------------------------------------------------------------------
+
+[266/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    Everything is same as I explained for the baseline scenario just we applied cut 
+    for the CAPEX here and then doing this over the four months in the like till Oct
+    ober we will get like this cash and for October which is greater than the minimu
+    m cash flow.
+  ------------------------------------------------------------------
+
+[267/302] trigger=[we will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    So this scenario passes and then we will be like just explaining this result usi
+    ng in text later on along with the chart. This is the chart data.
+  ------------------------------------------------------------------
+
+[268/302] trigger=[I will]
+  Speaker : Harsh Vardhan Dixit  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    Okay, sure, I will add that.
+  ------------------------------------------------------------------
+
+[269/302] trigger=[We'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    We'll inform you on Monday.
+  ------------------------------------------------------------------
+
+[270/302] trigger=[I will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    I will have a discussion with them first and then I'll just have a discussion wi
+    th you.
+  ------------------------------------------------------------------
+
+[271/302] trigger=[I'll]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    Yeah, I'll. And I'll share anything with Akashan that. We have on the. From our 
+    side as well. And then we can discuss as a group commander.
+  ------------------------------------------------------------------
+
+[272/302] trigger=[I will]
+  Speaker : Rhythm jalhotra  [developer]
+  Meeting : Nolocode-meeting  #5  (2026-05-05)
+    Okay, now I will walk you through another change. For example like in cogs we ar
+    e using code V course and depth like we have sub account for depth account like 
+    amortization and depreciation which all come under account code tap and these al
+    l accounts come under because so in new sheet he told us not to include code dep
+    th. They have already mentioned this.
+  ------------------------------------------------------------------
+
+[273/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #5  (2026-05-05)
+    Okay, I'll have a look at that. Could you just trying to think what will help me
+     now specify this because I need to raise this right. So I need.
+  ------------------------------------------------------------------
+
+[274/302] trigger=[we will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #5  (2026-05-05)
+    Now they're changing it. So before we work on anything I want a formal document 
+    which we will sign off and we will put it on read only for everyone. And so that
+     is the sole document we will work from. So just if you can. So as you said Simr
+    an, just add, create a sheet, add the column if you can summarize the effort as 
+    well. And I'm just trying to think what else.
+  ------------------------------------------------------------------
+
+[275/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #5  (2026-05-05)
+    Yeah, just give us that summary please separately on our private space and then 
+    what I'll do then work out the best way.
+  ------------------------------------------------------------------
+
+[276/302] trigger=[We'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #5  (2026-05-05)
+    Well thanks for your patience on this guys. We'll work it out. Just yeah kindly 
+    where we can be productive. Let's do that and then meanwhile I'll speed up the, 
+    the confirmation on this.
+  ------------------------------------------------------------------
+
+[277/302] trigger=[I will]
+  Speaker : Rhythm jalhotra  [developer]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    It is the closing bit I can show you like from here. It is the closing asset in 
+    capex. As I will walk you through ui.
+  ------------------------------------------------------------------
+
+[278/302] trigger=[We will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    We will add the descriptions at every point.
+  ------------------------------------------------------------------
+
+[279/302] trigger=[I will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    Okay sir, I will also mark, I will also mark them in because there's some that I
+     was reviewing very quickly on the call with the client yesterday and I wasn't a
+    ble to explain and some of them seemed very, didn't really seem a change. So I'm
+     gonna highlight them as well. Where it says impact. I'm just gonna state why I 
+    believe it's not much effort at all.
+  ------------------------------------------------------------------
+
+[280/302] trigger=[I will]
+  Speaker : Rhythm jalhotra  [developer]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    Now he want us to use one single formula for that which I have to look when. I w
+    ill work on that. Yeah, its impact is medium.
+  ------------------------------------------------------------------
+
+[281/302] trigger=[we'll]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    So Akash, so like maybe like it's. It's in the medium category because we'll now
+     need to check like from where the values we need to pick from Again if the form
+    ula would have been the same like we have already done like we need to just chan
+    ge that formula there. And already what we are doing logic previously doing, we 
+    just need to implement it. But now the formula has been changed. We need to agai
+    n check from where to pick the values. We need to again implement the formula in
+     both the president.
+  ------------------------------------------------------------------
+
+[282/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    So seasonality when we were discussing this was based off as much data as we hav
+    e. So if there's three years data, we'll base it off three years. If there's fou
+    r years, is four years more than more. That was the. That was the initial interp
+    retation of this when they first said it. Are they saying now they only want fou
+    r?
+  ------------------------------------------------------------------
+
+[283/302] trigger=[we will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    So the seasonality. No worries, no worries. Just let me know I can repeat my pro
+    blem. So seasonality detector, what the client had said at the start, it should 
+    be based off all the available previous years. So if there's only two available 
+    years or 10 available years, we will base it off all of those years. Yes, that w
+    as the expectation. That's the current implementation, right? And now you want i
+    t to be four. He said he wants it to be only four.
+  ------------------------------------------------------------------
+
+[284/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    So override. Yeah, I don't know. Just make sure that's, that's clear in the. Yes
+    , I'll go.
+  ------------------------------------------------------------------
+
+[285/302] trigger=[I will]
+  Speaker : Rhythm jalhotra  [developer]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    Next we move to like for, for forecast financial we do not have any values in th
+    e sheet. He only provide us the document in which he given us all the formula so
+     I will walk you through that like my first point is in right now in forecast fi
+    nancials. Oh sorry it's local.
+  ------------------------------------------------------------------
+
+[286/302] trigger=[I will]
+  Speaker : Rhythm jalhotra  [developer]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    I go to sheet like a cured income and security deposit before it was not there a
+    s you can see it in UI under current assets like it is not in UI before he did n
+    ot give us formula for that either but in the like in this sheet he mentioned ac
+    ute income security deposits and the long term investment formula also change li
+    ke before in the document he gave us formula for short term depth Long term dept
+    h but now the formula for show Sorry for long term depth is changed again like h
+    ere you can see I will walk you through by the.
+  ------------------------------------------------------------------
+
+[287/302] trigger=[I will]
+  Speaker : Rhythm jalhotra  [developer]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    I will mark it acute income, security deposit, long term investment, investment 
+    property, goodwill bond payable, lease, liability fields. All are the new line i
+    tems.
+  ------------------------------------------------------------------
+
+[288/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    Sorry but I think I understand what you're saying but I just need to see this on
+    e on my own. So I'll do this after the call. Okay, let's just move on. But what'
+    s the efforts for all of these changes.
+  ------------------------------------------------------------------
+
+[289/302] trigger=[we'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    Itself the new one. So once yeah okay. For now as it is rhythm when you have a c
+    hance to review just update the risk or let Simran or myself know we'll update i
+    t and then I'll find a way to make it seem simple. Yes Ala.
+  ------------------------------------------------------------------
+
+[290/302] trigger=[we will]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    So we have to check what, what will affect if we change any, hierarchy of, of th
+    e forecast to low or above. So we, we will need a much more time to figure all t
+    his out because we ourselves don't know the impact. We have to, see everything f
+    irst, see the impact of change of every section. So it may take one to two. Are 
+    you getting my point?
+  ------------------------------------------------------------------
+
+[291/302] trigger=[we will]
+  Speaker : Rhythm jalhotra  [developer]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    Sorry, yeah, as I mentioned before like we can like we are telling you estimated
+     time like when we will work on that, then we will get to know the effect of all
+     this. Like as Neha previously mentioned, the, the effect of all this also like 
+    the effect of all these changes in the value will impact scenario part also like
+     scenario modeling. So we have, we also have to see that part also.
+  ------------------------------------------------------------------
+
+[292/302] trigger=[going to]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    And so if the client doesn't agree, then we're going to push to not make any of 
+    these changes because as far as I'm concerned this is out of scope and this wasn
+    't previously agreed. So for us, as Simran knows, the client's not very easy to 
+    work with. They are quite challenging. So unless we have clear expectations set 
+    and understanding set to them, they won't agree. So this is all an effort to hel
+    p us.
+  ------------------------------------------------------------------
+
+[293/302] trigger=[we will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    No, no, of course. So the exercise, the document we're creating now needs final 
+    document which we will add to an addendum and create a contract with it which wi
+    ll be signed. Work off the back of that. So this is why I'm saying let's add as 
+    much detail as we can on this document because then there's not room for changes
+    .
+  ------------------------------------------------------------------
+
+[294/302] trigger=[I will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    Okay, look, I appreciate your time. I know it's late for you guys. I don't want 
+    to take too much more time. I will review what, what you have put. What I would 
+    say is just when you have a minute review those impacts again, please keep them 
+    updated Simran and then we can have discussion around that.
+  ------------------------------------------------------------------
+
+[295/302] trigger=[I'll]
+  Speaker : Rhythm jalhotra  [developer]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    I'll have a word with Rhythm after.
+  ------------------------------------------------------------------
+
+[296/302] trigger=[we will]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    This meeting and then we will update.
+  ------------------------------------------------------------------
+
+[297/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    So if you go into the drive folder right in the planning and discussions you sho
+    uld see at the bottom dummy data plus calcs plus validation. So we're obviously 
+    working off this. I don't know if you guys have access so I'll give Simran acces
+    s to this. Are you project please?
+  ------------------------------------------------------------------
+
+[298/302] trigger=[going to]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    So I'm looking on the ui, I'm coming here and I'm making sure the numbers match.
+     The first few sections are good. These ones are minor issues. Okay when I go to
+     working capital. Sorry, not working capital capex there is issues here. These a
+    re not minor ones either. These are quite significant. So I'm going to complete 
+    this for all of the forecasting pages so just give me some time. Can you please 
+    just review the red and let us know why these are wrong?
+  ------------------------------------------------------------------
+
+[299/302] trigger=[going to]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    Okay, these need to Be accurate, because I want to go to the client and say the 
+    app is. The forecasting pages are now complete. They have been complete for a wh
+    ile according to the sheet we have already built. And all the numbers are valida
+    ted and I've done the validation. And so any changes to this now will be more ef
+    fort. And so I'm going to summarize here. Dummy calculations, matches up. This i
+    s what we're working on. This is their new calculation.
+  ------------------------------------------------------------------
+
+[300/302] trigger=[I'll]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    Obviously it won't match what the app has, so I'll finish this. For the rest, pl
+    ease review the red. Please review the red items and just make sure you understa
+    nd why they're wrong, because I don't know if they're actually wrong or you have
+     implemented some feedback along the way that the client might have given you. A
+    nd it's different in the app versus what's here. Just please review the word. An
+    d just one more question on CapEx. What I've understood here is opening PPE.
+  ------------------------------------------------------------------
+
+[301/302] trigger=[I will]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    Okay, that's fine. So I will go ahead and do this and please, if you can review 
+    and let me know as soon as you can why these are wrong. Because if I can go to t
+    he client and say the app is complete, the numbers are matching, everything is v
+    alidated now, everything you're asking for is changes, we will be in a stronger 
+    position.
+  ------------------------------------------------------------------
+
+[302/302] trigger=[we will]
+  Speaker : Rhythm jalhotra  [developer]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    Yeah, we will review it tomorrow and add our comments in the document.
+  ------------------------------------------------------------------
+

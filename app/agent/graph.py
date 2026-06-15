@@ -146,8 +146,8 @@ def _make_call_llm(llm_with_tools, llm_with_tools_forced):
                 f"This IS the {mtg_word} the user is asking about — do not try to determine "
                 f"it yourself and do NOT call list_meetings. "
                 f"Your job is to search within this {mtg_word} using the available tools. "
-                f"Call search_transcripts, get_meeting_summaries, list_speakers, or "
-                f"count_signal_chunks directly — the scope is already enforced."
+                f"Call search_transcripts, get_meeting_summaries, or list_speakers "
+                f"directly — the scope is already enforced."
             )
         elif scope_type == "date_range":
             scope_note = (

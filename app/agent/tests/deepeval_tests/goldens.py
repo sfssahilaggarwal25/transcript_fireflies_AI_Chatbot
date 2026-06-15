@@ -92,22 +92,38 @@ CORRECT_QUERIES = EvaluationDataset(
     goldens=[
 
         # ── A-01  speaker + topic attribution ────────────────────────────────
+        # Ground truth verified via verify_chunks speaker --name "Ashpreet Singh"
+        # and debug_retrieval --speaker "Ashpreet Singh". All context chunks and
+        # must_have_facts are confirmed present in ChromaDB raw_text.
         Golden(
             input="What did Ashpreet say about AI architecture?",
             expected_output=(
-                "Ashpreet discussed the AI architecture design and suggested using a structured multi-agent approach rather than relying solely on a deterministic workflow. He emphasized defining clear agent responsibilities, using LangGraph with agents, subgraphs, nodes, and tools, and carefully designing document chunking and retrieval strategies. He highlighted thatretrieval should combine semantic search with metadata-based filtering (hybrid search) to improve speed and accuracy. He also stressed that document quality, chunking strategy, and embedding quality are critical because poor inputs will lead to poor outputs. Additionally, he recommended reviewing the AI Architecture document, agent definitions, and feedback from previous documents to ensure the architecture is scalable, production-ready, and optimized for implementation effort."
+                "Ashpreet Singh discussed AI architecture across the Nolocode AI meeting (2026-03-25) "
+                "and the Nolocode x Akili x SFS Devops sync (2026-03-12). "
+                "Ashpreet challenged whether an agentic approach was actually better than a deterministic "
+                "flow, noting that Approach 1 had deterministic output and unit tests. "
+                "He advised identifying the number of agents to deploy and each agent's role before building "
+                "a multi-agent system, and that each agent should have a segregation role with specific "
+                "groundings and guidelines. "
+                "He asked the team to plan out how the four agents would work with subgraphs, graphs, nodes, "
+                "and tools based on each agent's role. "
+                "He provided feedback on the AI Architecture document pages and noted that agent definitions "
+                "were provided in a document. "
+                "He also recommended using a hybrid search approach combining semantic search with metadata "
+                "filtering to improve retrieval speed."
             ),
-            # context = ideal chunks that SHOULD be retrieved (ground truth)
-            # retrieval_context = what the system actually retrieves at runtime
+            # context = ground-truth raw_text chunks confirmed in ChromaDB
+            # via verify_chunks speaker and debug_retrieval with speaker filter
             context=[
                 "This is a multi agent flow and that's a single agent managing everything.",
-                "That needs to be part of vector or is just. This can just be part of your lang graph node and subgraphs also you can manage that from subgraphs also your deterministic flow."
-                "Have you Planned out how your let's say I've given you four agents plan planner out how you will work with sub graphs and graphs and nodes and tools in each agents based on their role."
-                "I've given feedback to both of the pages. So there was some bit of information on Unifieds and some of bit of this new AI architecture one so you can correlate and put it together."
-                "I have defined agents definitions there because previous year also mentioned previous ones there. Just look into that input document."
-                "I will suggest you use a semantic search kind of in a hybrid search semantic plus metadata."
-                "During your chunking you're storing as a metadata as well and summary as well."
-                "If document is not well articulated or given to the vector embedded correctly it will still have the same issue."
+                "So what I believe you said in the previous approach there will be unit test cases. All of that will be part of pipeline and that requires more effort in terms of validating and it. It has a deterministic output. Based on your initial testing, what I would say what. What made you feel that this is a better approach in terms of solving a same problem?",
+                "Two things. Just identify which all nodes you need and what are tools you need to give to your agent. First you need to identify since you're making an agent take one, you need to identify how many agents you deploying and what is each agent's role.",
+                "Okay, Just, just you have this in your head also you will also have a segregation role of segregation for each agent. So he's binded all. So it will help you to create their groundings. There are guidelines for each agent.",
+                "Have you Planned out how your let's say I've given you four agents plan planner out how you will work with sub graphs and graphs and nodes and tools in each agents based on their role.",
+                "I've given feedback to both of the pages. So there was some bit of information on Unifieds and some of bit of this new AI architecture one so you can Just correlate and put it together.",
+                "I have defined agents definitions there because previous year also mentioned previous ones there. Just look into that input document.",
+                "I will suggest you use a semantic search kind of in a hybrid search semantic plus metadata.",
+                "During your chunking you're storing as a metadata as well and summary as well.",
             ],
             additional_metadata={
                 "id":            "proj_speaker_ashpreet_ai_architecture",
@@ -116,27 +132,21 @@ CORRECT_QUERIES = EvaluationDataset(
                 "query_type":    "attribution",
                 "signal":        None,
                 "speaker":       "Ashpreet Singh",
-                # dense_query strips the speaker name so the vector embedding
-                # focuses on the topic only. The speaker is already handled by
-                # hard_filters — encoding "Ashpreet" in the embedding dilutes
-                # the semantic signal for "AI architecture".
-                # Deliberately avoids the word "architecture" — it causes the
-                # reranker to score microservice/backend chunks as 9.5 because
-                # they ARE architecture discussions, just not AI/ML architecture.
                 "dense_query":   "multi-agent LangGraph subgraph node tool embedding vector chunking retrieval strategy",
                 "expected_tool": "search_transcripts",
                 "known_gap":     False,
 
                 "expected_meetings": [
                     "Nolocode AI meeting (2026-03-25)",
-                    "Nolocode - AI module",
+                    "Nolocode x Akili x SFS Devops sync (2026-03-12)",
                 ],
                 "must_have_facts": [
-                    "multi-agent vs single agent architecture",
-                    "four agents with subgraphs and lang graph",
-                    "modular microservice deployment",
-                    "feedback on AI Architecture Diagram",
-                    "agent definitions provided",
+                    "multi-agent vs single agent flow distinction",
+                    "identify agent roles before building multi-agent system",
+                    "each agent needs segregation role and guidelines",
+                    "plan four agents with subgraphs nodes and tools per role",
+                    "feedback on AI Architecture document",
+                    "hybrid search semantic plus metadata recommendation",
                 ],
                 "must_not_have": [
                     "Redis",
@@ -149,32 +159,34 @@ CORRECT_QUERIES = EvaluationDataset(
                     "fact_recall":        0.4,
                     "hallucination_free": 0.2,
                 },
-                "known_missing": [
-                    "Ashpreet 56:50 — hybrid search recommendation not retrieved",
-                ],
             },
         ),
 
         # ── A-02  no-speaker decision query (pure topic retrieval) ────────────
+        # Ground truth verified via verify_chunks keyword searches and
+        # debug_retrieval. "Approach 1 finalized for Module 4" NOT in DB for
+        # our 10 meetings — removed. Facts below are all confirmed in raw_text.
         Golden(
             input="What AI approach did we decide to go with?",
             expected_output=(
-                "Approach 1 was finalized for Module 4. "
-                "A RAG-based approach was decided for non-preset chatbot questions."
+                "The team confirmed that Approach 1 and Approach 2 are only for the stress test case "
+                "and have nothing to do with the simple chatbot. "
+                "For general non-preset chatbot questions, a RAG-based approach was confirmed. "
+                "For the overall AI agent architecture, the team proposed starting with a single agent "
+                "approach first, then moving to multi-agent if the single agent did not give good accuracy. "
+                "The work done on AI up to the Devops sync was with the first approach, "
+                "and the team needed to rework toward the second approach."
             ),
-            # context = ground-truth chunks (no-speaker path → raw text only, no speaker prefix).
-            # Sentences referencing "Project Manager SFS confirmed... in 2026-04-08" and
-            # "Bhavneet Mhajan confirmed... in 2026-04-15" were removed — speaker names and
-            # meeting dates live in chunk metadata, not chunk text. The Recall judge compares
-            # retrieval_context (raw text) against expected_output, so those facts can never
-            # be verified. Bhavneet's "going with approach one" chunk also never appears in the
-            # top-20 retrieval results (6-word chunk buried by verbose discussion chunks from
-            # the 2026-03-25 Nolocode AI meeting that dominate hybrid search for "approach").
+            # context = ground-truth raw_text confirmed in ChromaDB:
+            # Karan  1:06:08 — "approach one and two is just for the stress test case"
+            # Bhavneet 1:05:22 — "this rag based approach should answer all these types of questions"
+            # PM  Devops sync — "whatever work done on AI was with the first approach"
+            # Harsh AI meeting 31:32 — "single agent first, multi-agent if accuracy insufficient"
             context=[
-                "Project Manager SFS: module 4 starting with the approach 1, whatever is.",
-                "Bhavneet Mhajan: It's a RAG based approach for the non preset questions.",
-                "Karan Middha: approach one and two is just for the stress test case. It's nothing to do with the simple Chatbot.",
-                "Harsh Vardhan Dixit: first we will go with the single agent approach. If the single agent is enough then we will stay with the single agent. Else we will move to a multi agent architecture.",
+                "Actually that approach one and two is just for the stress test case. It's nothing to do with the simple Chatbot A. It will be done in both if you simple. If you want a simple answer, it will be done in both the approaches.",
+                "So this rag based approach should answer all these types of questions. We have all that included, right?",
+                "Yeah, yeah, hi. Yeah, see I want to confirm here that whatever work was done on AI was with the first approach for now. So the team has to rework the second approach now.",
+                "Yeah, simulation result will be validated by the second agent. Like yeah, if we move to like multi agent architecture. If the single agent is enough like if we get good accuracy with single agent then we will stay with single agent. Else we will move to multi agent architecture.",
             ],
             additional_metadata={
                 "id":            "proj_decision_ai_approach",
@@ -183,34 +195,19 @@ CORRECT_QUERIES = EvaluationDataset(
                 "query_type":    "decision",
                 "signal":        "decision",
                 "speaker":       None,
-                # dense_query: confirmation-focused vocabulary so the vector search
-                # finds the SHORT decision chunks ("we're going with approach one",
-                # "module 4 starting with approach 1") which get buried when broad
-                # topic vocabulary ("stress test", "multi-agent") dominates the query.
-                "dense_query":   "going with approach one decided confirmed module 4 single agent RAG",
-                # reranker_hint: tells the reranker to score DECISION CONFIRMATIONS high
-                # and hard-drop PRESENTATION chunks. Without this, the reranker scores
-                # Harsh's approach-2 demo (Langsmith, agent mechanics) at 9 because the
-                # question "decide to go with" doesn't distinguish presentation from
-                # decision.
-                # Broader than "final decision confirmed" alone — also includes RAG and
-                # single agent so those confirmation chunks score ≥7 and avoid the noisy
-                # fallback (triggered when <3 chunks are high-quality).
-                "reranker_hint": "approach one finalized decided module 4 RAG single agent architecture decision confirmed",
+                "dense_query":   "approach one two stress test RAG chatbot single agent multi-agent decided confirmed",
                 "expected_tool": "search_transcripts",
                 "known_gap":     False,
 
                 "expected_meetings": [
-                    "Nolocode meeting (2026-04-08)",
-                    "Nolocode-M2-and-M4 (2026-04-15)",
                     "Nolocode AI meeting (2026-03-25)",
+                    "Nolocode x Akili x SFS Devops sync (2026-03-12)",
                 ],
                 "must_have_facts": [
-                    "approach one is finalized for module four",
-                    "going with approach one",
-                    "RAG based approach for non preset questions",
-                    "approach one and two is just for the stress test",
-                    "single agent approach first multi agent if needed",
+                    "approach one and two only for stress test not general chatbot",
+                    "RAG based approach for non-preset chatbot questions",
+                    "single agent approach first multi-agent if accuracy insufficient",
+                    "work done on AI was with first approach team needs to rework second",
                 ],
                 "must_not_have": [
                     "approach 2 finalized",
@@ -222,12 +219,6 @@ CORRECT_QUERIES = EvaluationDataset(
                     "fact_recall":        0.4,
                     "hallucination_free": 0.2,
                 },
-                "known_missing": [
-                    "Harsh 31:32 — single agent first, multi-agent fallback (buried by 211 discussion chunks)",
-                    "Karan — approach one and two only for stress test, not chatbot (buried by discussion chunks)",
-                    "Bhavneet 1:02:07 — RAG based for non-preset questions",
-                    "Bhavneet 1:06:33 — RAG based approach confirmed",
-                ],
             },
         ),
 

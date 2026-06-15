@@ -13,7 +13,7 @@ from .base import _fmt_date
 logger = logging.getLogger(__name__)
 
 _RERANK_MODEL      = "gemini-2.5-flash"
-_MAX_PREVIEW_CHARS = 450
+_MAX_PREVIEW_CHARS = 800
 
 
 # ── Per-query rejected-doc accumulator ───────────────────────────────────────
@@ -67,7 +67,8 @@ def rerank_documents(
         speaker = m.get("speaker_name", "Unknown")
         meeting = m.get("meeting_title", "")[:40]
         date    = m.get("meeting_date", "")
-        content = doc.page_content[:_MAX_PREVIEW_CHARS].replace("\n", " ")
+        raw     = m.get("raw_text") or doc.page_content
+        content = raw[:_MAX_PREVIEW_CHARS].replace("\n", " ")
         chunk_previews.append(
             f"[{i}] Speaker: {speaker} | Meeting: {meeting} ({date})\n"
             f"    Content: {content}"
@@ -115,12 +116,29 @@ def rerank_documents(
         f"For questions asking who raised / first mentioned / expressed something: "
         f"score highest the chunk where the speaker states it directly themselves.\n\n"
         f"--- RULE 4: ANSWER TYPE MATCH ---\n"
-        f"Read the question and determine what kind of answer it seeks — a confirmed outcome, "
-        f"a description of how something works, a commitment someone made, a summary, etc.\n"
-        f"Score 7+ ONLY for chunks that provide THAT TYPE of content.\n"
-        f"Example: if the question asks what was DECIDED or CHOSEN, a chunk that describes or "
-        f"explains an option scores 3-4 even if the topic keyword matches perfectly — "
-        f"unless the chunk also states the final outcome or confirmation.\n\n"
+        f"Detect the question's intent from its wording, then apply the matching rule:\n\n"
+        f"DECISION / CONFIRMATION intent  (question contains: decide, decided, agreed, go with,\n"
+        f"confirmed, which approach, what approach, which one):\n"
+        f"  Score 7+ for ANY chunk that directly addresses the decision space:\n"
+        f"    - What an approach applies to  ('only for stress tests', 'for chatbot questions')\n"
+        f"    - Which approach was chosen or proposed  ('we will go with single agent first')\n"
+        f"    - Scope or conditions of the decision  ('if accuracy is good, stay with single agent')\n"
+        f"  Do NOT require the word 'decided' — informal confirmations and scope clarifications count equally.\n"
+        f"  Score 3-4 only for chunks about a completely unrelated decision or topic.\n\n"
+        f"ATTRIBUTION intent  (question contains: what did X say, what did X recommend,\n"
+        f"what did X highlight, what did X discuss, X's view):\n"
+        f"  Score 7+ for chunks where the named speaker makes a substantive statement\n"
+        f"  — recommendation, advice, challenge, explanation, or direction on the topic.\n"
+        f"  Score 5-6 for short follow-up questions or brief acknowledgments from that speaker.\n"
+        f"  Score 3-4 for chunks where the speaker mentions the topic only in passing.\n\n"
+        f"SUMMARY / EVOLUTION intent  (question contains: summarize, overview, how did it evolve,\n"
+        f"across meetings, overall, history, what changed):\n"
+        f"  Score 7+ for any chunk containing factual content about the topic,\n"
+        f"  including background and context — summaries need full coverage, not just conclusions.\n"
+        f"  Score 3-4 only if the chunk is about a completely different subject.\n\n"
+        f"FACTUAL / EXPLANATION intent  (all other questions):\n"
+        f"  Score 7+ for chunks whose PRIMARY content directly explains or answers the question.\n"
+        f"  Score 3-4 for tangential mentions where the topic is not the main subject.\n\n"
         f"Chunks:\n{chunks_text}\n\n"
         f"Respond with ONLY a JSON array, one object per chunk, no explanation:\n"
         f'[{{"index": 0, "score": 7}}, {{"index": 1, "score": 3}}, ...]\n\n'
@@ -156,7 +174,7 @@ def rerank_documents(
             target = _norm(speaker_hint)
             for i, doc in enumerate(documents):
                 if _norm(doc.metadata.get("speaker_name", "")) == target:
-                    score_map[i] = score_map.get(i, 0) + 1.5
+                    score_map[i] = score_map.get(i, 0) + 1.0
 
         indexed = [
             (i, documents[i], score_map.get(i, 0))

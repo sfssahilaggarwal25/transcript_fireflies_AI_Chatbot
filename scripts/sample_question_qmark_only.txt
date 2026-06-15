@@ -1,0 +1,152 @@
+[Bhavneet Mhajan]
+  So this is in cash flow, right?
+
+[Bhavneet Mhajan]
+  Can I see which the code that they're referring to if you go to the source documentation where there is. So change in other equity and change in current earnings. So the actual Excel with the financia
+
+[Bhavneet Mhajan]
+  Yeah, Just one second. Is it ce? I don't see CE as a classification anyway.
+
+[Bhavneet Mhajan]
+  So I don't. If you look at the document. I don't. Is it CE or re? Are you sure
+
+[Ngũmi Gituro]
+  Are you able to define the code and find where it's been applied? Maybe it was renamed in the code. Obviously we are not aware. Like are you able to follow that and see how many times it's been used o
+
+[Ngũmi Gituro]
+  But why is it defined before this or used?
+
+[Bhavneet Mhajan]
+  So can you see where they're extracting the. So we have the db right. And if we can we see what numbers they're extracting for some particular month so we can see where they're deriving the numbers fr
+
+[Bhavneet Mhajan]
+  So they're taking no. No numbers. So what's the only number taken then? It's only taken from oeq.
+
+[Bhavneet Mhajan]
+  Okay, so if I, if I take a particular month, what numbers are we using then? So let's take a number. Let's take a month like January 2024 for example. What are the numbers that it's taking to do the c
+
+[Karan Middha]
+  Yeah, sorry, rhythm. For the full formula they have, they have been taking the OEQ and the adj. So can you calculate value for one month using the other other data like change in retained earning anot
+
+[Ngũmi Gituro]
+  Okay, you guys are trying to calculate the total equity in the balance sheet or what was the question with regard to? If you go back to the original, original question inside your document.
+
+[Ngũmi Gituro]
+  Earnings. Not in retained earnings. Wouldn't that be equity?
+
+[Project Manager SFS]
+  So shall we proceed with the next query?
+
+[Rhythm jalhotra]
+  And for accumulated depreciation, for actual, we have depth code which has amortization and depreciation. So should we use depth code for that? Like I show you, in this financial sheet, we have code d
+
+[Bhavneet Mhajan]
+  Go back to the ui because we shouldn't. If you go, where are we looking? It's balance sheet, right? So we shouldn't have accumulated depreciation as a line item here to begin with. So this accumulated
+
+[Bhavneet Mhajan]
+  So if you go to the top, don't stop sharing. So you had your question on onca, right? So for onca, what you can use is to keep it simple. You can use the same numbers from the previous year. So ONCA h
+
+[Ngũmi Gituro]
+  So there's only one pending question, right?
+
+[Karan Middha]
+  Only one pending question, is it?
+
+[Bhavneet Mhajan]
+  So what's the one pending question that we have?
+
+[Karan Middha]
+  Okay, can you repeat that question again?
+
+[Bhavneet Mhajan]
+  If you follow the formulas, it gives you all the numbers it's taking, right? As a, as a calculation, there was C67, D67, C83. If you go, you'll see there about four or five. Right, so it's telling you
+
+[Bhavneet Mhajan]
+  No, go to the ui. go to the cash flow. You are calculating financing activities, right? Cash flow from financing activities. So you have got all the, the numbers there, right? To, to get to your numbe
+
+[Bhavneet Mhajan]
+  No, no, no, what I'm saying is from your. You have sub line items that you can take your calculation from. That's what I'm saying. If you follow that formula, you have five, five numbers that it's rel
+
+[Rhythm jalhotra]
+  Okay, can you go to Rashid once again?
+
+[Bhavneet Mhajan]
+  Let's just write it down. Right, so let's look at C67 and D67. Actually write down what? Yeah, so what are C67 and D67? Why don't you actually write down. Great, yeah, write down the names, right, bas
+
+[Karan Middha]
+  You guys told that this is the formula and this is the columns you need to take into account. But like in the change in earning. Not every tender. Like with what data? Like we need to calculate this f
+
+[Ngũmi Gituro]
+  So I mean the example is Excel, right? The current calculation shows it's 20,000 and that's how it ended up as 20,000 because of the addition or subtraction of Those items. So instead of writing the l
+
+[Bhavneet Mhajan]
+  If you, if you look at that cash flow, indirect Excel, right. It gives you the entire formulas of how to calculate your, your cash flow, right? You just have to follow those formulas and what numbers 
+
+[Bhavneet Mhajan]
+  And it links through the different tabs of what numbers it's picking up and what accounts is picking up from. You just have to follow that for one month. So you understand and then you can apply that 
+
+[Bhavneet Mhajan]
+  So now given these queries, what's the latest timeline? Simran for once you've built it and tested it internally with your QA before you hand over to us, what's your update timeline there?
+
+[Bhavneet Mhajan]
+  So for module two it is just a forecasted financials page which is pending. The other pages are done. You attached the other pages?
+
+[Neha]
+  Is my screen visible? So I have gone through this third document and. And we have implemented like a double Q system.
+
+[Bhavneet Mhajan]
+  Yeah and then the scenario modeling. Do you how is that coming along module 3?
+
+[Bhavneet Mhajan]
+  Because a lot of, because a lot of the calculations you're using in module 3 are derived from module 2 right?
+
+[Project Manager SFS]
+  Very good morning, how are you? We are just waiting for Ashpirit to join and then we can key off the meeting.
+
+[Nolocode AI]
+  Hi Badnet, do you want to check with Ashpeed when is he joining?
+
+[Project Manager SFS]
+  Yeah, hi, how are you?
+
+[Nolocode AI]
+  Okay so I think we have everyone now, right? Okay so if we can then begin with first like do you have direct questions Ashby Bhavni or should we give you an overview of the first approach and then the
+
+[Harsh Vardhan Dixit]
+  Okay so hello everyone. So I'm sharing my screen and then I will explain the both approaches. Is my screen visible to everyone?
+
+[Harsh Vardhan Dixit]
+  So we will, we were getting like what will be the input required to execute this test? What are the reasoning which need to be performed to get out from these tests and what are the output format we n
+
+[Bhavneet Mhajan]
+  I wanted to see the pros and cons you had below the document of the previous approach. Can we just go through that before?
+
+[Bhavneet Mhajan]
+  to create a new a sixth preset question that would require a new code, right? How long would that take in your estimate for developer to do that? Okay, create another five preset questions. So I have 
+
+[Harsh Vardhan Dixit]
+  Okay, So this is the chatbot. I am asking the question here. Let me refresh. Okay, see this time response is written in 31 seconds. So the response is, the question was if the market dips and we miss 
+
+[Harsh Vardhan Dixit]
+  Also the graph includes the base scenario and the minimum cash flow which is used here to compare and with mitigation. What will be the effect after mitigation? So graph is showing this and then there
+
+[Harsh Vardhan Dixit]
+  Sorry, can you repeat the question?
+
+[Bhavneet Mhajan]
+  number compare to the current cash balance? Cash balance was half of that.
+
+[Bhavneet Mhajan]
+  As in my question is if the actual cash balance is half of that how do we have a minimum cash flow as double if the existing cash balance is the same. And the question is we want to survive the next 1
+
+[Bhavneet Mhajan]
+  Yeah, it's Come with the recommended mitigation of 20 in Opex and 50 it must have come up with various different combinations, right? What were the different combinations and how did it arrive to that
+
+[Bhavneet Mhajan]
+  Is it applying a criteria? How is it coming to a conclusion to say the best option is a 20 reduction in optics.
+
+[Harsh Vardhan Dixit]
+  Okay, I think we have a document regarding this. Let me show you. Oh, I can see the logic directly here. Give me a second. Document. This one? So we are using this logic to get to the like the best co
+
+
+Total shown: 50

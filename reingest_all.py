@@ -41,17 +41,16 @@ PROJECT_ID = "proj_nolocode_001"
 CACHE_DIR  = "data/transcripts"
 
 ALL_MEETING_IDS = [
+    # --- current API account (8 meetings) ---
+    "01KTXPCKMGW63E2C0B9A3FGKDV",
+    "01KTRHTDCKY1BTKCACQS2VP3YM",
+    "01KTH2FHQHN0ACXXD4C7Z76R28",
+    "01KQVZ1DWZXB47EH1AJN0XFEA1",
+    "01KQVC08JN29QCJW94Z9MH64QB",
+    "01KP7TRKMTZGVPNJ8CBF18DVTR",
+    "01KKGA075M7EANGQ289WYZZ8XZ",
+    # --- Nolocode meetings now available via new API account ---
     "01KM2DD6MXGSZ4F1QW0BNJE16N",
-    "01KMHQSBYB1RAGY2X4EP6DCMC9",
-    "01KPZQM8QJV019CTG2YBHBNKJB",
-    "01KR18Q6AJM5GZX7Q66VHZXZP3",
-    "01KQVP85XVSYDGBXDMCPD4BB6A",
-    "01KPSSB8Z5D7C70WJ11YFFFY2Z",
-    "01KPN0G7JN7B3SR8HXR0PVFPSZ",
-    "01KP8S4ZFHR6CGHJVK62931CC6",
-    "01KP5V2WV2YFKWZSA1E4Y3SE18",
-    "01KP5NPHRKEK81SCWMBH64172Q",
-    "01KJQ6XEQ535KTFNCQ5JSNYSYP",
     "01KM2NAB4W0G0H9YET0EEFZVDT",
     "01KMD9V4A64EXRA4WJVKBDV0W7",
     "01KN4EQFKRPWCSNAVS5BV7QK9F",
@@ -60,6 +59,16 @@ ALL_MEETING_IDS = [
     "01KNNPB1705JMXDKCMCXC5ESP4",
     "01KNS2DKRQFB33BZZCJZYTKD5K",
     "01KNVN05TF8TS9BVAMMHMV276T",
+    # --- old Nolocode meetings (previously had utterance chunks, now re-ingesting) ---
+    "01KMHQSBYB1RAGY2X4EP6DCMC9",
+    "01KPSSB8Z5D7C70WJ11YFFFY2Z",
+    "01KP5NPHRKEK81SCWMBH64172Q",
+    "01KP5V2WV2YFKWZSA1E4Y3SE18",
+    "01KP8S4ZFHR6CGHJVK62931CC6",
+    "01KPZQM8QJV019CTG2YBHBNKJB",
+    "01KPN0G7JN7B3SR8HXR0PVFPSZ",
+    "01KR18Q6AJM5GZX7Q66VHZXZP3",
+    "01KQVP85XVSYDGBXDMCPD4BB6A",
 ]
 
 
@@ -98,7 +107,7 @@ def delete_meeting_chunks(meeting_id: str) -> int:
 
 
 def print_before_stats(meeting_ids: list[str]) -> dict:
-    print("\n── BEFORE ──────────────────────────────────────────────")
+    print("\n-- BEFORE ------------------------------------------------")
     col = get_raw_collection()
     all_docs = col.get(include=["documents"])["documents"]
     total = len(all_docs)
@@ -107,9 +116,9 @@ def print_before_stats(meeting_ids: list[str]) -> dict:
         u200 = sum(1 for d in all_docs if len(d) < 200)
         o200 = sum(1 for d in all_docs if len(d) >= 200)
         print(f"  Total chunks  : {total}")
-        print(f"  Under 80 chars: {u80} ({u80/total*100:.1f}%)  ← noise")
+        print(f"  Under 80 chars: {u80} ({u80/total*100:.1f}%)  <- noise")
         print(f"  Under 200     : {u200} ({u200/total*100:.1f}%)")
-        print(f"  Over 200      : {o200} ({o200/total*100:.1f}%)  ← good size")
+        print(f"  Over 200      : {o200} ({o200/total*100:.1f}%)  <- good size")
     else:
         print("  No chunks in DB yet.")
     print()
@@ -126,7 +135,7 @@ def print_before_stats(meeting_ids: list[str]) -> dict:
 
 
 def print_after_stats(before_counts: dict) -> None:
-    print("\n── AFTER ───────────────────────────────────────────────")
+    print("\n-- AFTER -------------------------------------------------")
     col = get_raw_collection()
     all_docs = col.get(include=["documents"])["documents"]
     total = len(all_docs)
@@ -141,7 +150,7 @@ def print_after_stats(before_counts: dict) -> None:
     print(f"  Total chunks  : {total}")
     print(f"  Under 80 chars: {u80} ({u80/total*100:.1f}%)")
     print(f"  Under 200     : {u200} ({u200/total*100:.1f}%)")
-    print(f"  Over 200      : {o200} ({o200/total*100:.1f}%)  ← good size")
+    print(f"  Over 200      : {o200} ({o200/total*100:.1f}%)  <- good size")
     print()
 
     print(f"  {'Meeting ID':<45} {'Before':>7} {'After':>7} {'Change':>8}")
@@ -149,7 +158,7 @@ def print_after_stats(before_counts: dict) -> None:
     for mid, before in before_counts.items():
         after = get_chunk_count(mid)
         diff = after - before
-        symbol = "▲" if diff > 0 else ("▼" if diff < 0 else "=")
+        symbol = "+" if diff > 0 else ("-" if diff < 0 else "=")
         print(f"  {mid:<45} {before:>7} {after:>7} {symbol}{abs(diff):>7}")
 
 
@@ -167,7 +176,7 @@ def main():
 
     print(f"Re-ingesting {len(meeting_ids)} meeting(s) | project: {PROJECT_ID}")
     if args.dry_run:
-        print("DRY RUN — no changes\n")
+        print("DRY RUN - no changes\n")
 
     before_counts = print_before_stats(meeting_ids)
 
@@ -175,7 +184,7 @@ def main():
         print("Dry run complete. Run without --dry-run to apply.")
         return
 
-    print("── RE-INGESTING ────────────────────────────────────────")
+    print("-- RE-INGESTING ------------------------------------------")
     t_total = time.time()
     results = {"success": 0, "failed": 0}
 
@@ -200,13 +209,13 @@ def main():
             elapsed = int((time.time() - t) * 1000)
             title = result.get("meeting_title", "?")[:45]
             new_count = result.get("chunks_stored", 0)
-            print(f"  ✅ {title}")
-            print(f"     chunks: {before} → {new_count}  |  {elapsed}ms  ({source})")
+            print(f"  OK  {title}")
+            print(f"     chunks: {before} -> {new_count}  |  {elapsed}ms  ({source})")
             results["success"] += 1
 
         except Exception as e:
             elapsed = int((time.time() - t) * 1000)
-            print(f"  ❌ FAILED ({elapsed}ms): {e}")
+            print(f"  FAIL ({elapsed}ms): {e}")
             if "Too many requests" in str(e):
                 print(f"     Rate limit hit. Run fetch_and_cache.py after midnight UTC,")
                 print(f"     then re-run: python reingest_all.py --ids {meeting_id}")
@@ -216,9 +225,9 @@ def main():
             time.sleep(2)
 
     elapsed_total = int(time.time() - t_total)
-    print(f"\n── SUMMARY ─────────────────────────────────────────────")
-    print(f"  ✅ Success : {results['success']}")
-    print(f"  ❌ Failed  : {results['failed']}")
+    print(f"\n-- SUMMARY -----------------------------------------------")
+    print(f"  Success : {results['success']}")
+    print(f"  Failed  : {results['failed']}")
     print(f"  Total time : {elapsed_total}s")
 
     print_after_stats(before_counts)

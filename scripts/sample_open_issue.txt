@@ -1,0 +1,120 @@
+[1/40] trigger=[confusion]  speaker=Ngũmi Gituro
+  Yeah, I think there was some confusion because I think we went back and forth but we didn't understand the actual questions.
+
+[2/40] trigger=[concern]  speaker=Project Manager SFS
+  So that was my only concern, that he should join the meeting so that we can have a discussion in the same call and then we can finalize everything.
+
+[3/40] trigger=[not working]  speaker=Project Manager SFS
+  Yeah, sure. Yes, yes. As rhythm is not working on these. These kind of things. So he can left the meeting for now because he's working more focused on the forecast module so he can continue his work.
+
+[4/40] trigger=[problem]  speaker=Project Manager SFS
+  Okay, no problem. Then you can have your discussion and then you can let us know Still I want to highlight it here that when one you inform us that with each approach we will need to proceed it furthe
+
+[5/40] trigger=[problem]  speaker=Harsh Vardhan Dixit
+  Yeah, let's go. So the problem with the first approach was it for every stress test we need to implement it manually and change in the repo and then need to make it live again. So that was the major i
+
+[6/40] trigger=[issue]  speaker=Harsh Vardhan Dixit
+  So that tool required the simulation function for stress test and the input which is gathered from the database then execute them on the stress test then return the output. So as of now I think there'
+
+[7/40] trigger=[problem]  speaker=Ashpreet Singh
+  So what I believe you said in the previous approach there will be unit test cases. All of that will be part of pipeline and that requires more effort in terms of validating and it. It has a determinis
+
+[8/40] trigger=[not accurate]  speaker=Ashpreet Singh
+  But in terms of. When you say it was not accurate what that's. Can you be bit specific? It was not giving right numbers. It was not able to summarize better
+
+[9/40] trigger=[issue]  speaker=Ashpreet Singh
+  solid in our design. So when we start implementing it should solve it because based on the document if document is not well articulated or given to the vector I embedded correctly it will still have t
+
+[10/40] trigger=[problem]  speaker=Ashpreet Singh
+  Like I, I didn't get it storing into vector database. So you, so let's say you cannot chunk the complete document into one or, or you can identify. Okay, this is the fun vector. How do you want to sol
+
+[11/40] trigger=[not correct]  speaker=Ngũmi Gituro
+  No, it's not correct. It's either we rename this to loan repayment or you take out the interest and then you rename it to principle. It has principal repaid. Basically.
+
+[12/40] trigger=[confused]  speaker=Neha
+  That's why I'm confused because we have that and discussion. We like we don't have.
+
+[13/40] trigger=[not working]  speaker=Bhavneet Mhajan
+  But Simon, I don't agree with that. It's not additional because I've told you to generate the cash flow on the. Balance sheet you take a speed code base. So there's nothing additional that I've given 
+
+[14/40] trigger=[not correct]  speaker=Bhavneet Mhajan
+  I think there are two feedbacks I've. Given you in the UAT document that said this is not correct. Provider provide me a breakdown. A breakdown wasn't provided. The comments were just saying resolved 
+
+[15/40] trigger=[not correct]  speaker=Bhavneet Mhajan
+  No, but then, but then, but then Simran on this point then when I. Gave, when I asked you in the first round, right? Basically or these are not correct, you. Should have said these are the formulas yo
+
+[16/40] trigger=[not right]  speaker=Karan Middha
+  So the like we have already always followed the one unified document within which all the formats were mentioned. So now if you like come like if you have given us the sheet with the updated formulas.
+
+[17/40] trigger=[problem]  speaker=Project Manager SFS
+  Yeah, no problem.
+
+[18/40] trigger=[problem]  speaker=Nolocode AI
+  So the seasonality. No worries, no worries. Just let me know I can repeat my problem. So seasonality detector, what the client had said at the start, it should be based off all the available previous 
+
+[19/40] trigger=[need clarification]  speaker=Nolocode AI
+  So orange. So you've highlighted this one in orange is because you need clarification.
+
+[20/40] trigger=[issue]  speaker=Nolocode AI
+  Now the issue with four years I have is if the customer or the end user has given only available two years, how does that work? So four years, will not show an accurate seasonality detector because th
+
+[21/40] trigger=[error]  speaker=Project Manager SFS
+  I wanted to highlight the point that they are asking it dynamic 9% to be UA text to be dynamic. But in the new sheet it is a static error also.
+
+[22/40] trigger=[confusing]  speaker=Nolocode AI
+  This is the thing that's confusing me now which is we had a previous engagement with Simran and the team to understand the formulas he asked for the breakdown of how we calculate the line items on the
+
+[23/40] trigger=[not matching]  speaker=Rhythm jalhotra
+  So now in sheet the formula like the values are changed for that before we have operating. Activate operating. Before we have other current assets and other current liabilities. But now it is not in t
+
+[24/40] trigger=[issue]  speaker=Project Manager SFS
+  The balance sheet is mentioned in the issue. You can see there.
+
+[25/40] trigger=[confused]  speaker=Rhythm jalhotra
+  Yeah, yeah, yes. Like the 21 point is regarding that as I show you before like in the UI we have OC and OCL but now we have some extra fields. Like the field names are different so we don't know what 
+
+[26/40] trigger=[not working]  speaker=Nolocode AI
+  So I'm looking on the ui, I'm coming here and I'm making sure the numbers match. The first few sections are good. These ones are minor issues. Okay when I go to working capital. Sorry, not working cap
+
+[27/40] trigger=[confusion]  speaker=Nolocode AI
+  But on the M2 topic that we raised, I think there may be some confusion or misunderstanding, I'm not sure and I'm trying to work it out but I spoke to them yesterday and I said if there feels like the
+
+[28/40] trigger=[error]  speaker=Nolocode AI
+  They did, they did take me through this. So they did say this was an error and so that was one fix that they needed. So this was highlighted to me.
+
+[29/40] trigger=[confusing]  speaker=Rhythm jalhotra
+  I have one query also. Yes, this is the new sheet and Subhavneet asked us to calculate these values. And these values are like these key names are much different from the UI screen. Like we have chang
+
+[30/40] trigger=[confusion]  speaker=Karan Middha
+  Actually maybe I. Sorry for the confusion. Actually I was stuck with the old plan only like in the method one as it is saying we'll eventually run the whole forecast again independent level you will c
+
+[31/40] trigger=[brought up]  speaker=Karan Middha
+  It's what you brought up that point actually myself also I was not. I was also confused actually I was from the starting only. I was thinking of going with the. The second approach. But yes, we have t
+
+[32/40] trigger=[issue]  speaker=Karan Middha
+  Sure we can do that. However like. Like you think it is like a best UI experience. UI UX experience. We can build it that way if you want. Like it should be navigated back to the baseline builder and 
+
+[33/40] trigger=[concern]  speaker=Nolocode AI
+  The concern I have with that is. Let me just show you. If I just log into a. This is not the one. I don't know if the railway one is still there. One second. Okay, so my only concern is that if you se
+
+[34/40] trigger=[concern]  speaker=Nolocode AI
+  My concern is that now if we go for this approach where we have a pop up and there's no way to specify the stress test like in this example. I've just done this. If there's no Specific way they might 
+
+[35/40] trigger=[not correct]  speaker=Nolocode AI
+  Now they have to. You see the UX is not correct.
+
+[36/40] trigger=[not working]  speaker=Project Manager SFS
+  Actually he just mentioned that some of the things in the AWS environment is not working but that are working on the railway. So the team is testing on it and plus we are facing some kind of issue wit
+
+[37/40] trigger=[not correct]  speaker=Nolocode AI
+  Okay, this one is not correct or he can specifically tell you what is wrong.
+
+[38/40] trigger=[concern]  speaker=Nolocode AI
+  Sorry to hear that I was not aware of this and this concern has. Never really been raised with me from. The client side so I don't know.
+
+[39/40] trigger=[concern]  speaker=Project Manager SFS
+  I already informed you and as well that I'm only. And still I was available. I was replying to them and still I'm listening all these things kind of things this concern with you.
+
+[40/40] trigger=[still pending]  speaker=Project Manager SFS
+  I just said hi. Apart from this, I want to inform you that the team is joining. Two or three people are still pending to join, so let me ask them and then we can start.
+

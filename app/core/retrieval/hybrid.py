@@ -565,6 +565,92 @@ def compound_retrieve(
     return merged[:k_final]
 
 
+def speaker_hybrid_retrieve(
+    query: str,
+    project_id: str,
+    speaker_name: str,
+    other_hard_filters: Optional[dict] = None,
+    date_where: Optional[dict] = None,
+    k: int = 25,
+    dense_query: Optional[str] = None,
+) -> list[Document]:
+    """
+    Two-pass speaker retrieval covering both chunk types.
+
+    Pass A: hybrid_retrieve with speaker_name=$eq → atomic chunks where speaker spoke.
+    Pass B: dialogue_group corpus post-filtered by the pipe-separated speakers field,
+            then BM25 + dense within that subset, RRF merged.
+    Final:  equal-weight RRF of A + B, deduplicated, top k returned.
+
+    Needed because dialogue_group chunks have speaker_name="" (multi-speaker) so an
+    exact speaker_name filter silently drops all cross-speaker exchange chunks.
+    """
+    query      = _validate_query(query)
+    project_id = _validate_project_id(project_id)
+    _dense_q   = (dense_query or query).strip()
+
+    # ── Pass A: atomic chunks (speaker_name exact match) ─────────────────────
+    filters_a = {"speaker_name": speaker_name}
+    if other_hard_filters:
+        filters_a.update(other_hard_filters)
+
+    atomic_docs = hybrid_retrieve(
+        query=query,
+        project_id=project_id,
+        hard_filters=filters_a,
+        date_where=date_where,
+        k=k,
+        dense_query=dense_query,
+    )
+
+    # ── Pass B: dialogue_group chunks where speaker participated ─────────────
+    dg_corpus_all = _fetch_project_corpus(
+        project_id,
+        hard_filters={"chunk_type": "dialogue_group"},
+        date_where=date_where,
+    )
+    dg_corpus = [
+        doc for doc in dg_corpus_all
+        if speaker_name in (doc.metadata.get("speakers") or "").split("|")
+    ]
+    logger.info(
+        "  speaker_hybrid: %d/%d dialogue_group chunks contain speaker=%s",
+        len(dg_corpus), len(dg_corpus_all), speaker_name,
+    )
+
+    if not dg_corpus:
+        return atomic_docs
+
+    # BM25 within the speaker's dialogue_group chunks
+    bm25_dg = _bm25_search(query, dg_corpus, k=k)
+
+    # Dense: search all dialogue_group chunks in scope, then post-filter by speakers
+    dg_filter  = _build_filter(project_id, {"chunk_type": "dialogue_group"}, date_where)
+    vectorstore = get_vectorstore()
+    raw_dense_dg = vectorstore.similarity_search(query=_dense_q, k=k, filter=dg_filter)
+    dense_dg = [
+        d for d in raw_dense_dg
+        if speaker_name in (d.metadata.get("speakers") or "").split("|")
+        and not d.metadata.get("is_meeting_summary")
+    ]
+
+    merged_dg, dg_stats = _rrf_merge(dense_dg, bm25_dg)
+    logger.info(
+        "  speaker_hybrid: dg RRF → dense_only=%d bm25_only=%d overlap=%d total=%d",
+        dg_stats["dense_only"], dg_stats["bm25_only"], dg_stats["overlap"], len(merged_dg),
+    )
+
+    # ── Final merge: equal-weight RRF of atomic + dialogue_group ─────────────
+    final_merged, final_stats = _rrf_merge(
+        atomic_docs, merged_dg, dense_weight=0.5, bm25_weight=0.5
+    )
+    logger.info(
+        "  speaker_hybrid: final → atomic=%d dg=%d merged=%d returned=%d",
+        len(atomic_docs), len(merged_dg), len(final_merged), min(len(final_merged), k),
+    )
+    return final_merged[:k]
+
+
 # ── Legacy signal wrappers (backward compat) ──────────────────────────────────
 # Superseded by hybrid_retrieve() with hard_filters. Kept for older scripts.
 

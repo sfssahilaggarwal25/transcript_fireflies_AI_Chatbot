@@ -1,0 +1,389 @@
+DECISION SIGNAL AUDIT (stored DB values)
+Generated : 2026-06-04 23:29:52
+Count     : 42
+
+[1/42] trigger=[approved]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    So once that particular sheet has been approved by O.
+  ------------------------------------------------------------------
+
+[2/42] trigger=[finalized]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    But you have to be 100% sure that this is where you completely conclude module 2
+    , 3 and 4. Okay, so quick question from my side guys. Are you guys going through
+     the whole development phase and then you're coming back to security and testing
+     or are you going to do each module will. Will be developed and then security te
+    sted and then finalized. Are we going to find
+  ------------------------------------------------------------------
+
+[3/42] trigger=[finalized]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    So I would rather get things done sequentially in my opinion. Just then we, we a
+    re, we've done one thing, we've finalized it and we handed it over.
+  ------------------------------------------------------------------
+
+[4/42] trigger=[agreed]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Also we are, we are responsible to hand over the code to the client in a agreed 
+    way. So for us to do that, if we have code being developed all over the place, a
+    nd it's not complete, then we can't really give them a clear handover.
+  ------------------------------------------------------------------
+
+[5/42] trigger=[agreed]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    That's fine. So that's agreed. So we don't, we don't. Anything that's modeled on
+     the front end, we don't want to store that on the. On the back end database. It
+    's just when we generate the forecast.
+  ------------------------------------------------------------------
+
+[6/42] trigger=[agreed]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    No, no, actually in multiple times. Like in this call only. I explained this bef
+    ore also. Like the first forecast generation is done by backend only. Only when 
+    you change, when you change the drivers on the front end that time like which we
+     do the forecasting on front end, the forecast data is there in back end. We hav
+    e also we have provided you the different architecture diagrams and the flow dia
+    gram and we agreed with it. So like,
+  ------------------------------------------------------------------
+
+[7/42] trigger=[confirmed]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    used it like we are not using it. I actually mentioned this also before also lik
+    e their team have using it. We are not using Redis. They like the code was imple
+    mented before so we have been not been using the like it. Maybe it is been used 
+    in the Excel file or there's some operations. So like our backend team have not 
+    checked that part but they have just confirmed that they are not using Redis lik
+    e it was implemented before only.
+  ------------------------------------------------------------------
+
+[8/42] trigger=[confirmed]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Don't know about the docker part. It will need to be confirmed like by the admin
+    .
+  ------------------------------------------------------------------
+
+[9/42] trigger=[finalized]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #11  (1772453100000)
+    Now, I have no. I understand the hard work you guys are doing and I want to rewa
+    rd you guys and I want to pay you early. But the predicament I have is that, any
+     payment we make, and if it's that $2,500 that we make the payment, we won't be 
+    able to pay you for the other separate modules. We will have to make a complete 
+    payment at the end once you've finalized everything.
+  ------------------------------------------------------------------
+
+[10/42] trigger=[decided]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode architecture meeting  #12  (1773911100000)
+    Okay then. Because the thing is they want me to highlight here as well that the 
+    deadline would be on the basis of whatever you have decided. If you want to have
+     the architectural changes now then the deadlines would be moved further.
+  ------------------------------------------------------------------
+
+[11/42] trigger=[decided]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #13  (1774268100000)
+    Okay, so not sure what happened but I'll repeat my question just before you drop
+    . So because myself and Raheel we went on the call with you and Ashpreet. What w
+    as decided because from Ashpreet's comment back to us was that you guys agreed t
+    hat you will do the Redis deployment but because of the time constraints you wil
+    l do that afterwards. Is that correct? What was.
+  ------------------------------------------------------------------
+
+[12/42] trigger=[agreed]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #13  (1774268100000)
+    Okay, so if you've agreed on that. I think me and Rahil were just talking about 
+    it. If we can get the functionality deployed with the socket park redis till aft
+    erwards then that allow us to at least deliver aspects of the product. Because r
+    ight now the team cannot do zero integration testing. We cannot test the numbers
+     on the forecasting modules. We're basically stuck. So if you've agreed with Ash
+    preet then we're okay with that too. I don't know what you think.
+  ------------------------------------------------------------------
+
+[13/42] trigger=[confirmed]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #13  (1774268100000)
+    They were saying that we have merged the code and they were facing some kind of 
+    issues at their level. So I just asked for the screenshots where I have merged t
+    he code and plus from our code. They are facing some kind of listenations. But n
+    o, they haven't shared any kind of screenshots related to that part. So they hav
+    en't confirmed from their side what to keep and what to remove from the merges. 
+    We will ask them and then. Okay, in terms of deployment, what is DevOps?
+  ------------------------------------------------------------------
+
+[14/42] trigger=[agreed]
+  Speaker : Ashpreet Singh  [client]
+  Meeting : Nolocode - AI module  #14  (1775044800000)
+    Lang, Fuse, Langsmith have answered Langsmith most of the things aligned so even
+     chunking out have agreed to that. Yeah, most of the points are closed. Any othe
+    r I'm happy to take now?
+  ------------------------------------------------------------------
+
+[15/42] trigger=[selected]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    Yeah, so what? So, so the logic should be that if I've selected a particular mon
+    th, it should show my cash balance for that month. If I, if I'm looking at a yea
+    r, then it should show me what. My cash balance is cumulative, right?
+  ------------------------------------------------------------------
+
+[16/42] trigger=[confirmed]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    Yeah, no, no, no, no, that's fine, that's fine. Once, once you've confirmed it, 
+    then you let me know. That's fine. Yeah, tell me now. Just test it and confirm a
+    nd then just put a message.
+  ------------------------------------------------------------------
+
+[17/42] trigger=[confirmed]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    But these are not under our scope. We have worked upon the forecasting and the s
+    cenario modeling, plus on the zero. So we were not confirmed related to this. I 
+    need to discuss with the car before. Discuss before working on this.
+  ------------------------------------------------------------------
+
+[18/42] trigger=[confirmed]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode - M1  #15  (1775124600000)
+    Exactly. I thought I'm just giving you the heads up that is an integration. That
+     needs to be happening. Simran just message on the WhatsApp group when you have 
+    fixed those points on. Module one on zero. Manish has updated that and when you.
+     Have confirmed that you've added the. The default baseline builder numbers basi
+    cally for module 2. So once you've done the baseline builder module 3 then modul
+    e 3 will already have data. I just want to. Yeah, yeah.
+  ------------------------------------------------------------------
+
+[19/42] trigger=[confirmed]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    Yeah, he was confirmed. Because I don't know what this is supposed to mean in te
+    rms of positive. If it's positive working capital, that means you have more, you
+     have less cash tied up in operations. And negative means more, more cash. So I 
+    don't know if this number is just hard coded text or it's dynamic but just confi
+    rm. But it should align with the principle. That if your net working capital is 
+    increasing then it's better for you, which is the case here.
+  ------------------------------------------------------------------
+
+[20/42] trigger=[finalized]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting  #17  (1775623200000)
+    Okay, sure. So whatever feedback you have added so far, we will start working on
+     it. And also Akash informed me yesterday night that module, Sorry, the approach
+     one is finalized for module four as well. So we will start with that too.
+  ------------------------------------------------------------------
+
+[21/42] trigger=[decision]
+  Speaker : Neha  [developer]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    So my point is when. When any of other decision can be changed for the user, the
+     whole screen will be on loading until this totally generate forecast will happe
+    n.
+  ------------------------------------------------------------------
+
+[22/42] trigger=[agreed]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode meeting  #18  (1775736600000)
+    Yeah, that's fine. Whatever info. If you've agreed with them about the month and
+     year column and what has been added that is useful that. Because if a user look
+    s into 127 Record, this means nothing. It doesn't make any business sense. It ju
+    st shows okay, 127 record. But what exactly in those records? What time? Some th
+    ings he likes. If he's agreed with month and year, then yeah, just put that colu
+    mn in. Okay, just one more question from my side on this.
+  ------------------------------------------------------------------
+
+[23/42] trigger=[decision]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+    Okay so I think Ashprit has just sent me a message. He just stuck in a meeting. 
+    Can we do 2:30 India time and in the meantime these your responses to his feedba
+    ck. If you just share it on the WhatsApp group he can look at it in the meantime
+     and then Simran if you can just put in a call at 2:30 Indian time which is 1 o'
+     clock UA time. And then can join and then the full and then you and Aspreet and
+     the full team can go through that and come to a decision.
+  ------------------------------------------------------------------
+
+[24/42] trigger=[finalized]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode meeting with Ashpreet  #1  (2026-03-19)
+    So we will provide you with the time estimations of both the modules for now bec
+    ause scenario modeling is done but for now the socket IO regarding which we need
+     to discuss with Ashpreet and once it is finalized then we can provide you with 
+    that handover of scenario modeling.
+  ------------------------------------------------------------------
+
+[25/42] trigger=[decision]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    So Ashpreet, you. You'd want to see that design before you make a decision, righ
+    t?
+  ------------------------------------------------------------------
+
+[26/42] trigger=[decision]
+  Speaker : Ashpreet Singh  [client]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    In this deterministic can we into one effort adding another stress test with thi
+    s current approach. If that saves me time and effort and make that production re
+    ady in within one day. That's the benefit. I get it with the new approach and I 
+    can take a better decision. I hope that sounds well to you Akash.
+  ------------------------------------------------------------------
+
+[27/42] trigger=[decision]
+  Speaker : Ashpreet Singh  [client]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    I'm saying think about how you better design it. So it helped me as an user or a
+    lso as a client. Let's say if you're. If three days has been taken can we optimi
+    ze do a one day production ready deployment. That's what I will say. If effort r
+    ight. That's when then I will be able to take a better decision also got your po
+    int.
+  ------------------------------------------------------------------
+
+[28/42] trigger=[agreed]
+  Speaker : Ashpreet Singh  [client]
+  Meeting : Nolocode AI meeting  #2  (2026-03-25)
+    Yeah agreed. So based on what input I have given you based on 4 think about that
+     perspective.
+  ------------------------------------------------------------------
+
+[29/42] trigger=[confirmed]
+  Speaker : Ngũmi Gituro  [client]
+  Meeting : Nolocode-M1  #9  (2026-04-14)
+    Okay, gotcha. I understand. Okay Priya. And then there was the redirect into for
+    ecast assumptions instead of the default. Niha, you confirmed it was done or act
+    ually Niha, you had something to add earlier, right? When Manish was talking. Ne
+    ha had raised her hand when she. When you were talking.
+  ------------------------------------------------------------------
+
+[30/42] trigger=[going with]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Yes, I think we discussed with Raheel and Akash on Monday, right, that now that 
+    we're going with approach one, there was a demo that was done three weeks ago. I
+     think it was recession playbook. And we gave some feedback that the output was 
+    not being consistent. And even on the application we noticed the stress test que
+    stion that's been built in, it's not dynamic or changing. If you change your num
+    bers. So what we asked for is just let's have a Revised POC for one of those que
+    stions.
+  ------------------------------------------------------------------
+
+[31/42] trigger=[agreed]
+  Speaker : Bhavneet Mhajan  [client]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    And, and what we had and what we had agreed was that if that feedback has been w
+    orked on then we would like to have a. Another round. Of, of a demo then of the 
+    output.
+  ------------------------------------------------------------------
+
+[32/42] trigger=[confirmed]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-M2-and-M4  #8  (2026-04-15)
+    Minimum cash flow is same as the cash balance. That's what confirmed now.
+  ------------------------------------------------------------------
+
+[33/42] trigger=[going with]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    It's what you brought up that point actually myself also I was not. I was also c
+    onfused actually I was from the starting only. I was thinking of going with the.
+     The second approach. But yes, we have this in the previous week. We have discus
+    sed with the team. We'll go with your. Your recommended approach.
+  ------------------------------------------------------------------
+
+[34/42] trigger=[decided]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Actually he said to me in the last Friday only actually just me and her Chandra 
+    and Nagumi was there. So I clarified two times from him. So and he also explicit
+    ly mentioned that he has told like you and Heel about this and I have also like 
+    I've also told him like when Ashprit was there like this was the thing which we 
+    decided and. And he said like I was not aware of this thing but we don't need th
+    is thing.
+  ------------------------------------------------------------------
+
+[35/42] trigger=[stick with]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    So the client wanted both, right? It was on this, it was on the scope. So the Ex
+    cel. I think someone showed me the Excel exporter. So that's. That's a simple. Y
+    ou've already got it done and we just need a simple export on Excel. We don't ne
+    ed anything fancy. So let's stick with that. The PDF. I just need your help to u
+    nderstand what it is you guys need from a template perspective to be able to cre
+    ate that.
+  ------------------------------------------------------------------
+
+[36/42] trigger=[agreed]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-catchup  #7  (2026-04-20)
+    Until these features are the client always going to be quite explicit about the 
+    completion of the module in its entirety. Just let us know what your requirement
+    s are or what do you need to know or what do you need for us to provide regardin
+    g the PDF export. That's one thing. And Redis side. So when are you guys plannin
+    g to do redis? We agreed Simran, we've. I'll take the other conversation with yo
+    u afterwards.
+  ------------------------------------------------------------------
+
+[37/42] trigger=[confirmed]
+  Speaker : Project Manager SFS  [project_manager]
+  Meeting : Nolocode-M2-formula-discussion  #3  (2026-04-24)
+    Have shared the queries related to the short term and the long term and the rest
+     of the things in which you just confirmed on the call itself that these are der
+    ived from there. I'll share that with you after this meeting. For now we can dis
+    cuss the formulas.
+  ------------------------------------------------------------------
+
+[38/42] trigger=[agreed]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    This is the thing that's confusing me now which is we had a previous engagement 
+    with Simran and the team to understand the formulas he asked for the breakdown o
+    f how we calculate the line items on the forecast financials off the back of tha
+    t he's given a lot more formulas which we've which has had to change and this is
+     why we've had to go back for additional effort now that was agreed and moved on
+     and now it seems as though they've got whole different line ideas yes.
+  ------------------------------------------------------------------
+
+[39/42] trigger=[agreed]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    Way quick question so what once we agreed on the new formulas for the forecast f
+    inancials right? You guys haven't started implementing them right?
+  ------------------------------------------------------------------
+
+[40/42] trigger=[agreed]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    And so if the client doesn't agree, then we're going to push to not make any of 
+    these changes because as far as I'm concerned this is out of scope and this wasn
+    't previously agreed. So for us, as Simran knows, the client's not very easy to 
+    work with. They are quite challenging. So unless we have clear expectations set 
+    and understanding set to them, they won't agree. So this is all an effort to hel
+    p us.
+  ------------------------------------------------------------------
+
+[41/42] trigger=[decision]
+  Speaker : Karan Middha  [developer]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    Right, so and if they agree to make these changes, then also please make them wr
+    ite everything that this is the final decision and no further changes would be e
+    ntertained after that in the formulas or in the forecast module.
+  ------------------------------------------------------------------
+
+[42/42] trigger=[agreed]
+  Speaker : Nolocode AI  [client]
+  Meeting : Nolocode-meeting  #4  (2026-05-07)
+    Yeah@gmail.com yeah, this one. Okay so I've given you editor access so let me sh
+    are with you. Okay, sending. Please just verify this because what I want to say 
+    to the client is just find the document. What I want to say to the to the client
+     is you. We have previously agreed to the formulas that was set here and these a
+    re the calculations that our developers have started with.
+  ------------------------------------------------------------------
+

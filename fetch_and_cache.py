@@ -35,19 +35,18 @@ from app.clients.fireflies_client import fetch_all_transcripts, FirefliesAPIErro
 
 CACHE_DIR = "data/transcripts"
 
-# Only cache these 19 meetings (our project's meetings)
+# All active Nolocode project meetings (25 total)
 TARGET_IDS = {
+    # --- current API account (8 meetings) ---
+    "01KTXPCKMGW63E2C0B9A3FGKDV",
+    "01KTRHTDCKY1BTKCACQS2VP3YM",
+    "01KTH2FHQHN0ACXXD4C7Z76R28",
+    "01KQVZ1DWZXB47EH1AJN0XFEA1",
+    "01KQVC08JN29QCJW94Z9MH64QB",
+    "01KP7TRKMTZGVPNJ8CBF18DVTR",
+    "01KKGA075M7EANGQ289WYZZ8XZ",
+    # --- Nolocode meetings now available via new API account ---
     "01KM2DD6MXGSZ4F1QW0BNJE16N",
-    "01KMHQSBYB1RAGY2X4EP6DCMC9",
-    "01KPZQM8QJV019CTG2YBHBNKJB",
-    "01KR18Q6AJM5GZX7Q66VHZXZP3",
-    "01KQVP85XVSYDGBXDMCPD4BB6A",
-    "01KPSSB8Z5D7C70WJ11YFFFY2Z",
-    "01KPN0G7JN7B3SR8HXR0PVFPSZ",
-    "01KP8S4ZFHR6CGHJVK62931CC6",
-    "01KP5V2WV2YFKWZSA1E4Y3SE18",
-    "01KP5NPHRKEK81SCWMBH64172Q",
-    "01KJQ6XEQ535KTFNCQ5JSNYSYP",
     "01KM2NAB4W0G0H9YET0EEFZVDT",
     "01KMD9V4A64EXRA4WJVKBDV0W7",
     "01KN4EQFKRPWCSNAVS5BV7QK9F",
@@ -56,6 +55,16 @@ TARGET_IDS = {
     "01KNNPB1705JMXDKCMCXC5ESP4",
     "01KNS2DKRQFB33BZZCJZYTKD5K",
     "01KNVN05TF8TS9BVAMMHMV276T",
+    # --- old Nolocode meetings (need cache for re-ingest) ---
+    "01KMHQSBYB1RAGY2X4EP6DCMC9",
+    "01KPSSB8Z5D7C70WJ11YFFFY2Z",
+    "01KP5NPHRKEK81SCWMBH64172Q",
+    "01KP5V2WV2YFKWZSA1E4Y3SE18",
+    "01KP8S4ZFHR6CGHJVK62931CC6",
+    "01KPZQM8QJV019CTG2YBHBNKJB",
+    "01KPN0G7JN7B3SR8HXR0PVFPSZ",
+    "01KR18Q6AJM5GZX7Q66VHZXZP3",
+    "01KQVP85XVSYDGBXDMCPD4BB6A",
 }
 
 
@@ -103,16 +112,16 @@ def main():
     print(f"Need to fetch   : {len(to_fetch)}")
 
     if not to_fetch:
-        print("\n✅ All meetings already cached. Nothing to do.")
+        print("\nAll meetings already cached. Nothing to do.")
         print(f"   Cache location: {os.path.abspath(CACHE_DIR)}/")
         return
 
     print(f"\nFetching all transcripts in one bulk API call...")
 
     try:
-        all_transcripts = fetch_all_transcripts(limit=100)
+        all_transcripts = fetch_all_transcripts()
     except FirefliesAPIError as e:
-        print(f"\n❌ Fireflies API error: {e}")
+        print(f"\nERROR Fireflies API error: {e}")
         if "Too many requests" in str(e):
             print("   Rate limit active. Try again after midnight UTC.")
         sys.exit(1)
@@ -135,19 +144,19 @@ def main():
 
         if mid in already_cached and not args.force:
             skipped.append(mid)
-            print(f"  ⏭  {mid}  (already cached)")
+            print(f"  SKIP {mid}  (already cached)")
             continue
 
         path = save_transcript(transcript)
         saved.append(mid)
-        print(f"  💾 {mid}  {sentences:4d} sentences  {title}")
+        print(f"  SAVE {mid}  {sentences:4d} sentences  {title}")
 
-    print(f"\n── SUMMARY ─────────────────────────────────────────────")
-    print(f"  💾 Saved    : {len(saved)}")
-    print(f"  ⏭  Skipped  : {len(skipped)} (already cached)")
+    print(f"\n-- SUMMARY -----------------------------------------------")
+    print(f"  Saved    : {len(saved)}")
+    print(f"  Skipped  : {len(skipped)} (already cached)")
 
     if not_found:
-        print(f"  ⚠️  Not found in API response: {len(not_found)}")
+        print(f"  Not found in API response: {len(not_found)}")
         for mid in not_found:
             print(f"      {mid}")
         print("  These meetings may have been deleted from your Fireflies account.")

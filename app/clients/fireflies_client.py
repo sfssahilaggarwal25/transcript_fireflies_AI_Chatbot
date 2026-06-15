@@ -103,7 +103,7 @@ def fetch_transcript(transcript_id: str) -> Dict[str, Any]:
         raise FirefliesAPIError(f"Unexpected error: {str(e)}")
 
 
-def fetch_all_transcripts(limit: int = 100) -> list[dict]:
+def fetch_all_transcripts() -> list[dict]:
     """
     Fetch all transcripts in one API call using the bulk `transcripts` query.
 
@@ -111,15 +111,14 @@ def fetch_all_transcripts(limit: int = 100) -> list[dict]:
     `transcript` field returned by fetch_transcript() — so the rest of the
     pipeline (normalize → chunk → store) works unchanged.
 
-    limit: max meetings to return (Fireflies free tier has ~100 total).
     Raises FirefliesAPIError on any API failure.
     """
     if not Config.API_KEY:
         raise FirefliesAPIError("Fireflies API key not configured")
 
     query = """
-    query Transcripts($limit: Int) {
-      transcripts(limit: $limit) {
+    query {
+      transcripts {
         id
         title
         date
@@ -144,7 +143,7 @@ def fetch_all_transcripts(limit: int = 100) -> list[dict]:
                 "Authorization": f"Bearer {Config.API_KEY}",
                 "Content-Type": "application/json",
             },
-            json={"query": query, "variables": {"limit": limit}},
+            json={"query": query},
             timeout=60,
         )
 

@@ -10,7 +10,6 @@ Tools
   get_meeting_summaries — Fetch pre-built meeting summary paragraphs.
   list_meetings         — Meeting titles, dates, and numbers (no content).
   list_speakers         — Speaker names, roles, chunk counts (scope-aware).
-  count_signal_chunks   — Exact metadata count for signal-flagged chunks.
 
 Private implementation details (helpers, accumulator, signal maps) live in
 utils/ — not imported from outside app/agent/.
@@ -24,7 +23,7 @@ from langchain_core.messages import HumanMessage
 from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
 
-from app.core.retrieval import hybrid_retrieve
+from app.core.retrieval import hybrid_retrieve, speaker_hybrid_retrieve
 from app.core.retrieval.reranker import rerank_documents
 from app.core.storage.db import get_raw_collection
 from .utils import (
@@ -40,7 +39,6 @@ from .utils import (
     _fmt_ts,
     fmt_date,
     _resolve_speaker_name,
-    _exhaustive_signal_search,
     _expand_short_chunks_for_reranking,
     _expand_context,
     _apply_diversity_cap,
@@ -74,7 +72,7 @@ def search_transcripts(
     - Open issues / blockers (signal_filter='open_issue')
     - Documents / files shared by participants (signal_filter='document_share')
 
-    For COUNTING signal types (e.g. "how many commitments?"), use count_signal_chunks instead.
+    For COUNTING signal types (e.g. "how many commitments?"), call search_transcripts with the relevant signal query and count the results returned in the header line.
     For SUMMARIES of a meeting, use get_meeting_summaries instead.
 
     Parameters
@@ -125,15 +123,6 @@ def search_transcripts(
         elif not resolved_speaker:
             logger.warning("search_transcripts | speaker %r not found — searching without filter", speaker_name)
 
-    # Exhaustive path: signal + scope → completeness beats ranking
-    if signal_filter and signal_filter in _SIGNAL_MAP and scope_ids:
-        return _exhaustive_signal_search(
-            project_id=project_id,
-            signal_filter=signal_filter,
-            scope_ids=scope_ids,
-            speaker_name=resolved_speaker,
-        )
-
     filters: dict   = {}
     effective_query = query
 
@@ -147,8 +136,8 @@ def search_transcripts(
         effective_query,  # fallback if no HumanMessage found
     )
 
-    if resolved_speaker:
-        filters["speaker_name"] = resolved_speaker
+    # speaker_name is NOT added to filters here — it is passed directly to
+    # speaker_hybrid_retrieve which handles atomic + dialogue_group in two passes.
 
     if signal_filter and signal_filter in _SIGNAL_MAP:
         if signal_filter in _HARD_SIGNAL_FILTERS:
@@ -206,14 +195,26 @@ def search_transcripts(
         )
 
     try:
-        docs = hybrid_retrieve(
-            query=effective_query,
-            project_id=project_id,
-            hard_filters=filters if filters else None,
-            date_where=scope_where,
-            k=effective_k,
-            dense_query=dense_for_hybrid,
-        )
+        if resolved_speaker:
+            # Two-pass: atomic (speaker_name=$eq) + dialogue_group (speakers pipe field)
+            docs = speaker_hybrid_retrieve(
+                query=effective_query,
+                project_id=project_id,
+                speaker_name=resolved_speaker,
+                other_hard_filters=filters if filters else None,
+                date_where=scope_where,
+                k=effective_k,
+                dense_query=dense_for_hybrid,
+            )
+        else:
+            docs = hybrid_retrieve(
+                query=effective_query,
+                project_id=project_id,
+                hard_filters=filters if filters else None,
+                date_where=scope_where,
+                k=effective_k,
+                dense_query=dense_for_hybrid,
+            )
     except Exception as exc:
         logger.warning("search_transcripts error: %s", exc)
         return f"Search failed: {exc}"
@@ -305,7 +306,11 @@ def search_transcripts(
     for doc in expanded:
         meta     = doc.metadata
         position = meta.get("_position")
-        speaker  = meta.get("speaker_name", "Unknown")
+        speaker  = (
+            meta.get("speaker_name")
+            or (meta.get("speakers") or "").replace("|", " · ")
+            or "Unknown"
+        )
         meeting  = meta.get("meeting_title", "Unknown Meeting")
         date     = meta.get("meeting_date", "")
         ts       = _fmt_ts(meta.get("start_time"))
@@ -314,15 +319,19 @@ def search_transcripts(
         relevance     = meta.get("_relevance", "high")
         relevance_tag = " [LOW RELEVANCE — treat as background context only]" if relevance == "low" else ""
 
+        # Use raw_text (actual speech) for the answer LLM, not page_content (HQ format).
+        # HQ format is intentional for retrieval (embedding alignment) but the answer
+        # LLM reads HQ questions literally and misattributes advice as questions asked.
+        content = (meta.get("raw_text") or doc.page_content).strip()
         if position == "before":
             lines.append(f"[CONTEXT ↑ before] {speaker} {ts} — {meeting} ({date_str})")
-            lines.append(f"    {doc.page_content.strip()[:300]}")
+            lines.append(f"    {content[:300]}")
         elif position == "after":
             lines.append(f"[CONTEXT ↓ after] {speaker} {ts} — {meeting} ({date_str})")
-            lines.append(f"    {doc.page_content.strip()[:300]}")
+            lines.append(f"    {content[:300]}")
         else:
             lines.append(f"[{next(num_iter)}] {speaker} {ts} — {meeting} ({date_str}){relevance_tag}")
-            lines.append(f"    {doc.page_content.strip()[:400]}")
+            lines.append(f"    {content[:400]}")
         lines.append("")
 
     return "\n".join(lines)
@@ -472,10 +481,27 @@ def list_speakers(
 
     speakers: dict[str, dict] = {}
     for m in metas:
-        name = m.get("speaker_name")
-        if name and not m.get("is_meeting_summary"):
+        if m.get("is_meeting_summary"):
+            continue
+        if m.get("chunk_type") == "dialogue_group":
+            # dialogue_group chunks store pipe-separated participant names
+            for name in (m.get("speakers") or "").split("|"):
+                name = name.strip()
+                if not name:
+                    continue
+                if name not in speakers:
+                    speakers[name] = {"role": "unknown", "count": 0}
+                speakers[name]["count"] += 1
+        else:
+            name = m.get("speaker_name")
+            if not name:
+                continue
+            role = m.get("speaker_role", "unknown")
             if name not in speakers:
-                speakers[name] = {"role": m.get("speaker_role", "unknown"), "count": 0}
+                speakers[name] = {"role": role, "count": 0}
+            elif speakers[name]["role"] == "unknown" and role != "unknown":
+                # upgrade role from atomic chunk when seen for the first time
+                speakers[name]["role"] = role
             speakers[name]["count"] += 1
 
     if not speakers:
@@ -571,5 +597,4 @@ TOOLS = [
     get_meeting_summaries,
     list_meetings,
     list_speakers,
-    count_signal_chunks,
 ]

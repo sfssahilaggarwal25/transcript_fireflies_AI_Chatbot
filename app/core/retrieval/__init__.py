@@ -17,6 +17,7 @@ from .base import reset_corpus_cache
 from .config import RetrievalConfig, get_retrieval_config
 from .hybrid import (
     hybrid_retrieve,
+    speaker_hybrid_retrieve,
     compound_retrieve,
     retrieve_documents,
     retrieve_commitment_documents,
@@ -34,6 +35,7 @@ __all__ = [
     "get_retrieval_config",
     # Core retrieval
     "hybrid_retrieve",
+    "speaker_hybrid_retrieve",
     "compound_retrieve",
     "retrieve_documents",
     # Metadata aggregation

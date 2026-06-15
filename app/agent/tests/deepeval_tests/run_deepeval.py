@@ -42,6 +42,7 @@ load_dotenv()
 
 from deepeval import evaluate
 from deepeval.metrics import (
+    AnswerRelevancyMetric,
     ContextualPrecisionMetric,
     ContextualRecallMetric,
     ContextualRelevancyMetric,
@@ -50,6 +51,7 @@ from deepeval.models import DeepEvalBaseLLM
 from deepeval.test_case import LLMTestCase
 from google import genai as google_genai
 
+from app.agent.service import answer_query
 from app.agent.tests.deepeval_tests.goldens import PROJECT_QUERIES, CORRECT_QUERIES
 from app.core.retrieval.hybrid import hybrid_retrieve
 from app.core.retrieval.reranker import rerank_documents
@@ -155,7 +157,7 @@ def retrieve_chunks(
     )
 
     # DEBUG: show every chunk's reranker score before the quality filter
-    print(f"\n  ── RERANKER SCORES ({len(docs)} docs after rerank) ──")
+    print(f"\n  -- RERANKER SCORES ({len(docs)} docs after rerank) --")
     for d in docs:
         score = d.metadata.get("_rerank_score", "?")
         rel   = d.metadata.get("_relevance", "?")
@@ -173,14 +175,29 @@ def retrieve_chunks(
 
     chunks = []
     for doc in docs:
-        if not doc.page_content:
+        # Use raw_text (actual transcript speech) not page_content (HQ question).
+        # DeepEval's judge evaluates whether the context ANSWERS the query.
+        # HQ questions are interrogative ("Which framework is planned?") so the
+        # judge correctly scores them 0 — they don't contain the answer.
+        # raw_text is the declarative transcript ("We are using LangGraph...").
+        raw = doc.metadata.get("raw_text") or doc.page_content
+        if not raw:
             continue
+
+        # Prepend meeting + date so the judge can verify sentences like
+        # "in the Nolocode AI meeting (2026-03-25)" that reference metadata
+        # rather than raw transcript text. Without this, those sentences
+        # score 0 recall even though the chunk IS from the right meeting.
+        meeting = doc.metadata.get("meeting_title", "")
+        date    = doc.metadata.get("meeting_date", "")
+        prefix  = f"[{meeting} ({date})] " if meeting else ""
+
         if speaker:
-            # Prepend speaker name so the relevancy judge sees attribution
-            stored_name = doc.metadata.get("speaker_name", speaker)
-            chunks.append(f"{stored_name}: {doc.page_content}")
+            stored_name = doc.metadata.get("speaker_name") or \
+                          doc.metadata.get("speakers", speaker).replace("|", " + ")
+            chunks.append(f"{prefix}{stored_name}: {raw}")
         else:
-            chunks.append(doc.page_content)
+            chunks.append(f"{prefix}{raw}")
 
     return chunks
 
@@ -198,30 +215,28 @@ def main():
 
     print(f"\nRunning {len(goldens)} goldens (skipped {len(all_goldens) - len(goldens)} known gaps)\n")
 
-    # 3 pure retrieval metrics — all use Gemini as the judge
     judge = GeminiJudge()
     PASS_THRESHOLD = 0.7
 
     metrics = [
-        # async_mode=False: metrics run sequentially, not concurrently.
-        # Gemini Pro drops connections when 3 metrics fire ~50 API calls simultaneously.
-        # Sequential mode trades speed for stability — acceptable for offline eval.
+        # async_mode=False: sequential to avoid Gemini Pro connection drops under load.
         ContextualRelevancyMetric(threshold=PASS_THRESHOLD, model=judge, include_reason=True, async_mode=False),
         ContextualRecallMetric(threshold=PASS_THRESHOLD, model=judge, include_reason=True, async_mode=False),
         ContextualPrecisionMetric(threshold=PASS_THRESHOLD, model=judge, include_reason=True, async_mode=False),
+        AnswerRelevancyMetric(threshold=PASS_THRESHOLD, model=judge, include_reason=True, async_mode=False),
     ]
 
-    # Run the retriever for each golden and build DeepEval test cases
+    # Run the retriever + agent for each golden and build DeepEval test cases
     test_cases = []
 
     for i, golden in enumerate(goldens, 1):
         gid = (golden.additional_metadata or {}).get("id", f"#{i}")
-        print(f"  [{i:02d}/{len(goldens)}] {gid}  →  {golden.input[:60]}…", end="", flush=True)
+        print(f"  [{i:02d}/{len(goldens)}] {gid}  ->  {golden.input[:60]}...", end="", flush=True)
 
         meta          = golden.additional_metadata or {}
-        speaker       = meta.get("speaker")        # None for topic queries
-        dense_query   = meta.get("dense_query")    # topic-only query for vector search
-        reranker_hint = meta.get("reranker_hint")  # intent hint for reranker (optional)
+        speaker       = meta.get("speaker")
+        dense_query   = meta.get("dense_query")
+        reranker_hint = meta.get("reranker_hint")
 
         hard_filters = {}
         if speaker:
@@ -231,23 +246,19 @@ def main():
         chunks = retrieve_chunks(
             golden.input,
             hard_filters=hard_filters or None,
-            speaker=speaker,                    # triggers name-prepend path
-            dense_query=dense_query,            # None falls back to full question
-            reranker_hint=reranker_hint,        # None → uses topic_hint rule
+            speaker=speaker,
+            dense_query=dense_query,
+            reranker_hint=reranker_hint,
         )
+
+        # Call the real agent to get the actual answer for AnswerRelevancyMetric.
+        actual_output = answer_query(query=golden.input, project_id=PROJECT_ID).get("answer", "")
         elapsed = round((time.time() - t0) * 1000)
 
-        # LLMTestCase for retrieval-only evaluation:
-        #   input            = the PM's question
-        #   actual_output    = expected_output (we're not testing the LLM answer here)
-        #   expected_output  = the ideal answer (used by ContextualRecall to check coverage)
-        #   retrieval_context = chunks the retriever actually fetched
         test_case = LLMTestCase(
             input=golden.input,
-            actual_output=golden.expected_output,
+            actual_output=actual_output,
             expected_output=golden.expected_output,
-            # context     = ideal chunks from the golden (ground truth)
-            # retrieval_context = what the retriever actually fetched right now
             context=golden.context or [],
             retrieval_context=chunks,
         )
@@ -256,7 +267,7 @@ def main():
         print(f"  {elapsed}ms  ({len(chunks)} chunks)")
 
     # Run DeepEval — it scores all test cases and prints a table
-    print(f"\nScoring {len(test_cases)} test cases with DeepEval…\n")
+    print(f"\nScoring {len(test_cases)} test cases with DeepEval...\n")
     evaluate(test_cases=test_cases, metrics=metrics)
 
 

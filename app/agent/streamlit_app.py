@@ -90,7 +90,6 @@ TOOL_META = {
     "get_meeting_summaries": {"icon": "📋", "label": "Get Meeting Summaries"},
     "list_meetings":         {"icon": "📅", "label": "List Meetings"},
     "list_speakers":         {"icon": "👥", "label": "List Speakers"},
-    "count_signal_chunks":   {"icon": "🔢", "label": "Count Signal Chunks"},
 }
 
 ROLE_ICON = {

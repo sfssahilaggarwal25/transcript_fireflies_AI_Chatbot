@@ -330,8 +330,11 @@ _CONTINUATION_WORDS = (
     "no no",            # always corrects the previous point
 )
 
-_TFIDF_BREAK_THRESHOLD = 0.15  # cosine sim below this → hard topic break
-_GROUP_MAX_TOKENS      = 300   # hard token cap per dialogue group
+_TFIDF_BREAK_THRESHOLD = 0.10  # cosine sim below this → hard topic break
+                               # 0.15 was too strict for Q→A exchanges where
+                               # "Is it going to LLM?" / "Yes, documents go to LLM"
+                               # share almost no TF-IDF tokens despite being one dialogue
+_GROUP_MAX_TOKENS      = 350   # hard token cap per dialogue group
 
 
 def create_dialogue_groups(atomic_chunks: list, meeting_metadata: dict) -> list:
@@ -388,8 +391,17 @@ def create_dialogue_groups(atomic_chunks: list, meeting_metadata: dict) -> list:
         next_tokens  = len(next_chunk["text"].split())
         group_tokens = sum(len(c["text"].split()) for c in current_group)
 
-        # Rule 1 — hard topic boundary
-        if sim < _TFIDF_BREAK_THRESHOLD:
+        # Rule 1 — hard topic boundary (TF-IDF break)
+        # Exception: when the speaker changes AND the next turn is short
+        # (< 30 tokens), bypass this rule entirely. Short responses at a
+        # speaker-change boundary are almost always reactions/answers to the
+        # previous turn, not topic jumps — even when TF-IDF sees zero overlap.
+        # Example: "Okay, I will document it." (4 tokens) has sim=0.0 with the
+        # preceding explanation but is a direct reply and a commitment.
+        speaker_changed = current_group[-1].get("speaker_name") != next_chunk.get("speaker_name")
+        short_response  = next_tokens < 30
+
+        if sim < _TFIDF_BREAK_THRESHOLD and not (speaker_changed and short_response):
             if len(current_group) > 1:
                 groups.append(current_group)
             current_group = [next_chunk]
@@ -412,6 +424,7 @@ def create_dialogue_groups(atomic_chunks: list, meeting_metadata: dict) -> list:
             next_tokens < 30                                                              # A
             or any(next_text_lower.startswith(w) for w in _CONTINUATION_WORDS)           # B
             or (prev_tokens < 30 and prev_speaker == next_chunk.get("speaker_name", "")) # C
+            or (speaker_changed and sim >= _TFIDF_BREAK_THRESHOLD)                       # D: same topic + speaker change = dialogue reply
         )
 
         if should_merge:
@@ -435,6 +448,12 @@ def create_dialogue_groups(atomic_chunks: list, meeting_metadata: dict) -> list:
             if sp and sp not in seen:
                 unique_speakers.append(sp)
                 seen.add(sp)
+
+        # Dialogue groups require at least 2 different speakers.
+        # Single-speaker groups are same-speaker merges from Rule 2C and should
+        # remain as atomic chunks — not labelled as dialogue_group.
+        if len(unique_speakers) < 2:
+            continue
 
         raw_text = "\n".join(
             f"{t.get('speaker_name', 'Unknown')}: {t['text']}"
@@ -562,12 +581,12 @@ def generate_hypothetical_questions_batch(all_chunks: list) -> None:
                 fut = pool.submit(_generate_hq_single, chunk, client)
                 future_to_global[fut] = batch_indices[local_idx]
 
-            for future in as_completed(future_to_global):
+            for future in as_completed(future_to_global, timeout=120):
                 global_idx = future_to_global[future]
                 try:
-                    results[global_idx] = future.result()
+                    results[global_idx] = future.result(timeout=90)
                 except Exception as exc:
-                    # _generate_hq_single never raises; this guards executor failures.
+                    # Covers TimeoutError, API errors, executor failures.
                     chunk   = all_chunks[global_idx]
                     title   = chunk.get("meeting_title", "")
                     speaker = chunk.get("speaker_name") or chunk.get("speakers", "")
